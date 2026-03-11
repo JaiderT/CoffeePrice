@@ -27,7 +27,7 @@ const compradorSchema = new mongoose.Schema(
             trim: true,
             default: null,
         },
-    }
+    },
     { timestamps: true }
 );
 
