@@ -1,10 +1,14 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-  name: {
+const usuarioSchema = new mongoose.Schema({
+  nombre: {
     type: String,
     required: true,
-    unique: true,
+    trim: true
+  },
+  apellido: {
+    type: String,
+    required: true,
     trim: true
   },
   email: {
@@ -12,15 +16,24 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
+    lowercase: true,
   },
   password: {
     type: String,
     required: true,
+    minlength: [8, "minimo 8 caracteres"],
+  },
+  celular: {
+    type: String,
+    trim: true,
   },
   rol: {
-    enum: ["productor", "comprador", "admin", "visitante"],
-    default: "visitante"
+    enum: ["productor", "comprador", "admin"],
+    required: [true, "rol necesario"],
+    default: "productor"
   }
-}, { timestamps: true });
+}, 
+{ timestamps: true }
+);
 
-export default mongoose.model("usuario", userSchema);
+export default mongoose.model("usuario", usuarioSchema);
