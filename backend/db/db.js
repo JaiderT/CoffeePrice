@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
+import dotenv from 'dotenv';
 
-const uri = "mongodb+srv://diazmotajhoandanilo_db_user:jjj_2026@coffepricecluster.eqgthtr.mongodb.net/CoffePrice?retryWrites=true&w=majority"
+dotenv.config();
+
+const uri = process.env.MONGODB_URI;
 
 mongoose.connect(uri)
 .then(() => console.log("✅ Conectado a la base de datos"))
