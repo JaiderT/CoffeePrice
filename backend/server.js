@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import "./db/db.js"
+import "dotenv/config";
+import "./db/db.js";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({}));
 
 app.get('/', (req, res) => {
     res.send('Servidor con CORS activado🚀');
