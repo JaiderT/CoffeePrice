@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 //Registro 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, rol } = req.body;
+    const { nombre, email, password, rol } = req.body;
 
     //Verificar si el usuario ya existe 
     const existeUsuario = await Usuario.findOne({ email });
@@ -17,7 +17,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     //Crear el usuario
-    const newUsuario = new Usuario({ name, email, password: hashedPassword, rol });
+    const newUsuario = new Usuario({ nombre, email, password: hashedPassword, rol });
     await newUsuario.save();
 
     res.status(201).json({ message: "Usuario registrado exitosamente" });
@@ -33,7 +33,7 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Buscar el usuario
-    const user = await user.findOne({ email });
+    const user = await Usuario.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
@@ -46,12 +46,12 @@ export const login = async (req, res) => {
 
     // Generar el token JWT
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.rol },
       "coffeprice_secret",
       { expiresIn: "1d" }
     );
 
-    res.status(200).json({ token, role: user.role, name: user.name });
+    res.status(200).json({ token, role: user.rol, name: user.nombre });
 
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
