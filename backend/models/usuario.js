@@ -28,6 +28,7 @@ const usuarioSchema = new mongoose.Schema({
     trim: true,
   },
   rol: {
+    type: String,
     enum: ["productor", "comprador", "admin"],
     required: [true, "rol necesario"],
     default: "productor"

@@ -5,7 +5,7 @@ import {
   createResena,
   updateResena,
   deleteResena,
-} from "../controllers/resenaController.js";
+} from "../controllers/reseña.js"; // ✅ era resenaController.js (no existía)
 
 const router = express.Router();
 

@@ -16,7 +16,9 @@ const preciosSchema = new mongoose.Schema(
 
         },
         tipocafe: {
+            type: String,
             enum: ["pergamino_seco", "especial", "organico", "verde"],
+            default: "pergamino_seco"
         },
     },
     { timestamps: true }

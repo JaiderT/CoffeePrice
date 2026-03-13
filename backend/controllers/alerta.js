@@ -14,8 +14,8 @@ export const getAlertaById = async (req, res) => {
   try {
     const alerta = await Alerta.findById(req.params.id)
       .populate("usuario", "nombre apellido")
-      .populate("comprador", "nombreEmpresa")
-    
+      .populate("comprador", "nombreEmpresa");
+
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
     res.json(alerta);
   } catch (error) {
@@ -25,7 +25,7 @@ export const getAlertaById = async (req, res) => {
 
 export const createAlerta = async (req, res) => {
   try {
-    const { usuario, comprador, precioMinimo, canales } = req.body 
+    const { usuario, comprador, precioMinimo, canales } = req.body;
 
     const alerta = new Alerta({ usuario, comprador, precioMinimo, canales });
     await alerta.save();
@@ -70,9 +70,9 @@ export const toggleAlerta = async (req, res) => {
 export const deleteAlerta = async (req, res) => {
   try {
     const alerta = await Alerta.findByIdAndDelete(req.params.id);
-    if (!alerta) return res.status(404).json({ mensaje: "Alerta no encontrada" });
-    res.json({ mensaje: "Alerta eliminada correctamente" });
+    if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
+    res.json({ message: "Alerta eliminada correctamente" });
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al eliminar alerta", error: error.message });
+    res.status(500).json({ message: "Error al eliminar alerta", error: error.message });
   }
 };
