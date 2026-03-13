@@ -1,35 +1,26 @@
 import Noticia from "../models/noticia.js";
 
-// @desc    Obtener todas las noticias (con filtro opcional por categoría)
-// @route   GET /api/noticias
-
 export const getNoticias = async (req, res) => {
     try {
-        const {categoria} = req.query;
-        const filtro = categoria ? {categoria} : {};
+        const { categoria } = req.query;
+        const filtro = categoria ? { categoria } : {};
 
         const noticias = await Noticia.find(filtro).sort({ createdAt: -1 });
         res.json(noticias);
     } catch (error) {
-        res.status(500).json({message: "Error al obtener noticias", error: error.message});
+        res.status(500).json({ message: "Error al obtener noticias", error: error.message });
     }
 };
-
-// @desc    Obtener una noticia por ID
-// @route   GET /api/noticias/:id
 
 export const getNoticiaById = async (req, res) => {
     try {
         const noticia = await Noticia.findById(req.params.id);
-        if (!noticia) return res.status(404).json({message: "Noticia no encontrada"});
+        if (!noticia) return res.status(404).json({ message: "Noticia no encontrada" });
         res.json(noticia);
     } catch (error) {
-        res.status(500).json({message: "Error al obtener noticia", error: error.message});
+        res.status(500).json({ message: "Error al obtener noticia", error: error.message });
     }
 };
-
-// @desc    Crear una noticia
-// @route   POST /api/noticias
 
 export const createNoticia = async (req, res) => {
     try {
@@ -40,12 +31,9 @@ export const createNoticia = async (req, res) => {
 
         res.status(201).json(noticia);
     } catch (error) {
-        res.status(400).json({message: "Error al crear noticia", error: error.message});
+        res.status(400).json({ message: "Error al crear noticia", error: error.message });
     }
 };
-
-// @desc    Actualizar una noticia
-// @route   PUT /api/noticias/:id
 
 export const updateNoticia = async (req, res) => {
     try {
@@ -57,22 +45,19 @@ export const updateNoticia = async (req, res) => {
             { new: true, runValidators: true }
         );
 
-        if (!noticia) return res.status(404).json({message: "Noticia no encontrada"});
-        res,json(noticia);
+        if (!noticia) return res.status(404).json({ message: "Noticia no encontrada" });
+        res.json(noticia); // ✅ era res,json
     } catch (error) {
-        res.status(400).json({message: "Error al actualizar noticia", error: error.message});
+        res.status(400).json({ message: "Error al actualizar noticia", error: error.message });
     }
 };
-
-// @desc    Eliminar una noticia
-// @route   DELETE /api/noticias/:id
 
 export const deleteNoticia = async (req, res) => {
     try {
         const noticia = await Noticia.findByIdAndDelete(req.params.id);
-        if (!noticia) return res.status(404).json({message: "Noticia no encontrada"});
-        res.json({message: "Noticia eliminada correctamente"});
+        if (!noticia) return res.status(404).json({ message: "Noticia no encontrada" });
+        res.json({ message: "Noticia eliminada correctamente" });
     } catch (error) {
-        res.status(500).json({message: "Error al eliminar noticia", error: error.message});
+        res.status(500).json({ message: "Error al eliminar noticia", error: error.message });
     }
 };

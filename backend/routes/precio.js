@@ -1,16 +1,18 @@
 import express from "express";
-import { getprecios } from "../controllers/precio.js";
-import { getpreciosBycomprador } from "../controllers/precio.js";
-import { createprecio } from "../controllers/precio.js";
-import { updateprecio } from "../controllers/precio.js";
-import { deleteprecio } from "../controllers/precio.js";
+import {
+  getprecios,
+  getpreciosBycomprador,
+  createprecio,
+  updateprecio,
+  deleteprecio,
+} from "../controllers/precio.js";
 
 const router = express.Router();
 
 router.get("/", getprecios);
-router.get("/", getpreciosBycomprador);
+router.get("/comprador/:compradorId", getpreciosBycomprador); // ✅ era GET "/" duplicado
 router.post("/", createprecio);
-router.put("/", updateprecio);
-router.delete("/", deleteprecio);
+router.put("/:id", updateprecio);    // ✅ era PUT "/" sin :id
+router.delete("/:id", deleteprecio); // ✅ era DELETE "/" sin :id
 
 export default router;

@@ -6,7 +6,7 @@ import {
   createVenta,
   actualizarEstadoPago,
   deleteVenta,
-} from "../controllers/ventaController.js";
+} from "../controllers/venta.js"; // ✅ era ventaController.js (no existía)
 
 const router = express.Router();
 
