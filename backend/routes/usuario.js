@@ -7,7 +7,7 @@ import { eliminarusuario } from "../controllers/usuario";
 const router = express.Router();
 
 router.get("/", getusuario);
-router.put("/", updateusuario);
+router.put("/actualizar", updateusuario);
 router.put("/", cambiarpassword);
 router.delete("/", eliminarusuario);
 
