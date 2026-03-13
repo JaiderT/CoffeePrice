@@ -6,7 +6,7 @@ import {
   updateAlerta,
   toggleAlerta,
   deleteAlerta,
-} from "../controllers/alertaController.js";
+} from "../controllers/alerta.js"; // ✅ era alertaController.js (no existía)
 
 const router = express.Router();
 
