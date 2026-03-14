@@ -1,13 +1,15 @@
-import { useState } from 'react'
-import './App.jsx'
+import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
+import Login from "./components/Auth/Login.jsx"
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className='text-center'>
-      <h1>Sapos hptas</h1>
-    </div>
+    <BrowserRouter>
+    <Routes>
+
+      <Route path='/login' element={<Login />} />
+
+    </Routes>
+    </BrowserRouter>
   )
 }
 
