@@ -26,12 +26,15 @@ print('Hasta: ' + df_precios['ds'].max().strftime('%d/%m/%Y'))
 
 # PASO 2: CARGAR TRM HISTORICA (desde 27/11/1991 del Banrep)
 # IMPORTANTE: ajusta los nombres de columna segun tu archivo
-df_trm = pd.read_csv('datos/trm_historica.csv')
+df_trm = pd.read_csv('datos/trm_historica.csv', sep=';', decimal=',', quotechar='"')
 print('Columnas del archivo TRM: ' + str(list(df_trm.columns)))
 
 # Renombrar columnas al formato estandar
 # Cambia 'fecha' y 'valor' por los nombres reales de tu archivo
-df_trm = df_trm.rename(columns={'fecha': 'ds', 'valor': 'trm'})
+df_trm = df_trm.rename(columns={
+    'DateTime': 'ds',
+    'Tasa Representativa del Mercado (TRM)': 'trm'
+})
 df_trm['ds'] = pd.to_datetime(df_trm['ds'])
 print(f'TRM cargada: {len(df_trm)} registros')
 
