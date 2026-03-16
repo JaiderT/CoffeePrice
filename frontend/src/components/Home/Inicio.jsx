@@ -21,7 +21,7 @@ function Inicio() {
 
           {/* Texto izquierda */}
           <div className="max-w-lg">
-            <span className="bg-[#6B3A2A] text-[#C8A96E] text-xs px-3 py-1 rounded-full">
+            <span className="bg-#6B3A2A text-[#C8A96E] text-xs px-3 py-1 rounded-full">
               ☕ Para caficultores colombianos
             </span>
             <h1 className="text-white text-5xl font-bold mt-6 leading-tight">
