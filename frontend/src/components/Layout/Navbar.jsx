@@ -23,7 +23,7 @@ function Navbar() {
         <Link to="/login" className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm hover:bg-[#2C1A0E] hover:text-white transition-colors">
           Iniciar sesión
         </Link>
-        <Link to="/registro" className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm hover:bg-[#B8994E] transition-colors">
+        <Link to="/register" className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm hover:bg-[#B8994E] transition-colors">
           Registrarse gratis
         </Link>
       </div>
