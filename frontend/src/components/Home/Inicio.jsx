@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import Navbar from '../Layout/Navbar';
+import Footer from '../Layout/Footer';
 
 const datosGrafica = [
   { mes: 'Feb', precio: 1700000 },
@@ -9,6 +11,8 @@ const datosGrafica = [
 
 function Inicio() {
   return (
+    <>
+       <Navbar />
     <div className="min-h-screen bg-[#F5ECD7]">
 
       {/* Hero Section */}
@@ -196,39 +200,9 @@ function Inicio() {
           <p className="text-gray-500 text-xs mt-6">✓ Gratis para caficultores · ✓ Sin tarjeta de crédito · ✓ Cancela cuando quieras</p>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="w-full bg-[#2C1A0E] py-12">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="flex justify-between">
-            <div className="max-w-xs">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">☕</span>
-                <span className="text-white text-xl font-bold">CoffePrice</span>
-              </div>
-              <p className="text-gray-400 text-sm">El precio justo del café, en tus manos. Para caficultores colombianos.</p>
-            </div>
-            {[
-              { title: 'PLATAFORMA', links: ['Ver precios', 'Mapa de compradores', 'Configurar alertas', 'Calculadora'] },
-              { title: 'INFORMACIÓN', links: ['Noticias del café', 'Tendencias', 'Precio FNC', 'Municipios'] },
-              { title: 'SOPORTE', links: ['Centro de ayuda', 'Contacto', 'Términos de uso', 'Privacidad'] },
-            ].map((col, i) => (
-              <div key={i}>
-                <p className="text-[#C8A96E] text-xs font-semibold mb-4">{col.title}</p>
-                {col.links.map((link, j) => (
-                  <p key={j} className="text-gray-400 text-sm mb-2 hover:text-white cursor-pointer">{link}</p>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-gray-700 mt-8 pt-6">
-            <p className="text-gray-500 text-xs">© 2025 CoffePrice · Hecho con ☕ en Colombia</p>
-          </div>
-        </div>
-      </div>
-
     </div>
+    <Footer />
+    </>
   )
 }
-
 export default Inicio
