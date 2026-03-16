@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import Navbar from '../Layout/Navbar';
-import Footer from '../Layout/Footer';
+import Navbar from '../Layout/Navbar.jsx';
+import Footer from '../Layout/Footer.jsx';
 
 const datosGrafica = [
   { mes: 'Feb', precio: 1700000 },
@@ -12,7 +12,7 @@ const datosGrafica = [
 function Inicio() {
   return (
     <>
-       <Navbar />
+      <Navbar />
     <div className="min-h-screen bg-[#F5ECD7]">
 
       {/* Hero Section */}

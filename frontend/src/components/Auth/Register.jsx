@@ -1,15 +1,11 @@
 import { useState } from "react";
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 
-export default function Login() {
-  const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Iniciando sesión...");
-  };
-
-  return (
+export default function Register() {
+    const navigate = useNavigate();
+    
+    return (
+        
     <div className="flex min-h-screen bg-[#3B1F0A]">
 
       {/* PANEL IZQUIERDO */}
@@ -66,18 +62,17 @@ export default function Login() {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[480px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
+      <div className="w-full lg:w-480px bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
 
         {/* Tab switcher */}
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
-          <button className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
+          <button onClick={() => navigate("/login")} className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
             Iniciar sesión
           </button>
-          <button type="button" onClick={()=> navigate('/register')} className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
+          <button className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
             Crear cuenta
           </button>
         </div>
-
         <form onSubmit={handleSubmit}>
 
           {/* Título */}
@@ -175,8 +170,8 @@ export default function Login() {
             Google
           </button>
         </div>
+
       </div>
     </div>
-  );
+    )
 }
-
