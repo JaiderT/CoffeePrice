@@ -1,20 +1,21 @@
 import { useState } from "react";
 
-export default function Login () {
-    const [ showPassword, setShowPassword ] = useState(false);
+export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = (e) => {    // 👈 aquí
-        e.preventDefault();
-        console.log("Iniciando sesión...");
-      };
-    return (
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Iniciando sesión...");
+  };
 
-         <div className="flex min-h-screen bg-[#3B1F0A]">
+  return (
+    <div className="flex min-h-screen bg-[#3B1F0A]">
 
       {/* PANEL IZQUIERDO */}
-      <div className="flex-1 hidden lg:flex flex-col justify-center px-56 py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #3B1F0A 0%, #5C2E0E 60%, #7A4020 100%)" }}>
-
+      <div
+        className="flex-1 hidden lg:flex flex-col justify-center px-16 py-12 relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #3B1F0A 0%, #5C2E0E 60%, #7A4020 100%)" }}
+      >
         {/* Decoración fondo */}
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.15) 0%, transparent 70%)" }} />
@@ -32,8 +33,10 @@ export default function Login () {
         </div>
 
         {/* Título */}
-        <h1 className="text-6xl font-black text-white leading-tight mb-5 relative z-10"
-          style={{ fontFamily: "Georgia, serif" }}>
+        <h1
+          className="text-6xl font-black text-white leading-tight mb-5 relative z-10"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
           Tu café merece <br />
           <span className="text-[#E8A870] italic text-6xl">el mejor precio</span>
         </h1>
@@ -62,7 +65,7 @@ export default function Login () {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-206 bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
+      <div className="w-full lg:w-[480px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
 
         {/* Tab switcher */}
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
@@ -76,76 +79,80 @@ export default function Login () {
 
         <form onSubmit={handleSubmit}>
 
-        {/* Título */}
-        <h2 className="text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
-          ¡Bienvenido de nuevo!
-        </h2>
-        <p className="text-sm text-gray-400 mb-8 leading-relaxed">
-          Entra a tu cuenta para ver los precios de tu zona
-        </p>
-
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
-            Correo electrónico
-          </label>
-          <input
-            type="email"
-            placeholder="tucorreo@gmail.com"
-            required
-            className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
-          />
-        </div>
-
-        {/* Contraseña */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
-            Contraseña
-          </label>
-          <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Tu contraseña"
-            required
-            className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
-          />
-          <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors"
+          {/* Título */}
+          <h2
+            className="text-3xl font-black text-[#3B1F0A] mb-1.5"
+            style={{ fontFamily: "Georgia, serif" }}
           >
-            {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            )}
+            ¡Bienvenido de nuevo!
+          </h2>
+          <p className="text-sm text-gray-400 mb-8 leading-relaxed">
+            Entra a tu cuenta para ver los precios de tu zona
+          </p>
+
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              placeholder="tucorreo@gmail.com"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
+            />
+          </div>
+
+          {/* Contraseña */}
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
+              Contraseña
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Tu contraseña"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Recordar / Olvidé */}
+          <div className="flex justify-between items-center mb-6">
+            <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+              <input type="checkbox" className="accent-[#C8814A] w-3.5 h-3.5" />
+              Recordarme
+            </label>
+            <a href="#" className="text-xs text-[#C8814A] font-semibold hover:underline">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          {/* Botón principal */}
+          <button
+            type="submit"
+            className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-5 shadow-lg hover:scale-[1.02] transition-transform"
+            style={{ background: "linear-gradient(135deg, #C8814A, #7A4020)" }}
+          >
+            ☕️ Iniciar sesión
           </button>
-        </div>
-        </div>
-
-        {/* Recordar / Olvidé */}
-        <div className="flex justify-between items-center mb-6">
-          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-            <input type="checkbox" className="accent-[#C8814A] w-3.5 h-3.5" />
-            Recordarme
-          </label>
-          <a href="#" className="text-xs text-[#C8814A] font-semibold hover:underline">
-            ¿Olvidaste tu contraseña?
-          </a>
-        </div>
-
-        {/* Botón principal */}
-        <button
-        type="submit"
-          className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-5 shadow-lg hover:scale-[1.02] transition-transform"
-          style={{ background: "linear-gradient(135deg, #C8814A, #7A4020)" }}>
-          ☕️  Iniciar sesión
-        </button>
         </form>
 
         {/* Divider */}
@@ -170,7 +177,6 @@ export default function Login () {
 
       </div>
     </div>
-                    
-    );
+  );
 }
 
