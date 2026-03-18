@@ -6,14 +6,13 @@ const preciosSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "comprador",
             required: [true, "El rol Comprador es necesario"]
-        }, 
+        },
         preciocarga: {
             type: Number,
-            required: [true, "El precio por carga en necesario"]
+            required: [true, "El precio por carga es necesario"]
         },
         preciokg: {
             type: Number,
-
         },
         tipocafe: {
             type: String,
@@ -24,9 +23,8 @@ const preciosSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-preciosSchema.pre("save", function (next) {
-    this.preciokg = Math.round(this.preciocarga / 125),
-    next();
+preciosSchema.pre("save", async function () {
+    this.preciokg = Math.round(this.preciocarga / 125);
 });
 
 export default mongoose.model("precio", preciosSchema);
