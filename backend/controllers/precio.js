@@ -6,8 +6,8 @@ export const getprecios = async (req, res) => {
         const filtro = tipoCafe ? { tipoCafe } : {};
 
         const precios = await PrecioModel.find(filtro)
-            .populate("comprador", "nombreEmpresa direccion")
-            .sort({ createdAt: -1 });
+            .populate("comprador", "nombreempresa direccion")
+            .sort({ preciocarga: -1 });
 
         res.json(precios);
     } catch (error) {
@@ -30,12 +30,16 @@ export const getpreciosBycomprador = async (req, res) => {
 export const createprecio = async (req, res) => {
     try {
         const { comprador, preciocarga, tipocafe } = req.body;
+        console.log("Body recibido:", req.body);
 
         const nuevoPrecio = new PrecioModel({ comprador, preciocarga, tipocafe });
+        console.log("Nuevo precio:", nuevoPrecio);
+
         await nuevoPrecio.save();
 
         res.status(201).json(nuevoPrecio);
     } catch (error) {
+        console.log("Error completo:", error);
         res.status(400).json({ message: "Error al crear precio", error: error.message });
     }
 };
