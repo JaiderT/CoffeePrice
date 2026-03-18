@@ -14,6 +14,7 @@ import resenaRoutes from "./routes/reseña.js";
 import solicitudRoutes from "./routes/solicitudRoutes.js";
 import usuarioRoutes from "./routes/usuario.js";
 import ventaRoutes from "./routes/venta.js";
+import compradorRoutes from "./routes/comprador.js";
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.use("/api/resenas", resenaRoutes);
 app.use("/api/solicitudes", solicitudRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/ventas", ventaRoutes);
+app.use("/api/comprador", compradorRoutes);
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));
