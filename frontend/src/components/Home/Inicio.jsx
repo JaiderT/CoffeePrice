@@ -1,19 +1,15 @@
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../Layout/Navbar';
 import Footer from '../Layout/Footer';
 
-const datosGrafica = [
-  { mes: 'Feb', precio: 1700000 },
-  { mes: 'Mar', precio: 1850000 },
-  { mes: 'Hoy', precio: 1950000 },
-];
-
 function Inicio() {
   const [precios, setPrecios] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [mostrarComoFunciona, setMostrarComoFunciona] = useState(false);
+  const comoFuncionaRef = useRef(null);
 
   useEffect(() => {
     const obtenerPrecios = async () => {
@@ -29,16 +25,23 @@ function Inicio() {
     obtenerPrecios();
   }, []);
 
+  const handleComoFunciona = () => {
+    setMostrarComoFunciona(true);
+    setTimeout(() => {
+      comoFuncionaRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   const medalles = ['🥇', '🥈', '🥉', '🥉'];
 
   const datosGrafica = precios.slice(0, 7).map((p, i) => ({
     mes: p.comprador?.nombreempresa?.slice(0, 6) || `P${i + 1}`,
     precio: p.preciocarga
   }));
+
   return (
-    <>
-      <Navbar />
     <div className="min-h-screen bg-[#F5ECD7]">
+      <Navbar />
       {/* Hero Section */}
       <div className="w-full bg-[#3D1F0F] py-12 md:py-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-10">
@@ -58,9 +61,11 @@ function Inicio() {
               <Link to="/precios" className="bg-[#C8A96E] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors text-center">
                 ☕ Ver precios ahora
               </Link>
-              <Link to="#" className="border border-white text-white px-6 py-3 rounded-full text-sm hover:bg-white hover:text-[#3D1F0F] transition-colors text-center">
+              <button
+                onClick={handleComoFunciona}
+                className="border border-white text-white px-6 py-3 rounded-full text-sm hover:bg-white hover:text-[#3D1F0F] transition-colors text-center">
                 ▶ Cómo funciona
-              </Link>
+              </button>
             </div>
             <div className="flex justify-center lg:justify-start gap-8 mt-10">
               <div>
@@ -88,27 +93,29 @@ function Inicio() {
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-4">PRECIO PROMEDIO · PITALITO</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#2C1A0E] mt-1">1.950.000</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2C1A0E] mt-1">
+              {precios[0]?.preciocarga?.toLocaleString() || '1.950.000'}
+            </h2>
             <p className="text-sm text-gray-500">COP por carga</p>
             <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full mt-2 inline-block">
               ▲ +2.1% vs ayer
             </span>
-              <div className="mt-4">
-                <p className="text-xs text-gray-400 font-semibold mb-3">MEJORES PRECIOS HOY</p>
-                {cargando ? (
-                  <p className="text-gray-400 text-sm text-center py-4">Cargando precios...</p>
-                ) : precios.slice(0, 4).map((item, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <span>{medalles[i]}</span>
-                      <span className="text-sm text-[#2C1A0E]">{item.comprador?.nombreempresa}</span>
-                    </div>
-                    <span className="text-sm font-semibold text-[#2C1A0E]">
-                      {item.preciocarga?.toLocaleString()}
-                    </span>
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 font-semibold mb-3">MEJORES PRECIOS HOY</p>
+              {cargando ? (
+                <p className="text-gray-400 text-sm text-center py-4">Cargando precios...</p>
+              ) : precios.slice(0, 4).map((item, i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <span>{medalles[i]}</span>
+                    <span className="text-sm text-[#2C1A0E]">{item.comprador?.nombreempresa}</span>
                   </div>
-                ))}
-              </div>
+                  <span className="text-sm font-semibold text-[#2C1A0E]">
+                    {item.preciocarga?.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
             <div className="bg-[#FFF8E7] rounded-xl p-3 mt-4 flex items-start gap-2">
               <span>🔔</span>
               <div>
@@ -133,7 +140,8 @@ function Inicio() {
               Actualizado constantemente por los propios compradores. Sin demoras, sin intermediarios.
             </p>
             <p className="text-white text-4xl md:text-5xl font-bold mt-6">
-              1.950.000 <span className="text-lg font-normal text-gray-400">COP/carga</span>
+              {precios[0]?.preciocarga?.toLocaleString() || '1.950.000'}
+              <span className="text-lg font-normal text-gray-400"> COP/carga</span>
             </p>
             <p className="text-gray-400 text-sm mt-1">Promedio Pitalito, Huila · Hoy</p>
             <Link to="/precios" className="bg-[#C8A96E] text-white px-6 py-3 rounded-full text-sm font-semibold mt-6 inline-block hover:bg-[#B8994E] transition-colors">
@@ -151,32 +159,43 @@ function Inicio() {
           </div>
         </div>
       </div>
-      {/* Cómo funciona */}
-      <div className="w-full bg-[#F5ECD7] py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
-          <p className="text-[#C8A96E] text-xs font-semibold uppercase">Simple y rápido</p>
-          <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-3">¿Cómo funciona CoffePrice?</h2>
-          <p className="text-gray-500 text-sm mt-3 max-w-lg mx-auto">
-            En 3 pasos ya sabes a quién venderle tu café para recibir el mejor precio del día.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-            {[
-              { icon: '📍', title: 'Activa tu ubicación', desc: 'Dinos en qué municipio estás. No necesitas crear cuenta para ver los precios de tu zona.' },
-              { icon: '💰', title: 'Compara precios', desc: 'Ve todos los compradores del municipio ordenados por precio, distancia o calificación.' },
-              { icon: '🗺️', title: 'Encuentra el punto', desc: 'Toca el mapa para ver exactamente dónde queda cada comprador y cómo llegar desde tu finca.' },
-              { icon: '🔔', title: 'Activa alertas', desc: 'Regístrate gratis y te avisamos cuando el precio supere el valor que tú defines.' },
-            ].map((item, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-b-4 hover:border-[#C8A96E] cursor-pointer">
-                <div className="bg-[#F5ECD7] w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">
-                  {item.icon}
+      {/* Sección Cómo funciona - oculta hasta que se presione el botón */}
+      {mostrarComoFunciona && (
+        <div ref={comoFuncionaRef} className="w-full bg-[#F5ECD7] py-12 md:py-16">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
+
+            {/* Botón cerrar */}
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setMostrarComoFunciona(false)}
+                className="text-[#6B3A2A] border border-[#6B3A2A] px-4 py-2 rounded-full text-xs hover:bg-[#6B3A2A] hover:text-white transition-colors">
+                ✕ Ocultar
+              </button>
+            </div>
+            <p className="text-[#C8A96E] text-xs font-semibold uppercase">Simple y rápido</p>
+            <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-3">¿Cómo funciona CoffePrice?</h2>
+            <p className="text-gray-500 text-sm mt-3 max-w-lg mx-auto">
+              En 3 pasos ya sabes a quién venderle tu café para recibir el mejor precio del día.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+              {[
+                { icon: '📍', title: 'Activa tu ubicación', desc: 'Dinos en qué municipio estás. No necesitas crear cuenta para ver los precios de tu zona.' },
+                { icon: '💰', title: 'Compara precios', desc: 'Ve todos los compradores del municipio ordenados por precio, distancia o calificación.' },
+                { icon: '🗺️', title: 'Encuentra el punto', desc: 'Toca el mapa para ver exactamente dónde queda cada comprador y cómo llegar desde tu finca.' },
+                { icon: '🔔', title: 'Activa alertas', desc: 'Regístrate gratis y te avisamos cuando el precio supere el valor que tú defines.' },
+              ].map((item, i) => (
+                <div key={i} className="bg-white rounded-2xl p-6 shadow-sm text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-b-4 hover:border-[#C8A96E] cursor-pointer">
+                  <div className="bg-[#F5ECD7] w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-[#2C1A0E] font-bold text-sm">{item.title}</h3>
+                  <p className="text-gray-500 text-xs mt-2 leading-relaxed">{item.desc}</p>
                 </div>
-                <h3 className="text-[#2C1A0E] font-bold text-sm">{item.title}</h3>
-                <p className="text-gray-500 text-xs mt-2 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       {/* Testimonios */}
       <div className="w-full bg-[#F5ECD7] py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
@@ -210,7 +229,7 @@ function Inicio() {
           <h2 className="text-white text-4xl md:text-5xl font-bold">¿Listo para vender <br /> al mejor precio?</h2>
           <p className="text-gray-400 text-sm mt-4">Únete a los caficultores del Huila que ya consultan CoffePrice antes de vender.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-            <Link to="/registro" className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors">
+            <Link to="/register" className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors">
               ☕ Crear cuenta gratis
             </Link>
             <Link to="/precios" className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-[#3D1F0F] transition-colors">
@@ -220,9 +239,9 @@ function Inicio() {
           <p className="text-gray-500 text-xs mt-6">✓ Gratis para caficultores · ✓ Sin tarjeta de crédito · ✓ Cancela cuando quieras</p>
         </div>
       </div>
+      <Footer />
     </div>
-    <Footer />
-    </>
   )
 }
+
 export default Inicio
