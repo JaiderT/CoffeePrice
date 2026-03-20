@@ -4,6 +4,8 @@ import Inicio from "./components/Home/Inicio.jsx"
 import Register from "./components/Auth/Register.jsx"
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx"
 import Precios from "./components/Home/Precios.jsx"
+import GoogleAuth from './components/Auth/GoogleAuth.jsx'
+import CompletarPerfil from './components/Auth/CompletarPerfil.jsx';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path='/' element={<Inicio />} />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
+        <Route path='/auth/google' element={<GoogleAuth />} />
+        <Route path='/completar-perfil' element={<CompletarPerfil />} />
 
         {/* Páginas privadas con sidebar */}
         <Route path='/precios' element={

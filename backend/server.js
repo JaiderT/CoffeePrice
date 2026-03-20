@@ -1,12 +1,13 @@
+import "dotenv/config"; // ← primera línea
 import express from 'express';
 import cors from 'cors';
-import "dotenv/config";
+import session from 'express-session';
+import passport from './config/passport.js';
 import "./db/db.js";
 
 // Rutas
+import authRoutes from "./routes/authRoutes.js";
 import alertaRoutes from "./routes/alerta.js";
-import loginRoutes from "./routes/login.js";
-import registerRoutes from "./routes/register.js";
 import noticiaRoutes from "./routes/noticiaRoutes.js";
 import precioRoutes from "./routes/precio.js";
 import prediccionRoutes from "./routes/prediccionRoutes.js";
@@ -21,9 +22,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rutas públicas
-app.use("/api/login", loginRoutes);
-app.use("/api/register", registerRoutes);
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
+
+app.use(passport.initialize());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/alertas", alertaRoutes);
+app.use("/api/noticias", noticiaRoutes);
+app.use("/api/precios", precioRoutes);
+app.use("/api/predicciones", prediccionRoutes);
+app.use("/api/resenas", resenaRoutes);
+app.use("/api/solicitudes", solicitudRoutes);
+app.use("/api/usuario", usuarioRoutes);
+app.use("/api/ventas", ventaRoutes);
+app.use("/api/comprador", compradorRoutes);
 
 // Rutas
 app.use("/api/alertas", alertaRoutes);

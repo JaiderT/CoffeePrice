@@ -1,0 +1,29 @@
+import express from 'express'
+import { login, register, googleCallback } from "../controllers/AuthController.js"
+import passport from '../config/passport.js'
+
+const router = express.Router()
+
+router.post("/login", login)
+router.post("/register", register)
+
+router.get('/google', (req, res, next) => {
+  const rol = req.query.rol || 'productor'
+  req.session.rolPendiente = rol
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+  })(req, res, next)
+})
+
+router.get('/google/callback',
+  (req, res, next) => {
+    passport.authenticate('google', {
+      failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`, // ← ahora se evalúa en runtime
+      session: false,
+    })(req, res, next)
+  },
+  googleCallback
+)
+
+export default router

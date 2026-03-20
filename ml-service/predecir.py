@@ -48,6 +48,7 @@ solo_futuro = prediccion[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(dias_a
 # real publicado en: federaciondecafeteros.org
 FACTOR_FNC = 0.6550
 
+
 # ── PASO 7: CONVERTIR A JSON ──────────────────────────
 resultado = []
 for _, fila in solo_futuro.iterrows():
