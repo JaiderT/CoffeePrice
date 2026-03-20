@@ -91,7 +91,7 @@ export default function Register() {
       </div>
 
       {/* ── PANEL DERECHO ── */}
-      <div className="w-full lg:w-[480px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0 overflow-y-auto">
+      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0 overflow-y-auto">
 
         {!success ? (
           <>
