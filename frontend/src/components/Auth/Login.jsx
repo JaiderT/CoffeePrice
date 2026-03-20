@@ -3,52 +3,80 @@ import {useNavigate} from 'react-router-dom'
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Iniciando sesión...");
+    console.log("Iniciando sesion...");
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:8081/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message);
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("name", data.name);
+
+      setSuccess (`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
+
+      setTimeout(() => {
+        if (data.role === "admin") navigate("/admin");
+      else navigate("/");
+      }, 1500)
+
+    } catch (err) {
+      setError("Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#3B1F0A]">
+    <div className="flex min-h-screen bg-[#3D1F0F]">
+
+      <a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="absolute top-4 right-4 w-7 h-7 ">
+          <path d="M224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160zM566.6 342.6C579.1 330.1 579.1 309.8 566.6 297.3L438.6 169.3C426.1 156.8 405.8 156.8 393.3 169.3C380.8 181.8 380.8 202.1 393.3 214.6L466.7 288L256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L466.7 352L393.3 425.4C380.8 437.9 380.8 458.2 393.3 470.7C405.8 483.2 426.1 483.2 438.6 470.7L566.6 342.7z"/>
+        </svg>
+      </a>
 
       {/* PANEL IZQUIERDO */}
-      <div
-        className="flex-1 hidden lg:flex flex-col justify-center px-16 py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #3B1F0A 0%, #5C2E0E 60%, #7A4020 100%)" }}
-      >
-        {/* Decoración fondo */}
+      <div className="flex-1 hidden lg:flex flex-col justify-center pl-45 px-16 py-12 relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.15) 0%, transparent 70%)" }} />
         <div className="absolute -bottom-20 left-10 w-72 h-72 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.08) 0%, transparent 70%)" }} />
 
-        {/* Logo */}
         <div className="flex items-center gap-3 mb-16 relative z-10">
-          <div className="w-12 h-12 bg-[#C8814A] rounded-xl flex items-center justify-center text-2xl shadow-lg">
-            ☕
-          </div>
-          <span className="text-5xl font-black text-white" style={{ fontFamily: "Georgia, serif" }}>
-            CoffePrice
-          </span>
+          <div className="w-12 h-12 bg-[#C8814A] rounded-xl flex items-center justify-center text-2xl shadow-lg">☕</div>
+          <span className="text-5xl font-black text-white" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
         </div>
 
-        {/* Título */}
-        <h1
-          className="text-6xl font-black text-white leading-tight mb-5 relative z-10"
-          style={{ fontFamily: "Georgia, serif" }}
-        >
+        <h1 className="text-6xl font-black text-white leading-tight mb-5 relative z-10" style={{ fontFamily: "Georgia, serif" }}>
           Tu café merece <br />
           <span className="text-[#E8A870] italic text-6xl">el mejor precio</span>
         </h1>
 
-        {/* Descripción */}
         <p className="text-white/65 text-2xl leading-relaxed max-w-sm mb-14 relative z-10">
-          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores
-          de tu municipio sin intermediarios.
+          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores de tu municipio sin intermediarios.
         </p>
 
-        {/* Stats */}
         <div className="flex gap-12 relative z-10">
           <div>
             <p className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>+240</p>
@@ -66,9 +94,8 @@ export default function Login() {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[480px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
+      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
 
-        {/* Tab switcher */}
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
           <button className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
             Iniciar sesión
@@ -79,12 +106,7 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit}>
-
-          {/* Título */}
-          <h2
-            className="text-3xl font-black text-[#3B1F0A] mb-1.5"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
+          <h2 className="text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
             ¡Bienvenido de nuevo!
           </h2>
           <p className="text-sm text-gray-400 mb-8 leading-relaxed">
@@ -93,34 +115,31 @@ export default function Login() {
 
           {/* Email */}
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
-              Correo electrónico
-            </label>
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Correo electrónico</label>
             <input
               type="email"
               placeholder="tucorreo@gmail.com"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
             />
           </div>
 
           {/* Contraseña */}
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
-              Contraseña
-            </label>
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contraseña</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Tu contraseña"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors"
-              >
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors">
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
@@ -141,29 +160,30 @@ export default function Login() {
               <input type="checkbox" className="accent-[#C8814A] w-3.5 h-3.5" />
               Recordarme
             </label>
-            <a href="#" className="text-xs text-[#C8814A] font-semibold hover:underline">
-              ¿Olvidaste tu contraseña?
-            </a>
+            <a href="#" className="text-xs text-black font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
           </div>
 
-          {/* Botón principal */}
+          {/* Error */}
+          {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+          {success && <p className="text-green-600 text-xs mb-3">✅ {success}</p>}
+
+          {/* Botón */}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-5 shadow-lg hover:scale-[1.02] transition-transform"
-            style={{ background: "linear-gradient(135deg, #C8814A, #7A4020)" }}
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-5 shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-60"
+            style={{ background: "linear-gradient(135deg, #3D1F0F, #7A4020)" }}
           >
-            ☕️ Iniciar sesión
+            {loading ? "Iniciando sesión..." : "☕️ Iniciar sesión"}
           </button>
         </form>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 mb-4 text-xs text-gray-400">
           <div className="flex-1 h-px bg-[#E0D8CE]" />
           o continúa con
           <div className="flex-1 h-px bg-[#E0D8CE]" />
         </div>
 
-        {/* Social */}
         <div className="flex gap-3">
           <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#C8814A]/25 bg-white text-xs font-semibold text-[#3B1F0A] hover:bg-[#C8814A]/5 transition">
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -179,4 +199,3 @@ export default function Login() {
     </div>
   );
 }
-
