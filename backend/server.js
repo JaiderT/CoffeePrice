@@ -16,6 +16,7 @@ import solicitudRoutes from "./routes/solicitudRoutes.js";
 import usuarioRoutes from "./routes/usuario.js";
 import ventaRoutes from "./routes/venta.js";
 import compradorRoutes from "./routes/comprador.js";
+import RecuperarPassword from "./routes/recuperar.js";
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use(session({
 
 app.use(passport.initialize());
 
+// rutas
+
 app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/noticias", noticiaRoutes);
@@ -40,16 +43,6 @@ app.use("/api/solicitudes", solicitudRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/ventas", ventaRoutes);
 app.use("/api/comprador", compradorRoutes);
-
-// Rutas
-app.use("/api/alertas", alertaRoutes);
-app.use("/api/noticias", noticiaRoutes);
-app.use("/api/precios", precioRoutes);
-app.use("/api/predicciones", prediccionRoutes);
-app.use("/api/resenas", resenaRoutes);
-app.use("/api/solicitudes", solicitudRoutes);
-app.use("/api/usuario", usuarioRoutes);
-app.use("/api/ventas", ventaRoutes);
-app.use("/api/comprador", compradorRoutes);
+app.use("/api/recuperar", RecuperarPassword);
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));
