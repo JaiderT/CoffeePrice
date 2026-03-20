@@ -34,12 +34,12 @@ export default function Login() {
       localStorage.setItem("role", data.role);
       localStorage.setItem("name", data.name);
 
-      setSuccess (`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
+      setSuccess(`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
         if (data.role === "admin") navigate("/admin");
-      else navigate("/");
-      }, 1500)
+        else navigate("/");
+      }, 1500);
 
     } catch (err) {
       setError("Error al conectar con el servidor");
@@ -51,13 +51,15 @@ export default function Login() {
   return (
     <div className="flex min-h-screen bg-[#3D1F0F]">
 
-      <a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="absolute top-4 right-4 w-7 h-7 ">
+      {/* Flecha salir - visible en móvil y desktop */}
+      <a href="/" className="absolute top-4 right-4 z-50 bg-[#3D1F0F]/60 p-2 rounded-full lg:bg-transparent lg:p-0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-6 h-6 lg:w-7 lg:h-7 fill-white">
           <path d="M224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160zM566.6 342.6C579.1 330.1 579.1 309.8 566.6 297.3L438.6 169.3C426.1 156.8 405.8 156.8 393.3 169.3C380.8 181.8 380.8 202.1 393.3 214.6L466.7 288L256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L466.7 352L393.3 425.4C380.8 437.9 380.8 458.2 393.3 470.7C405.8 483.2 426.1 483.2 438.6 470.7L566.6 342.7z"/>
         </svg>
       </a>
 
-      {/* PANEL IZQUIERDO */}
-      <div className="flex-1 hidden lg:flex flex-col justify-center pl-45 px-16 py-12 relative overflow-hidden">
+      {/* PANEL IZQUIERDO - solo desktop */}
+      <div className="flex-1 hidden lg:flex flex-col justify-center pl-20 px-16 py-12 relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.15) 0%, transparent 70%)" }} />
         <div className="absolute -bottom-20 left-10 w-72 h-72 rounded-full"
@@ -93,20 +95,26 @@ export default function Login() {
         </div>
       </div>
 
-      {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
+      {/* PANEL DERECHO - full en móvil, fijo en desktop */}
+      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px-10 shrink-0">
+
+        {/* Logo visible solo en móvil */}
+        <div className="flex items-center gap-3 mb-8 lg:hidden">
+          <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
+          <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
+        </div>
 
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
           <button className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
             Iniciar sesión
           </button>
-          <button type="button" onClick={()=> navigate('/register')} className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
+          <button type="button" onClick={() => navigate('/register')} className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
             Crear cuenta
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <h2 className="text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
             ¡Bienvenido de nuevo!
           </h2>
           <p className="text-sm text-gray-400 mb-8 leading-relaxed">
@@ -163,8 +171,8 @@ export default function Login() {
             <a href="#" className="text-xs text-black font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
           </div>
 
-          {/* Error */}
-          {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+          {/* Error y éxito */}
+          {error && <p className="text-red-500 text-xs mb-3">❌ {error}</p>}
           {success && <p className="text-green-600 text-xs mb-3">✅ {success}</p>}
 
           {/* Botón */}
