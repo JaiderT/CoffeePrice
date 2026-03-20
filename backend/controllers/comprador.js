@@ -25,7 +25,10 @@ export const createcomprador = async (req, res) => {
         });
 
         await nuevoComprador.save();
-        res.status(201).json(nuevoComprador);
+        res.status(201).json({ 
+            comprador: nuevoComprador,
+            message: "Perfil creado. Tu cuenta está pendiente de aprobación."
+        });
     } catch (error) {
         res.status(400).json({ message: "Error al crear comprador", error: error.message });
     }

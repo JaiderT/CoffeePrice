@@ -18,9 +18,14 @@ const usuarioSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
+  googleId: {
+    type: String,
+    default: null,
+  },
   password: {
     type: String,
-    required: true,
+    required: false,
+    default: null,
     minlength: [8, "minimo 8 caracteres"],
   },
   celular: {
@@ -32,6 +37,11 @@ const usuarioSchema = new mongoose.Schema({
     enum: ["productor", "comprador", "admin"],
     required: [true, "rol necesario"],
     default: "productor"
+  },
+  estado: {
+    type: String,
+    enum: ["activo", "pendiente", "rechazado"],
+    default: "activo"
   }
 }, 
 { timestamps: true }
