@@ -17,7 +17,6 @@ function App() {
         <Route path='/register' element={<Register />} />
         <Route path='/auth/google' element={<GoogleAuth />} />
         <Route path='/completar-perfil' element={<CompletarPerfil />} />
-
         {/* Páginas privadas con sidebar */}
         <Route path='/precios' element={
           <LayoutPrivado>

@@ -17,6 +17,7 @@ import usuarioRoutes from "./routes/usuario.js";
 import ventaRoutes from "./routes/venta.js";
 import compradorRoutes from "./routes/comprador.js";
 import RecuperarPassword from "./routes/recuperar.js";
+import Clima from './routes/clima.js'
 
 const app = express();
 
@@ -44,5 +45,6 @@ app.use("/api/usuario", usuarioRoutes);
 app.use("/api/ventas", ventaRoutes);
 app.use("/api/comprador", compradorRoutes);
 app.use("/api/recuperar", RecuperarPassword);
+app.use('/api/clima', Clima)
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));
