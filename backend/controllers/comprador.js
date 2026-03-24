@@ -60,3 +60,17 @@ export const deletecomprador = async (req, res) => {
         res.status(500).json({ message: "Error al eliminar comprador", error: error.message });
     }
 };
+
+export const getcompradorByUsuario = async (req, res) => {
+    try {
+        const comprador = await CompradorModel.findOne({ usuario: req.params.usuarioId })
+            .populate("usuario", "nombre apellido email");
+
+        if (!comprador) return res.status(404).json({ message: "Comprador no encontrado" });
+
+        res.json(comprador);
+    } catch (error) {
+        console.log("ERROR getcompradorByUsuario:", error.message); // ← agrega esto
+        res.status(500).json({ message: "Error al obtener comprador", error: error.message });
+    }
+};

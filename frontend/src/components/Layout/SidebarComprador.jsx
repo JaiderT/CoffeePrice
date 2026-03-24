@@ -3,15 +3,13 @@ import { useAuth } from '../../context/AuthContex.jsx';
 import { useState } from 'react';
 
 const menuItems = [
-  { icon: 'fa-solid fa-house', label: 'Inicio', path: '/dashboard' },
-  { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
-  { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },
-  { icon: 'fa-solid fa-bell', label: 'Alertas', path: '/alertas' },
-  { icon: 'fa-solid fa-chart-line', label: 'Historial', path: '/historial' },
-  { icon: 'fa-solid fa-gear', label: 'Configuración', path: '/configuracion' },
+  { icon: 'fa-solid fa-house', label: 'Dashboard', path: '/comprador/dashboard' },
+  { icon: 'fa-solid fa-plus', label: 'Publicar precio', path: '/comprador/publicar' },
+  { icon: 'fa-solid fa-list', label: 'Mis precios', path: '/comprador/precios' },
+  { icon: 'fa-solid fa-building', label: 'Mi empresa', path: '/comprador/empresa' },
 ];
 
-function Sidebar() {
+function SidebarComprador() {
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
@@ -24,7 +22,7 @@ function Sidebar() {
   };
 
   const iniciales = usuario
-    ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || usuario.nombre?.split(' ')?.[1]?.[0] || ''}`.toUpperCase()
+    ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
 
   return (
@@ -33,8 +31,7 @@ function Sidebar() {
 
         {/* Logo */}
         <div className="w-10 h-10 bg-[#C8A96E] rounded-xl flex items-center justify-center text-xl mb-4">
-          <li><Link to='/'>  ☕ </Link></li>
-          
+          ☕
         </div>
 
         {/* Links */}
@@ -80,7 +77,6 @@ function Sidebar() {
       </div>
 
       {/* Modal de confirmación */}
-      {/* Modal de confirmación */}
       {mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
@@ -108,4 +104,4 @@ function Sidebar() {
   )
 }
 
-export default Sidebar;
+export default SidebarComprador;

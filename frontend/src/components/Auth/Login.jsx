@@ -32,7 +32,7 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.role, data.name, data.apellido);
+      login(data.token, data.role, data.name, data.apellido, data.id );
 
       setSuccess(`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
 

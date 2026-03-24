@@ -21,12 +21,13 @@ export function AuthProvider({ children }) {
     setCargando(false);
   }, []);
 
-  const login = (token, rol, nombre, apellido) => {
+  const login = (token, rol, nombre, apellido, id) => {
     localStorage.setItem('token', token);
     localStorage.setItem('role', rol);
     localStorage.setItem('name', nombre);
     localStorage.setItem('apellido', apellido);
-    setUsuario({ token, rol, nombre, apellido });
+    localStorage.setItem('usuarioId', id);
+    setUsuario({ token, rol, nombre, apellido, id });
   };
 
   const logout = () => {

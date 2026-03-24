@@ -57,7 +57,7 @@ function Navbar() {
             <Link to="/login" className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm text-center hover:bg-[#2C1A0E] hover:text-white transition-colors" onClick={() => setMenuAbierto(false)}>
               Iniciar sesión
             </Link>
-            <Link to="/registro" className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm text-center hover:bg-[#B8994E] transition-colors" onClick={() => setMenuAbierto(false)}>
+            <Link to="/register" className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm text-center hover:bg-[#B8994E] transition-colors" onClick={() => setMenuAbierto(false)}>
               Registrarse gratis
             </Link>
           </div>

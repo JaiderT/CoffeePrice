@@ -4,7 +4,7 @@ const compradorSchema = new mongoose.Schema(
     {
         usuario: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Usuario",
+            ref: "usuario",
             required: [true, "El Rol usuario es necesario"]
         },
         nombreempresa: {
