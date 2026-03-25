@@ -1,8 +1,9 @@
 import Solicitud from "../models/solicitud.js";
+import Comprador from "../models/comprador.js";
 
-export const getSolicitudesByCaficultor = async (req, res) => {
+export const getSolicitudesByProductor = async (req, res) => {
     try {
-        const solicitudes = await Solicitud.find({ caficultor: req.params.caficultorId })
+        const solicitudes = await Solicitud.find({ productor: req.params.productorId })
             .populate("comprador", "nombreempresa tipo direccion")
             .sort({ createdAt: -1 });
 
@@ -15,7 +16,7 @@ export const getSolicitudesByCaficultor = async (req, res) => {
 export const getSolicitudesByComprador = async (req, res) => {
     try {
         const solicitudes = await Solicitud.find({ comprador: req.params.compradorId })
-            .populate("caficultor", "nombre apellido celular")
+            .populate("productor", "nombre apellido celular")
             .sort({ createdAt: -1 }); // ✅ era createAt
 
         res.json(solicitudes);
@@ -27,7 +28,7 @@ export const getSolicitudesByComprador = async (req, res) => {
 export const getSolicitudById = async (req, res) => { // ✅ era getSolicitudesById
     try {
         const solicitud = await Solicitud.findById(req.params.id)
-            .populate("caficultor", "nombre apellido celular")
+            .populate("productor", "nombre apellido celular")
             .populate("comprador", "nombreempresa tipo direccion");
 
         if (!solicitud) return res.status(404).json({ message: "Solicitud no encontrada" });
@@ -39,9 +40,16 @@ export const getSolicitudById = async (req, res) => { // ✅ era getSolicitudesB
 
 export const createSolicitud = async (req, res) => {
     try {
-        const { caficultor, comprador, cantidadcargas, tipocafe, mensaje } = req.body;
+        const { comprador, cantidadcargas, tipocafe, mensaje } = req.body;
 
-        const solicitud = new Solicitud({ caficultor, comprador, cantidadcargas, tipocafe, mensaje });
+        const solicitud = new Solicitud({
+            productor: req.user.id,
+            comprador,
+            cantidadcargas,
+            tipocafe,
+            mensaje
+        });
+
         await solicitud.save();
 
         res.status(201).json(solicitud);
@@ -52,24 +60,59 @@ export const createSolicitud = async (req, res) => {
 
 export const responderSolicitud = async (req, res) => {
     try {
-        const { estado } = req.body;
+        const { respuestaComprador } = req.body;
 
-        if (!["aceptada", "rechazada"].includes(estado)) {
-            return res.status(400).json({ message: "Estado invalido. Usa 'aceptada' o 'rechazada'" });
+        if (!respuestaComprador || !respuestaComprador.trim()) {
+            return res.status(400).json({
+                message: "La respuesta del comprador es obligatoria"
+            });
         }
 
         const solicitud = await Solicitud.findByIdAndUpdate(
             req.params.id,
-            { estado },
+            {   
+                respuestaComprador,
+                fechaRespuesta: new Date(),
+                estado: "respondida",
+            },
             { new: true }
         );
 
-        if (!solicitud) return res.status(404).json({ message: "Solicitud no encontrada" });
-        res.json({ message: `Solicitud ${estado}`, solicitud });
+        if (!solicitud) {
+            return res.status(404).json({message: "solicitud no encontrada" });
+        }
+        res.json({
+            message: "Solicitud respondida correctamente",
+            solicitud
+        });
     } catch (error) {
-        res.status(400).json({ message: "Error al responder solicitud", error: error.message });
+        res.status(400).json({
+            message: "Error al responder solicitud",
+            error: error.message
+        });
     }
 };
+export const cerrarSolicitud = async (req, res) => {
+    try {
+        const solicitud = await solicitud.findByIdAndUpdate(
+            req.params.id,
+            { estado: "cerrada" },
+            { new: true }
+        );
+        if (!solicitud) {
+            return res.status(404).json({ message: "Solicitud no encontrada" });
+        }
+        res.json({
+            message: "Solicitud cerrada correctamente",
+            solicitud
+        });
+    } catch (error) {
+        res.status(400).json({
+            message: "Error al cerrar solicitud",
+            error: error.message
+        });
+    };
+}
 
 export const deleteSolicitud = async (req, res) => {
     try {

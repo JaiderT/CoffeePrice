@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
-import user from "../models/usuario.js"
 import usuario from "../models/usuario.js";
 
 const transporte = nodemailer.createTransport({
@@ -31,27 +30,23 @@ export const solicitarCodigo = async (req, res) => {
 
         //Buscar usuario
 
-        const usuario = await user.findOne({email});
-
-        if (!usuario) {
-            return res.status(400).json({
-                message: "Correo electronico no encontrado"
+        const usuarioEncontrado = await usuario.findOne({email});
+            if (!usuarioEncontrado) {
+            return res.status(200).json({
+                message: "Si el correo está registrado, recibirá un código de verificación"
             });
-        }
-
-        // Generar codigo de 6 digit0s
+            }
 
         const codigo = generarCodigo();
 
-        // guardar codigo con expircion de 15 minutos
+        usuarioEncontrado.codigoRecuperacion = codigo;
+        usuarioEncontrado.codigoExpiracion = Date.now() + 900000;
+        await usuarioEncontrado.save();
 
-        usuario.codigoRecuperacion = codigo;
-        usuario.codigoExpiracion = Date.now() + 900000; // 15 minutos
-        await usuario.save();
 
         const mailOptions = {
             from: 'support.coffeprice@gmail.com',
-            to: usuario.email,
+            to: usuarioEncontrado.email,
             subject: 'Codigo de Recuperacion - CoffePrice',
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -61,7 +56,7 @@ export const solicitarCodigo = async (req, res) => {
             
             <h3 style="color: #333;">Recuperacion de Contraseña</h3>
             
-            <p>Hola <strong>${usuario.nombre}</strong>,</p>
+            <p>Hola <strong>${usuarioEncontrado.nombre}</strong>,</p>
             
             <p>Recibimos una solicitud para restablecer tu contraseña.</p>
             
@@ -99,10 +94,10 @@ export const solicitarCodigo = async (req, res) => {
 
         await transporte.sendMail(mailOptions);
 
-        console.log(`Codigo enviado a ${usuario.email}: ${codigo}`);
+        console.log(`Codigo enviado a ${usuarioEncontrado.email}: ${codigo}`);
 
         res.status(200).json({
-            message: "Si el correo existe, recibiras un codigo de verificacion",
+            message: "Si el correo esta registrado, recibiras un codigo de verificacion",
         });
     } catch (error) {
         console.error("Error al enviar el codigo", error);
@@ -132,30 +127,34 @@ export const cambiarPassword = async (req, res) => {
                 message: "La contraseña debe tener al menos 6 caracteres"
             });
         }
-
-        if (!usuario) {
+        const usuarioEncontrado = await usuario.findOne({ email });
+        if (
+            !usuarioEncontrado ||
+            usuarioEncontrado.codigoRecuperacion !== codigo ||
+            !usuarioEncontrado.codigoExpiracion ||
+            usuarioEncontrado.codigoExpiracion < Date.now()
+            ) {
             return res.status(400).json({
-                message: "Correo electronico no encontrado"
+                message: "Código inválido o expirado"
             });
-        }
-
-        // Encriptar nueva contraseña
+            }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
 
         // Actualizar contraseña y limpiar codigo
 
-        usuario.password = hashedPassword;
-        usuario.codigoRecuperacion = undefined;
-        usuario.codigoExpiracion = undefined;
-        await usuario.save();
+        usuarioEncontrado.password = hashedPassword;
+        usuarioEncontrado.codigoRecuperacion = undefined;
+        usuarioEncontrado.codigoExpiracion = undefined;
+        await usuarioEncontrado.save();
+
 
         // Email de confirmacion
 
         const mailOptions = {
             from: 'support.coffeprice@gmail.com',
-            to: usuario.email,
+            to: usuarioEncontrado.email,
             subject: 'Contraseña acualizada - CoffePrice',
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -172,14 +171,14 @@ export const cambiarPassword = async (req, res) => {
             <h2 style="color: #4F46E5; margin: 0;">Contraseña Actualizada</h2>
             </div>
             
-            <p>Hola <strong>${usuario.nombre}</strong>,</p>
+            <p>Hola <strong>${usuarioEncontrado.nombre}</strong>,</p>
             
             <p>Tu contraseña ha sido actualizada exitosamente.</p>
             
             <p>Ya puedes iniciar sesion con tu nueva contraseña.</p>
             
             <div style="text-align: center; margin: 30px 0;">
-            <a href="http://127.0.0.1:5500/src/pages/login.html" 
+            <a href="${process.env.FRONTEND_URL}/login" 
             style="background: linear-gradient(to right, #4F46E5, #7C3AED);
             color: white;
             padding: 12px 30px;

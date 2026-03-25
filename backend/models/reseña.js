@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const reseñaSchema = new mongoose.Schema(
   {
-    caficultor: {
+    productor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "usuario",
-      required: [true, "El caficultor es obligatorio"],
+      required: [true, "El productor es obligatorio"],
     },
     comprador: {
       type: mongoose.Schema.Types.ObjectId,
@@ -39,7 +39,6 @@ const reseñaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//Un caficultor solo puede reseñar una vez al mismo comprador
-reseñaSchema.index({ caficultor: 1, comprador: 1 }, { unique: true });
+reseñaSchema.index({ productor: 1, comprador: 1 }, { unique: true });
 
 export default mongoose.model("Reseña", reseñaSchema);

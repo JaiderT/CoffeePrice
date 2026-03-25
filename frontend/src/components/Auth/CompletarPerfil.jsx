@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function CompletarPerfil() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get("token");
-
   const [nombreempresa, setNombreempresa] = useState("");
   const [direccion, setDireccion] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -16,8 +16,7 @@ export default function CompletarPerfil() {
 
   // Si no hay token redirigir al login
   if (!token) {
-    navigate("/login");
-    return null;
+    return <Navigate to="/login" replace />
   }
 
   // Decodificar el token para obtener el id del usuario
@@ -29,7 +28,7 @@ export default function CompletarPerfil() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8081/api/comprador", {
+      const response = await fetch(`${API_URL}/api/comprador`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
