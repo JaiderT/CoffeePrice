@@ -102,7 +102,7 @@ export default function Login() {
       </div>
 
       {/* PANEL DERECHO - full en móvil, fijo en desktop */}
-      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0 -mt-57">
+      <div className="w-full lg:w-[780px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0 -mt-104">
 
         {/* Logo visible solo en móvil */}
         <div className="flex items-center gap-3 mb-8 lg:hidden">
