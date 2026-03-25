@@ -1,4 +1,5 @@
-import "dotenv/config"; // ← primera línea
+import "dotenv/config";
+import './config/env.js'
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
@@ -17,16 +18,27 @@ import usuarioRoutes from "./routes/usuario.js";
 import ventaRoutes from "./routes/venta.js";
 import compradorRoutes from "./routes/comprador.js";
 import RecuperarPassword from "./routes/recuperar.js";
+import Clima from './routes/clima.js'
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
+
 app.use(express.json());
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24,
+  },
 }));
 
 app.use(passport.initialize());
@@ -44,5 +56,6 @@ app.use("/api/usuario", usuarioRoutes);
 app.use("/api/ventas", ventaRoutes);
 app.use("/api/comprador", compradorRoutes);
 app.use("/api/recuperar", RecuperarPassword);
+app.use('/api/clima', Clima)
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));

@@ -6,13 +6,15 @@ import {
   updateprecio,
   deleteprecio,
 } from "../controllers/precio.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import roleMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getprecios);
-router.get("/comprador/:compradorId", getpreciosBycomprador); // ✅ era GET "/" duplicado
-router.post("/", createprecio);
-router.put("/:id", updateprecio);    // ✅ era PUT "/" sin :id
-router.delete("/:id", deleteprecio); // ✅ era DELETE "/" sin :id
+router.get("/comprador/:compradorId", getpreciosBycomprador); 
+router.post("/", authMiddleware, roleMiddleware("comprador", "admin"), createprecio);
+router.put("/:id", authMiddleware, roleMiddleware("comprador", "admin"), updateprecio);
+router.delete("/:id", authMiddleware, roleMiddleware("comprador", "admin"), deleteprecio); 
 
 export default router;

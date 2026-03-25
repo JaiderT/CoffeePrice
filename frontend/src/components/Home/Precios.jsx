@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function Precios() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [precios, setPrecios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
@@ -10,7 +11,7 @@ function Precios() {
   useEffect(() => {
     const obtenerPrecios = async () => {
       try {
-        const { data } = await axios.get('http://localhost:8081/api/precios');
+        const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
       } catch (error) {
         console.error('Error al obtener precios:', error);

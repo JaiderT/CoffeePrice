@@ -1,20 +1,18 @@
 import { useState } from "react";
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContex.jsx';
 
 export default function Login() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [saliendo, setSaliendo] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleNavigateRegister = () => {
-    setSaliendo(true);
-    setTimeout(() => navigate('/register'), 500);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +21,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8081/api/auth/login", { // ← cambiado de /api/login
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -36,16 +34,14 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("name", data.name);
+      login(data.token, data.role, data.name, data.apellido);
 
       setSuccess(`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
         if (data.role === "admin") navigate("/admin");
-        else navigate("/");
-      }, 1500);
+        else navigate("/precios");
+      }, 1500)
 
     } catch (err) {
       setError("Error al conectar con el servidor");
@@ -57,15 +53,13 @@ export default function Login() {
   return (
     <div className="flex min-h-screen bg-[#3D1F0F]">
 
-      {/* Flecha salir - visible en móvil y desktop */}
-      <a href="/" className="absolute top-4 right-4 z-50 bg-[#3D1F0F]/60 p-2 rounded-full lg:bg-transparent lg:p-0">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-6 h-6 lg:w-7 lg:h-7 ">
-          <path d="M224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160zM566.6 342.6C579.1 330.1 579.1 309.8 566.6 297.3L438.6 169.3C426.1 156.8 405.8 156.8 393.3 169.3C380.8 181.8 380.8 202.1 393.3 214.6L466.7 288L256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L466.7 352L393.3 425.4C380.8 437.9 380.8 458.2 393.3 470.7C405.8 483.2 426.1 483.2 438.6 470.7L566.6 342.7z"/>
-        </svg>
+      <a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="absolute top-4 right-4 w-7 h-7 ">
+        <path d="M224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160zM566.6 342.6C579.1 330.1 579.1 309.8 566.6 297.3L438.6 169.3C426.1 156.8 405.8 156.8 393.3 169.3C380.8 181.8 380.8 202.1 393.3 214.6L466.7 288L256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L466.7 352L393.3 425.4C380.8 437.9 380.8 458.2 393.3 470.7C405.8 483.2 426.1 483.2 438.6 470.7L566.6 342.7z" />
+      </svg>
       </a>
 
-      {/* PANEL IZQUIERDO - solo desktop */}
-      <div className="flex-1 hidden lg:flex flex-col justify-center pl-20 px-16 py-12 relative overflow-hidden">
+      {/* PANEL IZQUIERDO */}
+      <div className="flex-1 hidden lg:flex flex-col justify-center pl-45 px-16 py-12 relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.15) 0%, transparent 70%)" }} />
         <div className="absolute -bottom-20 left-10 w-72 h-72 rounded-full"
@@ -101,6 +95,7 @@ export default function Login() {
         </div>
       </div>
 
+
       {/* PANEL DERECHO - full en móvil, fijo en desktop */}
       <div className="w-full lg:w-[780px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0 -mt-104">
 
@@ -109,18 +104,18 @@ export default function Login() {
           <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
           <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
         </div>
-
+        
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
           <button className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
             Iniciar sesión
           </button>
-          <button type="button" onClick={handleNavigateRegister} className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
+          <button type="button" onClick={() => navigate('/register')} className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold">
             Crear cuenta
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
             ¡Bienvenido de nuevo!
           </h2>
           <p className="text-sm text-gray-400 mb-8 leading-relaxed">
@@ -177,8 +172,8 @@ export default function Login() {
             <a href="#" className="text-xs text-black font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
           </div>
 
-          {/* Error y éxito */}
-          {error && <p className="text-red-500 text-xs mb-3">❌ {error}</p>}
+          {/* Error */}
+          {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
           {success && <p className="text-green-600 text-xs mb-3">✅ {success}</p>}
 
           {/* Botón */}
@@ -203,15 +198,15 @@ export default function Login() {
           <button
             type="button"
             onClick={() => {
-              window.location.href = 'http://localhost:8081/api/auth/google?rol=productor'
+              window.location.href = `${API_URL}/api/auth/google?rol=productor`
             }}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#C8814A]/25 bg-white text-xs font-semibold text-[#3B1F0A] hover:bg-[#C8814A]/5 transition"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 2.18 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
             Google
           </button>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const navigate = useNavigate();
-
+  const API_URL = import.meta.env.VITE_API_URL;
   const [tipo, setTipo] = useState("productor");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -50,7 +50,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8081/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, apellido, email, password, celular, rol: tipo }),
@@ -243,7 +243,7 @@ export default function Register() {
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirmar contraseña"
+                    placeholder="Repite tu contraseña"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     required
@@ -308,7 +308,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = `http://localhost:8081/api/auth/google?rol=${tipo}`
+                  window.location.href = `${API_URL}/api/auth/google?rol=${tipo}`
                 }}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#C8814A]/25 bg-white text-xs font-semibold text-[#3B1F0A] hover:bg-[#C8814A]/5 transition mb-5"
               >
@@ -327,7 +327,7 @@ export default function Register() {
               ¿Ya tienes cuenta?{" "}
               <button type="button" onClick={() => navigate("/login")}
                 className="text-[#C8814A] font-semibold hover:underline">
-                Inicia sesión 
+                Inicia sesión →
               </button>
             </p>
           </>
