@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContex.jsx';
 import { useState } from 'react';
 
 const menuItems = [
-  { icon: 'fa-solid fa-house', label: 'Dashboard', path: '/comprador/dashboard' },
+  { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
   { icon: 'fa-solid fa-plus', label: 'Publicar precio', path: '/comprador/publicar' },
   { icon: 'fa-solid fa-list', label: 'Mis precios', path: '/comprador/precios' },
   { icon: 'fa-solid fa-building', label: 'Mi empresa', path: '/comprador/empresa' },
