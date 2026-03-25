@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
     setCargando(false);
   }, []);
 
-  const login = (token, rol, nombre, apellido) => {
+  const login = (token, rol, nombre, apellido, id) => {
     localStorage.setItem('token', token);
     localStorage.setItem('role', rol);
     localStorage.setItem('name', nombre);
