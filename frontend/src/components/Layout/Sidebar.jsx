@@ -33,8 +33,7 @@ function Sidebar() {
 
         {/* Logo */}
         <div className="w-10 h-10 bg-[#C8A96E] rounded-xl flex items-center justify-center text-xl mb-4">
-          <li><Link to='/'>  ☕ </Link></li>
-          
+          ☕
         </div>
 
         {/* Links */}

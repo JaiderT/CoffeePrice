@@ -1,20 +1,25 @@
 import express from "express";
 import {
-    getSolicitudesByCaficultor,
+    getSolicitudesByProductor,
     getSolicitudesByComprador,
     getSolicitudById,
     createSolicitud,
     responderSolicitud,
+    cerrarSolicitud,
     deleteSolicitud,
 } from "../controllers/solicitudControllers.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import roleMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
-router.get("/caficultor/:caficultorId", getSolicitudesByCaficultor);
-router.get("/comprador/:compradorId", getSolicitudesByComprador);
-router.get("/:id", getSolicitudById);
-router.post("/", createSolicitud);
-router.put("/:id/responder", responderSolicitud);
-router.delete("/:id", deleteSolicitud);
+router.get("/productor/:productorId", authMiddleware, getSolicitudesByProductor);
+router.get("/comprador/:compradorId", authMiddleware, getSolicitudesByComprador);
+router.get("/:id", authMiddleware, getSolicitudById);
+router.post("/", authMiddleware, roleMiddleware("productor"), createSolicitud);
+router.put("/:id/responder", authMiddleware, roleMiddleware("comprador", "admin"), responderSolicitud);
+router.put("/:id/cerrar", authMiddleware, cerrarSolicitud);
+router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteSolicitud);
+
 
 export default router;

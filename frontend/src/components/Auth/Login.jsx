@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContex.jsx';
 
 export default function Login() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +20,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8081/api/auth/login", { // ← cambiado de /api/login
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -189,7 +190,7 @@ export default function Login() {
           <button
             type="button"
             onClick={() => {
-              window.location.href = 'http://localhost:8081/api/auth/google?rol=productor'
+              window.location.href = `${API_URL}/api/auth/google?rol=productor`
             }}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#C8814A]/25 bg-white text-xs font-semibold text-[#3B1F0A] hover:bg-[#C8814A]/5 transition"
           >

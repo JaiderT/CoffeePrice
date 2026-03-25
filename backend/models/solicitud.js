@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const solicitudSchema = new mongoose.Schema(
     {
-        caficultor: {
+        productor: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "usuario",
-            required: [true, "El caficultor es obligatorio"],
+            required: [true, "El productor es obligatorio"],
         },
 
         comprador: {
@@ -28,8 +28,8 @@ const solicitudSchema = new mongoose.Schema(
 
         estado: {
             type: String,
-            enum: ["pendiente", "aceptada", "rechazada"],
-            default: "pendiente",
+            enum: ["abierta", "respondida", "cerrada"],
+            default: "abierta",
         },
 
         mensaje: {
@@ -37,6 +37,15 @@ const solicitudSchema = new mongoose.Schema(
             trim: true,
             default: null,
         },
+        respuestaComprador: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+        fechaRespuesta: {
+            type: Date,
+            default: null
+        }
     },
     { timestamps: true }
 );

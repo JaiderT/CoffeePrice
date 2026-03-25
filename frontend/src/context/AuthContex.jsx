@@ -14,14 +14,10 @@ export function AuthProvider({ children }) {
     if (token && nombre) {
       setUsuario({ token, rol, nombre, apellido });
     }
-
-    if (token && nombre) {
-      setUsuario({ token, rol, nombre });
-    }
     setCargando(false);
   }, []);
 
-  const login = (token, rol, nombre, apellido, id) => {
+  const login = (token, rol, nombre, apellido) => {
     localStorage.setItem('token', token);
     localStorage.setItem('role', rol);
     localStorage.setItem('name', nombre);

@@ -6,15 +6,18 @@ import {
   updateAlerta,
   toggleAlerta,
   deleteAlerta,
-} from "../controllers/alerta.js"; // ✅ era alertaController.js (no existía)
+} from "../controllers/alerta.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import roleMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
-router.get("/usuario/:usuarioId", getAlertasByUsuario);
-router.get("/:id", getAlertaById);
-router.post("/", createAlerta);
-router.put("/:id", updateAlerta);
-router.put("/:id/toggle", toggleAlerta);
-router.delete("/:id", deleteAlerta);
+router.get("/usuario/:usuarioId", authMiddleware, roleMiddleware("productor", "admin"), getAlertasByUsuario);
+router.get("/:id", authMiddleware, roleMiddleware("productor", "admin"), getAlertaById);
+router.post("/", authMiddleware, roleMiddleware("productor", "admin"), createAlerta);
+router.put("/:id", authMiddleware, roleMiddleware("productor", "admin"), updateAlerta);
+router.put("/:id/toggle", authMiddleware, roleMiddleware("productor", "admin"), toggleAlerta);
+router.delete("/:id", authMiddleware, roleMiddleware("productor", "admin"), deleteAlerta);
+
 
 export default router;
