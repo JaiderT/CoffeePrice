@@ -131,17 +131,6 @@ export default function Register() {
             </div>
 
             {/* Tab switcher */}
-            <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
-              <button type="button" onClick={() => navigate("/login")}
-                className="flex-1 py-2.5 rounded-lg text-gray-400 text-sm font-semibold hover:bg-[#C8814A]/5 transition-colors">
-                Iniciar sesión
-              </button>
-              <button type="button"
-                className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
-                Crear cuenta
-              </button>
-            </div>
-
             <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-1.5" style={{ fontFamily: "Georgia, serif" }}>
               Crea tu cuenta
             </h2>
@@ -295,7 +284,7 @@ export default function Register() {
               <button type="submit" disabled={loading || passwordsMismatch}
                 className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-4 shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{ background: "linear-gradient(135deg, #3D1F0F, #7A4020)" }}>
-                {loading ? "Creando cuenta..." : "Crear mi cuenta gratis"}
+                {loading ? "Creando cuenta..." : "Crear cuenta"}
               </button>
 
               {/* separador y botón Google */}
@@ -327,7 +316,7 @@ export default function Register() {
               ¿Ya tienes cuenta?{" "}
               <button type="button" onClick={() => navigate("/login")}
                 className="text-[#C8814A] font-semibold hover:underline">
-                Inicia sesión →
+                Inicia sesión 
               </button>
             </p>
           </>
