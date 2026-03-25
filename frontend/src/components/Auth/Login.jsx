@@ -94,9 +94,16 @@ export default function Login() {
         </div>
       </div>
 
-      {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-10 py-12 shrink-0">
 
+      {/* PANEL DERECHO - full en móvil, fijo en desktop */}
+      <div className="w-full lg:w-[780px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0 -mt-104">
+
+        {/* Logo visible solo en móvil */}
+        <div className="flex items-center gap-3 mb-8 lg:hidden">
+          <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
+          <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
+        </div>
+        
         <div className="bg-white rounded-xl p-1 flex mb-9 shadow-sm">
           <button className="flex-1 py-2.5 rounded-lg bg-[#3B1F0A] text-white text-sm font-semibold">
             Iniciar sesión
