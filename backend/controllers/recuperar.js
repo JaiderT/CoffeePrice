@@ -122,9 +122,9 @@ export const cambiarPassword = async (req, res) => {
             });
         }
 
-        if (nuevaPassword.length < 6) {
+        if (nuevaPassword.length < 8) {
             return res.status(400).json({
-                message: "La contraseña debe tener al menos 6 caracteres"
+                message: "La contraseña debe tener al menos 8 caracteres"
             });
         }
         const usuarioEncontrado = await usuario.findOne({ email });
