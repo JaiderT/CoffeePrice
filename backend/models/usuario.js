@@ -42,6 +42,14 @@ const usuarioSchema = new mongoose.Schema({
     type: String,
     enum: ["activo", "pendiente", "rechazado"],
     default: "activo"
+  },
+  codigoRecuperacion: {
+    type: String,
+    default: null,
+  },
+  codigoExpiracion: {
+    type: Date,
+    default: null,
   }
 }, 
 { timestamps: true }
