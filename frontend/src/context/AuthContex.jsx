@@ -14,10 +14,6 @@ export function AuthProvider({ children }) {
     if (token && nombre) {
       setUsuario({ token, rol, nombre, apellido });
     }
-
-    if (token && nombre) {
-      setUsuario({ token, rol, nombre });
-    }
     setCargando(false);
   }, []);
 
@@ -33,6 +29,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('name');
+    localStorage.removeItem('apellido');
     setUsuario(null);
   };
 

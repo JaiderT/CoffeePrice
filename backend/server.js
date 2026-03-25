@@ -1,4 +1,5 @@
-import "dotenv/config"; // ← primera línea
+import "dotenv/config";
+import './config/env.js'
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
@@ -21,13 +22,23 @@ import Clima from './routes/clima.js'
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
+
 app.use(express.json());
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24,
+  },
 }));
 
 app.use(passport.initialize());

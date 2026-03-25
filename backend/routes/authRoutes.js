@@ -1,11 +1,12 @@
 import express from 'express'
 import { login, register, googleCallback } from "../controllers/AuthController.js"
 import passport from '../config/passport.js'
+import { authLimiter } from '../middlewares/rateLimit.js'
 
 const router = express.Router()
 
-router.post("/login", login)
-router.post("/register", register)
+router.post("/login", authLimiter, login);
+router.post("/register", authLimiter, register);
 
 router.get('/google', (req, res, next) => {
   const rol = req.query.rol || 'productor'

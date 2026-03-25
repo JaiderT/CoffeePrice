@@ -6,6 +6,7 @@ import Navbar from '../Layout/Navbar';
 import Footer from '../Layout/Footer';
 
 function Inicio() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [precios, setPrecios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mostrarComoFunciona, setMostrarComoFunciona] = useState(false);
@@ -14,7 +15,7 @@ function Inicio() {
   useEffect(() => {
     const obtenerPrecios = async () => {
       try {
-        const { data } = await axios.get('http://localhost:8081/api/precios');
+        const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
       } catch (error) {
         console.error('Error al obtener precios:', error);
