@@ -18,7 +18,7 @@ export const getprecios = async (req, res) => {
 export const getpreciosBycomprador = async (req, res) => {
     try {
         const precios = await PrecioModel.find({ comprador: req.params.compradorId })
-            .populate("comprador", "nombreEmpresa")
+            .populate("comprador", "nombreempresa")
             .sort({ createdAt: -1 });
 
         res.json(precios);
@@ -30,13 +30,15 @@ export const getpreciosBycomprador = async (req, res) => {
 export const createprecio = async (req, res) => {
     try {
         const { comprador, preciocarga, tipocafe } = req.body;
-        console.log("Body recibido:", req.body);
 
-        const nuevoPrecio = new PrecioModel({ comprador, preciocarga, tipocafe });
-        console.log("Nuevo precio:", nuevoPrecio);
+        // ✅ Convertir explícitamente a número
+        const nuevoPrecio = new PrecioModel({
+            comprador,
+            preciocarga: Number(preciocarga),  // <-- fix
+            tipocafe
+        });
 
         await nuevoPrecio.save();
-
         res.status(201).json(nuevoPrecio);
     } catch (error) {
         console.log("Error completo:", error);
@@ -51,9 +53,9 @@ export const updateprecio = async (req, res) => {
         const precio = await PrecioModel.findById(req.params.id);
         if (!precio) return res.status(404).json({ message: "Precio no encontrado" });
 
-        precio.preciocarga = preciocarga ?? precio.preciocarga;
+        precio.preciocarga = preciocarga ? Number(preciocarga) : precio.preciocarga;  // <-- fix
         precio.tipocafe = tipocafe ?? precio.tipocafe;
-        await precio.save();
+        await precio.save(); // el pre("save") recalcula preciokg automáticamente ✅
 
         res.json(precio);
     } catch (error) {

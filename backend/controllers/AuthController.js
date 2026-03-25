@@ -62,7 +62,7 @@ export const login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
 
-    res.status(200).json({ token, role: user.rol, name: user.nombre, apellido: user.apellido });
+    res.status(200).json({ token, role: user.rol, name: user.nombre, apellido: user.apellido, id: user._id });
 
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
