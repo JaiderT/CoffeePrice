@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContex.jsx';
 
 function DashboardComprador() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
   const [precios, setPrecios] = useState([]);
   const [comprador, setComprador] = useState(null);
@@ -23,9 +24,10 @@ function DashboardComprador() {
   const obtenerComprador = async () => {
     try {
       const token = localStorage.getItem('token');
-      const usuarioId = localStorage.getItem('usuarioId');
+      const { usuario } = useAuth();
+      const usuarioId = usuario?.id;
       const { data } = await axios.get(
-        `http://localhost:8081/api/comprador/usuario/${usuarioId}`,
+        `${API_URL}/api/comprador/usuario/${usuarioId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setComprador(data);
@@ -38,7 +40,7 @@ function DashboardComprador() {
 
   const obtenerPrecios = async (compradorId) => {
     try {
-      const { data } = await axios.get(`http://localhost:8081/api/precios/comprador/${compradorId}`);
+      const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
       setPrecios(data);
     } catch (error) {
       console.error('Error al obtener precios:', error);
@@ -51,7 +53,7 @@ function DashboardComprador() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:8081/api/precios',
+      await axios.post(`${API_URL}/api/precios`,
         { ...nuevoPrecio, preciocarga: Number(nuevoPrecio.preciocarga), comprador: comprador._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -69,7 +71,7 @@ function DashboardComprador() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:8081/api/precios/${precioEditar._id}`,
+      await axios.put(`${API_URL}/api/precios/${precioEditar._id}`,
         { preciocarga: precioEditar.preciocarga, tipocafe: precioEditar.tipocafe },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -87,7 +89,7 @@ function DashboardComprador() {
     if (!window.confirm('¿Eliminar este precio?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:8081/api/precios/${id}`,
+      await axios.delete(`${API_URL}/api/precios/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMensaje({ tipo: 'exito', texto: 'Precio eliminado correctamente' });

@@ -7,12 +7,14 @@ import {
   getcompradorByUsuario,
 } from "../controllers/comprador.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
+import roleMiddleware from "../middlewares/rolMiddleware.js"
+
 const router = express.Router();
 
-router.get("/", getcompradores);
-router.post("/", createcomprador);
-router.get("/usuario/:usuarioId", getcompradorByUsuario); // ✅ muévela aquí arriba
-router.put("/:id", updatecomprador);
-router.delete("/:id", deletecomprador);
+router.get("/", authMiddleware, roleMiddleware,getcompradores);
+router.post("/", authMiddleware, createcomprador);
+router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
+router.put("/:id", authMiddleware, updatecomprador);
+router.delete("/:id", authMiddleware, roleMiddleware("admin"), deletecomprador);
 
 export default router;
