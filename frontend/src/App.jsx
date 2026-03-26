@@ -1,15 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Login from "./components/Auth/Login.jsx"
-import Inicio from "./components/Home/Inicio.jsx"
-import Register from "./components/Auth/Register.jsx"
-import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx"
-import Precios from "./components/Home/Precios.jsx"
-import GoogleAuth from './components/Auth/GoogleAuth.jsx'
-import CompletarPerfil from './components/Auth/CompletarPerfil.jsx';
 import ForgotPassword from './components/pages/ForgotPassword.jsx';
 import VerifyCode from './components/pages/VerifyCode.jsx';
-import LayoutComprador from "./components/Layout/LayoutComprador.jsx"
-import DashboardComprador from "./components/Home/DashboardComprador.jsx"
 
 // Auth
 import Login from "./components/Auth/Login.jsx";
