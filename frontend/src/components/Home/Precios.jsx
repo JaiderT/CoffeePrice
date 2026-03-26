@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+
 function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;
   const [precios, setPrecios] = useState([]);
@@ -44,12 +45,13 @@ function Precios() {
         <div>
           <h1 className="text-[#2C1A0E] text-2xl font-bold">Comparador de Precios</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Pitalito, Huila ·
+            Pital, Huila ·
             <span className="text-green-500 ml-1">● {precios.length} compradores activos hoy</span>
           </p>
         </div>
-        <button className="bg-[#C8A96E] text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors">
-          🧮 Calcular ganancia
+        <button
+          className="bg-[#C8A96E] text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
+           <i class="fa-solid fa-calculator"></i> Calcular ganancia 
         </button>
       </div>
 
