@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 const menuItems = [
   { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
+  { icon: 'fa-solid fa-user-tie', label: 'Dashboard', path: '/dashboard'},
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
   { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },
   { icon: 'fa-solid fa-bell', label: 'Alertas', path: '/alertas' },
@@ -33,7 +34,8 @@ function Sidebar() {
 
         {/* Logo */}
         <div className="w-10 h-10 bg-[#C8A96E] rounded-xl flex items-center justify-center text-xl mb-4">
-          ☕
+          <Link to='/'> ☕️ </Link>
+          
         </div>
 
         {/* Links */}
@@ -56,7 +58,6 @@ function Sidebar() {
 
         {/* Perfil y logout abajo */}
         <div className="mt-auto flex flex-col items-center gap-2">
-
           {/* Iniciales */}
           <div className="relative group w-10 h-10 rounded-full bg-[#C8A96E] flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:bg-[#B8994E] transition-colors">
             {iniciales}
@@ -64,7 +65,6 @@ function Sidebar() {
               {usuario?.nombre} {usuario?.apellido}
             </span>
           </div>
-
           {/* Botón cerrar sesión */}
           <button
             onClick={() => setMostrarModal(true)}
@@ -74,11 +74,8 @@ function Sidebar() {
               Cerrar sesión
             </span>
           </button>
-
         </div>
       </div>
-
-      {/* Modal de confirmación */}
       {/* Modal de confirmación */}
       {mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
