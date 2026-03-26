@@ -51,7 +51,7 @@ export const solicitarCodigo = async (req, res) => {
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-            <h2 style="color: #4F46E5; margin: 0;">TechStore Pro</h2>
+            <h2 style="color: #3D1F0F; margin: 0;">CoffePrice</h2>
             </div>
             
             <h3 style="color: #333;">Recuperacion de Contraseña</h3>
@@ -62,7 +62,7 @@ export const solicitarCodigo = async (req, res) => {
             
             <p>Tu codigo de verificacion es:</p>
             
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <div style="background: linear-gradient(135deg, #3D1F0F 0%, #7A4020) 100%);
             padding: 20px;
             border-radius: 10px;
             text-align: center;

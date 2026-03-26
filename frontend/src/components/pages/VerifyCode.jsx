@@ -106,20 +106,20 @@ export default function VerifyCode() {
 
     return (
         
-        <main className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-purple-50">
+        <main className="min-h-screen flex items-center justify-center bg-linear-to-br bg-[#FAF7F2]">
             <div className="w-full max-w-md">
                 <div className="bg-white rounded-2xl shadow-2xl p-8">
 
                     {/*ENCABEZADO*/}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-r from-blue-600 to-purple-600 rounded-full mb-4">
-                            <ShieldCheck className="w-8 h-8 text-white" />
+                        <div className="inline-flex items-center justify-center w-30 h-25 mb-4">
+                            <img src="https://static.vecteezy.com/system/resources/previews/020/191/033/non_2x/coffee-beans-icon-free-vector.jpg" alt="" />  
                         </div>
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">
                             Codigo de Verificacion
                         </h2>
                         <p className="text-gray-600">Ingresa el codigo enviado a</p>
-                        <p className="text-blue-600 font-semibold text-sm mt-1">{email}</p>
+                        <p className="text-[#C8814A] font-semibold text-sm mt-1">{email}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -219,7 +219,7 @@ export default function VerifyCode() {
 
                         {/*BOTON CAMBIAR*/}
                         <button type="submit" disabled={loading}
-                        className="w-full bg-linear-to-r from-blue-600 to-purple-600
+                        className="w-full bg-linear-to-r bg-[#3D1F0F]
                         text-white py-3 rounded-lg font-semibold disabled:opacity-50 flex items-center justify-center">
                             {loading ? (
                                 <><Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -235,7 +235,7 @@ export default function VerifyCode() {
                     <div className="mt-6 text-center">
                         <button type="button"
                         onClick={() => navigate("/forgot-password")}
-                        className="text-blue-600 font-semibold inline-flex items-center">
+                        className="text-[#C8814A] font-semibold inline-flex items-center">
                             <ArrowLeft className="w-4 h-4 mr-1" />
                             Reenviar codigo
                         </button>
