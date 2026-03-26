@@ -19,6 +19,7 @@ export default function VerifyCode() {
     const [showConfirm, setShowConfirm]  = useState(false);
     const [loading, setLoading]  = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
+    const API_URL = import.meta.env.VITE_API_URL;
 
     // referencia a los 6 inputs para mover el foco automaticamente
     const inputsRef = useRef([]);
@@ -82,7 +83,7 @@ export default function VerifyCode() {
 
         try {
             const response = await axios.post(
-                "http://localhost:8081/api/Recuperar/cambiar-password",
+                `${API_URL}/api/recuperar/cambiar-password`,
                 {
                     email: email,
                     codigo: codigoCompleto,

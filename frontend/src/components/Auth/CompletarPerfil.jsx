@@ -53,6 +53,7 @@ export default function CompletarPerfil() {
       // Guardar token y redirigir
       localStorage.setItem("token", token);
       localStorage.setItem("role", payload.role);
+      localStorage.setItem("usuarioId", payload.id);
       setSuccess(true);
 
     } catch (err) {

@@ -10,14 +10,15 @@ export default function GoogleAuth() {
     const error = params.get('error')
 
     if (token) {
-      // Decodificar el payload del JWT para obtener el rol
+
       const payload = JSON.parse(atob(token.split('.')[1]))
 
       localStorage.setItem('token', token)
       localStorage.setItem('role', payload.role)
 
-      if (payload.role === 'admin') navigate('/admin', { replace: true })
-      else navigate('/', { replace: true })
+      if (payload.role === 'admin') navigate('/admin/perfil', { replace: true })
+        else if (payload.role === 'comprador') navigate('/comprador/dashboard', {replace: true })
+      else navigate('/precios', { replace: true })
 
     } else {
       navigate('/login?error=' + (error || 'google_failed'), { replace: true })

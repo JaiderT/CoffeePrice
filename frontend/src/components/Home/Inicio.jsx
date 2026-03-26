@@ -17,6 +17,12 @@ function Inicio() {
       try {
         const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
+        if (data.length >= 2){
+          const max = data[0]?.preciocarga || 0;
+          const min = data[data.length-1]?.preciocarga || 0;
+          const variacion = max > 0 ? ((max - min) / min * 100).toFixed(1) : 0;
+          const compradores = new Set(data.map(p => p.comprador?._id)).size;
+        }
       } catch (error) {
         console.error('Error al obtener precios:', error);
       } finally {

@@ -11,8 +11,9 @@ export function AuthProvider({ children }) {
     const rol = localStorage.getItem('role');
     const nombre = localStorage.getItem('name');
     const apellido = localStorage.getItem('apellido');
+    const id = localStorage.getItem('usuarioId');
     if (token && nombre) {
-      setUsuario({ token, rol, nombre, apellido });
+      setUsuario({ token, rol, nombre, apellido, id});
     }
     setCargando(false);
   }, []);
@@ -30,6 +31,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('name');
+    localStorage.removeItem('apellido');
+    localStorage.removeItem('usuarioId');
     setUsuario(null);
   };
 

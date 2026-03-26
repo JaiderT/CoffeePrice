@@ -14,6 +14,8 @@ export default function ForgotPassword() {
     //muestra mensajes de exito o error al usuario
     const [message, setMessage] = useState ({ type: "", text: "" });
 
+    const API_URL = import.meta.env.VITE_API_URL;
+
     //hook para redirigir a otra pagina
     const navigate = useNavigate();
 
@@ -24,7 +26,7 @@ export default function ForgotPassword() {
 
         try {
             const response = await axios.post(
-                "http://localhost:8081/api/recuperar/solicitar-codigo",
+                `${API_URL}/api/recuperar/solicitar-codigo`,
                 { email: email }
             );
 

@@ -26,7 +26,7 @@ const prediccionSchema = new mongoose.Schema(
     tendencia: {
         type: String,
         enum: ["sube", "baja", "estable"],
-        required: [true, "La tendencia es obligatoria"],
+        default: "estable",
     },
 
     confianza: {

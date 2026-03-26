@@ -21,6 +21,7 @@ import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
 import PerfilProductor from "./components/Home/Perfilproductor.jsx";
 import PerfilComprador from "./components/Home/Perfilcomprador.jsx";
 import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
+import PrivateRoute from './components/PrivateRoute.jsx';
 
 function App() {
   return (
@@ -38,36 +39,38 @@ function App() {
 
         {/* ================== PRODUCTOR ================== */}
         <Route path='/precios' element={
-          <LayoutPrivado>
-            <Precios />
-          </LayoutPrivado>
+        <PrivateRoute roles={['productor', 'admin']}>
+          <LayoutPrivado><Precios /></LayoutPrivado>
+        </PrivateRoute>
         } />
-
-        <Route path='/perfil' element={
-          <LayoutPrivado>
-            <PerfilProductor />
-          </LayoutPrivado>
-        } />
+      
+      <Route path='/perfil' element={
+        <PrivateRoute roles={['productor']}>
+          <LayoutPrivado><PerfilProductor /></LayoutPrivado>
+        </PrivateRoute>
+      } />
 
         {/* ================== COMPRADOR ================== */}
         <Route path='/comprador/dashboard' element={
-          <LayoutComprador>
-            <DashboardComprador />
-          </LayoutComprador>
+        <PrivateRoute roles={['comprador']}>
+          <LayoutComprador><DashboardComprador /></LayoutComprador>
+        </PrivateRoute>
+        } />
+      
+        <Route path='/comprador/perfil' element={
+        <PrivateRoute roles={['comprador']}>
+          <LayoutComprador><PerfilComprador /></LayoutComprador>
+        </PrivateRoute>
         } />
 
-        <Route path='/comprador/perfil' element={
-          <LayoutComprador>
-            <PerfilComprador />
-          </LayoutComprador>
-        } />
 
         {/* ================== ADMIN ================== */}
         <Route path='/admin/perfil' element={
-          <LayoutPrivado>
-            <PerfilAdmin />
-          </LayoutPrivado>
+        <PrivateRoute roles={['admin']}>
+          <LayoutPrivado><PerfilAdmin /></LayoutPrivado>
+        </PrivateRoute>
         } />
+
 
       </Routes>
     </BrowserRouter>
