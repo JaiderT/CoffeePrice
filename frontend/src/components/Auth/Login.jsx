@@ -39,7 +39,9 @@ export default function Login() {
 
       setTimeout(() => {
         if (data.role === "admin") navigate("/admin");
-        else navigate("/precios");
+        else if (data.role === "comprador") navigate("/comprador/dashboard");
+        else if (data.role === "productor") navigate("/precios");
+        else navigate("/");
       }, 1500)
 
     } catch (err) {
