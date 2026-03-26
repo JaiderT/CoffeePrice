@@ -94,7 +94,7 @@ export const responderSolicitud = async (req, res) => {
 };
 export const cerrarSolicitud = async (req, res) => {
     try {
-        const solicitud = await solicitud.findByIdAndUpdate(
+        const solicitud = await Solicitud.findByIdAndUpdate(
             req.params.id,
             { estado: "cerrada" },
             { new: true }

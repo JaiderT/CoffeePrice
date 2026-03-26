@@ -18,9 +18,9 @@ import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
 
 // Perfiles
-import PerfilProductor from "./components/Home/PerfilProductor.jsx";
-import PerfilComprador from "./components/Home/PerfilComprador.jsx";
-import PerfilAdmin from "./components/Home/PerfilAdmin.jsx";
+import PerfilProductor from "./components/Home/Perfilproductor.jsx";
+import PerfilComprador from "./components/Home/Perfilcomprador.jsx";
+import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
 
 function App() {
   return (
