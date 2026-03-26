@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ForgotPassword from './components/pages/ForgotPassword.jsx';
+import VerifyCode from './components/pages/VerifyCode.jsx';
 
 // Auth
 import Login from "./components/Auth/Login.jsx";
@@ -31,6 +33,8 @@ function App() {
         <Route path='/register' element={<Register />} />
         <Route path='/auth/google' element={<GoogleAuth />} />
         <Route path='/completar-perfil' element={<CompletarPerfil />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/verify-code' element={<VerifyCode />} />
 
         {/* ================== PRODUCTOR ================== */}
         <Route path='/precios' element={
