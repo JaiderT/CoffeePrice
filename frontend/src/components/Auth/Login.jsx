@@ -35,7 +35,7 @@ export default function Login() {
 
       login(data.token, data.role, data.name, data.apellido, data.id );
 
-      setSuccess(`¡Bienvenido de nuevo, ${data.name}! 👋🏻`);
+      setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
         if (data.role === "admin") navigate("/admin/perfil");

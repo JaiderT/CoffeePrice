@@ -91,7 +91,7 @@ export default function PerfilProductor() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
           {/* Banner y avatar */}
-          <div className="h-24 bg-gradient-to-r from-[#3D1F0F] to-[#7A4020] relative">
+          <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#7A4020] relative">
             <div className="absolute -bottom-8 left-8">
               <div className="w-16 h-16 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
                 {iniciales}
