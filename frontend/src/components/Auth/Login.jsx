@@ -33,13 +33,13 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.role, data.name, data.apellido, data.id );
+      login(data.token, data.rol, data.name, data.apellido, data.id );
 
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
-        if (data.role === "admin") navigate("/admin/perfil");
-        else if (data.role === "comprador") navigate("/comprador/dashboard");
+        if (data.rol === "admin") navigate("/admin/perfil");
+        else if (data.rol === "comprador") navigate("/comprador/dashboard");
         else navigate("/precios");
       }, 1500)
 

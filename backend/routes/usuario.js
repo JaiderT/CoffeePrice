@@ -12,9 +12,6 @@ import {
 const router = express.Router();
 
 router.get("/", getusuario);
-router.put("/:id/actualizar", updateusuario);
-router.put("/:id/password", cambiarpassword);
-router.delete("/:id", eliminarusuario);
 
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {
@@ -32,18 +29,22 @@ router.put("/perfil", authMiddleware, async (req, res) => {
 });
 router.put("/password", authMiddleware, async (req, res) => {
   try {
-    const { passwordActual, passwordNueva } = req.body;
+    const { passwordactual, passwordnueva } = req.body;
     const usuario = await Usuario.findById(req.user.id);
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
-    const esValida = await bcrypt.compare(passwordActual, usuario.password);
+    const esValida = await bcrypt.compare(passwordactual, usuario.password);
     if (!esValida) return res.status(400).json({ message: "Contraseña Actual incorrecta"});
     const salt = await bcrypt.genSalt(10);
-    usuario.password = await bcrypt.hash(passwordNueva, salt);
+    usuario.password = await bcrypt.hash(passwordnueva, salt);
     await usuario.save();
     res.json({ message: "Contraseña Actualizada" });
   } catch (error) {
     res.status(500).json({ message: "Error al cambiar contraseña", error: error.message});
   }
 });
+
+router.put("/:id/actualizar", updateusuario);
+router.put("/:id/password", cambiarpassword);
+router.delete("/:id", eliminarusuario);
 
 export default router;

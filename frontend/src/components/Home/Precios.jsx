@@ -8,12 +8,22 @@ function Precios() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState('todos');
+  const [tendencia, setTendencia] = useState(null);
 
   useEffect(() => {
     const obtenerPrecios = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
+        if (data.length >=2 ) {
+          const precios = data.map(p => p.preciocarga).sort((a, b) => b - a);
+          const mejor = precios[0];
+          const peor = precios[precios.length - 1];
+          const diff = mejor - peor;
+          const pct = peor > 0 ? ((diff / peor) * 100).toFixed(1) : 0;
+          setTendencia({ pct, diff });
+        }
+
       } catch (error) {
         console.error('Error al obtener precios:', error);
       } finally {
@@ -73,9 +83,16 @@ function Precios() {
           <p className="text-gray-400 text-xs mt-1">{precios[precios.length - 1]?.comprador?.nombreempresa || '---'}</p>
         </div>
         <div>
-          <p className="text-gray-400 text-xs uppercase">📈 Tendencia</p>
-          <p className="text-green-400 text-2xl font-bold mt-1">▲ +2.1%</p>
-          <p className="text-gray-400 text-xs mt-1">vs ayer · +$41.000</p>
+          {tendencia ? (
+          <>
+            <p className="text-green-400 text-2xl font-bold mt-1">
+              ▲ +{tendencia.pct}%
+            </p>
+            <p className="text-gray-400 text-xs mt-1">
+              spread máx/mín • +${tendencia.diff.toLocaleString()}
+            </p>
+          </>
+        ) : <p className="text-gray-400 text-xs mt-1">Calculando...</p>}
         </div>
       </div>
 

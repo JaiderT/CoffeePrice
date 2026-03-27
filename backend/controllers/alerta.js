@@ -3,7 +3,7 @@ import Alerta from "../models/alerta.js";
 export const getAlertasByUsuario = async (req, res) => {
   try {
     const alertas = await Alerta.find({ usuario: req.params.usuarioId })
-      .populate("comprador", "nombreEmpresa tipo");
+      .populate("comprador", "nombreempresa tipo");
     res.json(alertas);
   } catch (error) {
     res.status(500).json({ message: "Error al obtener alertas", error: error.message });
@@ -14,7 +14,7 @@ export const getAlertaById = async (req, res) => {
   try {
     const alerta = await Alerta.findById(req.params.id)
       .populate("usuario", "nombre apellido")
-      .populate("comprador", "nombreEmpresa");
+      .populate("comprador", "nombreempresa");
 
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
     res.json(alerta);

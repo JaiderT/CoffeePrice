@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const rol = localStorage.getItem('role');
+    const rol = localStorage.getItem('rol');
     const nombre = localStorage.getItem('name');
     const apellido = localStorage.getItem('apellido');
     const id = localStorage.getItem('usuarioId');
@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
 
   const login = (token, rol, nombre, apellido, id) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('role', rol);
+    localStorage.setItem('rol', rol);
     localStorage.setItem('name', nombre);
     localStorage.setItem('apellido', apellido);
     localStorage.setItem('usuarioId', id);
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.removeItem('rol');
     localStorage.removeItem('name');
     localStorage.removeItem('apellido');
     localStorage.removeItem('usuarioId');

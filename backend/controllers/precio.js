@@ -2,8 +2,8 @@ import PrecioModel from "../models/precio.js";
 
 export const getprecios = async (req, res) => {
     try {
-        const { tipoCafe } = req.query;
-        const filtro = tipoCafe ? { tipoCafe } : {};
+        const { tipocafe } = req.query;
+        const filtro = tipocafe ? { tipocafe } : {};
 
         const precios = await PrecioModel.find(filtro)
             .populate("comprador", "nombreempresa direccion")
