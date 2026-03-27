@@ -15,6 +15,10 @@ export default function GoogleAuth() {
 
       localStorage.setItem('token', token)
       localStorage.setItem('role', payload.role)
+      localStorage.setItem('name', payload.name)
+      localStorage.setItem('apellido', payload.apellido)
+      localStorage.setItem('usuarioId', payload.id)
+
 
       if (payload.role === 'admin') navigate('/admin/perfil', { replace: true })
         else if (payload.role === 'comprador') navigate('/comprador/dashboard', {replace: true })
