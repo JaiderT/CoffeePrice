@@ -155,7 +155,7 @@ function Inicio() {
               Ver todos los precios →
             </Link>
           </div>
-          <div className="w-full lg:w-96 h-48">
+          <div className="w-full lg:w-96 h-48 min-h-48[192px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={datosGrafica}>
                 <Line type="monotone" dataKey="precio" stroke="#C8A96E" strokeWidth={3} dot={false} />
