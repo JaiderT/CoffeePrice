@@ -24,7 +24,6 @@ function DashboardComprador() {
   const obtenerComprador = async () => {
     try {
       const token = localStorage.getItem('token');
-      const { usuario } = useAuth();
       const usuarioId = usuario?.id;
       const { data } = await axios.get(
         `${API_URL}/api/comprador/usuario/${usuarioId}`,

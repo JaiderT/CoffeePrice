@@ -11,7 +11,7 @@ import roleMiddleware from "../middlewares/rolMiddleware.js"
 
 const router = express.Router();
 
-router.get("/", authMiddleware, roleMiddleware,getcompradores);
+router.get("/", authMiddleware, roleMiddleware("admin"), getcompradores);
 router.post("/", authMiddleware, createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
 router.put("/:id", authMiddleware, updatecomprador);

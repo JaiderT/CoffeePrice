@@ -35,7 +35,6 @@ export default function CompletarPerfil() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          usuario: payload.id,
           nombreempresa,
           direccion,
           telefono,

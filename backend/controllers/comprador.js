@@ -11,8 +11,8 @@ export const getcompradores = async (req, res) => {
 
 export const createcomprador = async (req, res) => {
     try {
-        const { usuario, nombreempresa, direccion, telefono, horario } = req.body;
-
+        const { nombreempresa, direccion, telefono, horario } = req.body;
+        const usuario = req.user.id;
         const yaexiste = await CompradorModel.findOne({ usuario });
         if (yaexiste) return res.status(400).json({ message: "Este usuario ya tiene un perfil de comprador" });
 
