@@ -58,13 +58,13 @@ export const login = async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, 
-        role: user.rol,
+        rol: user.rol,
       },
       process.env.JWT_SECRET, 
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     )
 
-    res.status(200).json({ token, role: user.rol, name: user.nombre, apellido: user.apellido, id: user._id });
+    res.status(200).json({ token, rol: user.rol, name: user.nombre, apellido: user.apellido, id: user._id });
 
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
@@ -77,7 +77,7 @@ export const googleCallback = (req, res) => {
     const token = jwt.sign(
           {
             id: req.user._id,
-            role: req.user.rol,
+            rol: req.user.rol,
             name: req.user.nombre,
             apellido: req.user.apellido,
           },

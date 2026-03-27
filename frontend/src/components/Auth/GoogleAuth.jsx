@@ -14,14 +14,14 @@ export default function GoogleAuth() {
       const payload = JSON.parse(atob(token.split('.')[1]))
 
       localStorage.setItem('token', token)
-      localStorage.setItem('role', payload.role)
+      localStorage.setItem('rol', payload.rol)
       localStorage.setItem('name', payload.name)
       localStorage.setItem('apellido', payload.apellido)
       localStorage.setItem('usuarioId', payload.id)
 
 
-      if (payload.role === 'admin') navigate('/admin/perfil', { replace: true })
-        else if (payload.role === 'comprador') navigate('/comprador/dashboard', {replace: true })
+      if (payload.rol === 'admin') navigate('/admin/perfil', { replace: true })
+        else if (payload.rol === 'comprador') navigate('/comprador/dashboard', {replace: true })
       else navigate('/precios', { replace: true })
 
     } else {

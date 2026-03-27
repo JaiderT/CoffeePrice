@@ -20,7 +20,7 @@ export const getReseñasByComprador = async (req, res) => {
 export const getReseñasByProductor = async (req, res) => {
   try {
     const reseñas = await Reseña.find({ productor: req.params.productorId })
-      .populate("comprador", "nombreEmpresa tipo");
+      .populate("comprador", "nombreempresa tipo");
 
     res.json(reseñas);
   } catch (error) {
