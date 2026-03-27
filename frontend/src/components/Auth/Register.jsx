@@ -100,7 +100,7 @@ export default function Register() {
         </h1>
 
         <p className="text-white/65 text-2xl leading-relaxed max-w-sm mb-14 relative z-10">
-          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores de tu municipio sin intermediarios.
+          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores de tu municipio.
         </p>
 
         <div className="flex gap-12 relative z-10">
@@ -315,7 +315,7 @@ export default function Register() {
             <p className="text-center text-xs text-gray-400">
               ¿Ya tienes cuenta?{" "}
               <button type="button" onClick={() => navigate("/login")}
-                className="text-[#C8814A] font-semibold hover:underline">
+                className="font-semibold text-[#C8814A] hover:text-[#7A4020] transition-colors">
                 Inicia sesión 
               </button>
             </p>
