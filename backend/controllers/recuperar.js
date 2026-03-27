@@ -77,11 +77,7 @@ export const solicitarCodigo = async (req, res) => {
             </div>
             
             <p style="color: #666; font-size: 14px;">
-            ⏲️ Este codigo expira en <strong>15 minutos</strong>.
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-            🔒 Si no solicitaste este cambio, ignora este email y tu contraseña permanecera segura.
+            Este codigo expira en <strong>15 minutos</strong>.
             </p>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
@@ -157,18 +153,18 @@ export const cambiarPassword = async (req, res) => {
             to: usuarioEncontrado.email,
             subject: 'Contraseña acualizada - CoffePrice',
             html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
             <div style="text-align: center; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <div style="background: linear-gradient(135deg, #3D1F0F, #7A4020);
             width: 60px;
             height: 60px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             margin-bottom: 20px;">
-            <span style="color: white; font-size: 30px;">✔️</span>
+            <span style="color: white; font-size: 30px;">☕️</span>
             </div>
-            <h2 style="color: #4F46E5; margin: 0;">Contraseña Actualizada</h2>
+            <h2 style="color: white; margin: 0;">Contraseña Actualizada</h2>
             </div>
             
             <p>Hola <strong>${usuarioEncontrado.nombre}</strong>,</p>
@@ -179,7 +175,7 @@ export const cambiarPassword = async (req, res) => {
             
             <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.FRONTEND_URL}/login" 
-            style="background: linear-gradient(to right, #4F46E5, #7C3AED);
+            style="background: linear-gradient(to right, #3D1F0F, #7A4020);
             color: white;
             padding: 12px 30px;
             text-decoration: none;

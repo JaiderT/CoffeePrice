@@ -12,6 +12,7 @@ import CompletarPerfil from "./components/Auth/CompletarPerfil.jsx";
 import Inicio from "./components/Home/Inicio.jsx";
 import Precios from "./components/Home/Precios.jsx";
 import DashboardComprador from "./components/Home/DashboardComprador.jsx";
+import Noticias from "./components/Home/Noticias.jsx";
 
 // Layouts
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
@@ -36,6 +37,7 @@ function App() {
         <Route path='/completar-perfil' element={<CompletarPerfil />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
         <Route path='/verify-code' element={<VerifyCode />} />
+        <Route path='/noticias' element={<Noticias />} />
 
         {/* ================== PRODUCTOR ================== */}
         <Route path='/precios' element={

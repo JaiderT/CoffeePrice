@@ -76,7 +76,7 @@ export default function Login() {
         </h1>
 
         <p className="text-white/65 text-2xl leading-relaxed max-w-sm mb-14 relative z-10">
-          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores de tu municipio sin intermediarios.
+          Entra a CoffePrice y consulta en segundos cuánto pagan los compradores de tu municipio.
         </p>
 
         <div className="flex gap-12 relative z-10">

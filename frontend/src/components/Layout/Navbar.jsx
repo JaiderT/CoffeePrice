@@ -19,7 +19,7 @@ function Navbar() {
           <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">¿Cómo funciona?</Link></li>
           <li><Link to="/precios" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Precios</Link></li>
           <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Funciones</Link></li>
-          <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Testimonios</Link></li>
+          <li><Link to="/noticias" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Noticias</Link></li>
         </ul>
 
         {/* Botones - solo en pantallas grandes */}
