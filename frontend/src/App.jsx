@@ -15,6 +15,8 @@ import Noticias from "./components/Home/Noticias.jsx";
 // Páginas privadas — Productor
 import Precios from "./components/Home/Precios.jsx";
 import PerfilProductor from "./components/Home/PerfilProductor.jsx";
+import Alertas from "./components/Home/Alertas.jsx";
+import Historial from "./components/Home/Historial.jsx";
 
 // Páginas privadas — Comprador
 import DashboardComprador from "./components/Home/DashboardComprador.jsx";
@@ -22,6 +24,7 @@ import PerfilComprador from "./components/Home/PerfilComprador.jsx";
 
 // Páginas privadas — Admin
 import PerfilAdmin from "./components/Home/PerfilAdmin.jsx";
+import Configuracion from "./components/Home/Configuracion.jsx";
 
 // Layouts y protección de rutas
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
@@ -54,6 +57,16 @@ function App() {
             <LayoutPrivado><PerfilProductor /></LayoutPrivado>
           </PrivateRoute>
         } />
+        <Route path="/alertas" element={
+          <PrivateRoute roles={['productor']}>
+            <LayoutPrivado><Alertas /></LayoutPrivado>
+          </PrivateRoute>
+        } />
+        <Route path="/historial" element={
+          <PrivateRoute roles={['productor', 'admin']}>
+            <LayoutPrivado><Historial /></LayoutPrivado>
+          </PrivateRoute>
+        } />
 
         {/* ── COMPRADOR ── */}
         <Route path="/comprador/dashboard" element={
@@ -71,6 +84,11 @@ function App() {
         <Route path="/admin/perfil" element={
           <PrivateRoute roles={['admin']}>
             <LayoutPrivado><PerfilAdmin /></LayoutPrivado>
+          </PrivateRoute>
+        } />
+        <Route path="/configuracion" element={
+          <PrivateRoute roles={['admin']}>
+            <LayoutPrivado><Configuracion /></LayoutPrivado>
           </PrivateRoute>
         } />
 
