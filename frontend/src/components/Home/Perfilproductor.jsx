@@ -7,7 +7,7 @@ export default function PerfilProductor() {
   const { usuario } = useAuth();
   const token = localStorage.getItem('token');
 
-  const [modo, setModo] = useState('ver'); // 'ver' | 'editar' | 'password'
+  const [modo, setModo] = useState('ver');
   const [datos, setDatos] = useState({ nombre: '', apellido: '', celular: '' });
   const [passwords, setPasswords] = useState({ actual: '', nueva: '', confirmar: '' });
   const [mensaje, setMensaje] = useState(null);
@@ -91,7 +91,7 @@ export default function PerfilProductor() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
           {/* Banner y avatar */}
-          <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#7A4020] relative">
+          <div className="h-24 bg-gradient-to-r from-[#3D1F0F] to-[#7A4020] relative">
             <div className="absolute -bottom-8 left-8">
               <div className="w-16 h-16 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
                 {iniciales}
@@ -117,7 +117,7 @@ export default function PerfilProductor() {
                 <button
                   onClick={() => setModo('editar')}
                   className="bg-[#F5ECD7] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#E0D0B0] transition-colors">
-                  ✏️ Editar
+                  <i className="fa-solid fa-pen mr-2"></i>Editar
                 </button>
               )}
             </div>
@@ -133,7 +133,7 @@ export default function PerfilProductor() {
                 <button
                   onClick={() => setModo('password')}
                   className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">
-                  🔐 Cambiar contraseña
+                  <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
                 </button>
               </div>
             )}
