@@ -7,7 +7,9 @@ function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
   const [precios, setPrecios] = useState([]);
+  const [clima, setClima] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [cargandoClima, setCargandoClima] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState('todos');
   const [tendencia, setTendencia] = useState(null);
@@ -17,22 +19,36 @@ function Precios() {
       try {
         const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
+
         if (data.length >= 2) {
-          const precios = data.map(p => p.preciocarga).sort((a, b) => b - a);
-          const mejor = precios[0];
-          const peor = precios[precios.length - 1];
+          const preciosOrdenados = data.map((p) => p.preciocarga).sort((a, b) => b - a);
+          const mejor = preciosOrdenados[0];
+          const peor = preciosOrdenados[preciosOrdenados.length - 1];
           const diff = mejor - peor;
           const pct = peor > 0 ? ((diff / peor) * 100).toFixed(1) : 0;
           setTendencia({ pct, diff });
         }
+        } catch (error) {
+          console.error('Error al obtener precios:', error);
+        } finally {
+          setCargando(false);
+        }
+    };
+
+    const obtenerClima = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/clima`);
+        setClima(data);
       } catch (error) {
-        console.error('Error al obtener precios:', error);
+        console.error('Error al obtener clima:', error);
       } finally {
-        setCargando(false);
+        setCargandoClima(false);
       }
     };
+
     obtenerPrecios();
-  }, []);
+    obtenerClima();
+  }, [API_URL]);
 
   const filtros = ['todos', 'pergamino_seco', 'especial', 'organico', 'verde'];
 
@@ -47,6 +63,34 @@ function Precios() {
   const precioMinimo = precios.length > 0
     ? Math.min(...precios.map(p => p.preciocarga))
     : 0;
+  const obtenerRecomendacionClima = () => {
+    if (!clima?.actual) {
+      return 'Consulta el clima antes de salir a vender o mover café.';
+    }
+
+    const { lluvia, humedad, descripcion, viento } = clima.actual;
+
+    if (lluvia >= 5) {
+      return 'Se esperan lluvias fuertes. Mejor proteger el café y evitar dejarlo al aire libre.';
+    }
+
+    if (lluvia > 0 || descripcion?.toLowerCase().includes('lluvia')) {
+      return 'Puede llover durante la jornada. Conviene cubrir el café y estar atento al cambio del tiempo.';
+    }
+
+    if (humedad >= 80) {
+      return 'La humedad está alta. Si vas a secar café, mejor hacerlo bajo cubierta o con más cuidado.';
+    }
+
+    if (viento >= 20) {
+      return 'Hay bastante viento. Revisa bien lonas, cubiertas o espacios de secado.';
+    }
+
+      return 'El clima se ve estable. Puede ser un buen momento para las labores del día.';
+    };
+
+    const recomendacionClima = obtenerRecomendacionClima();
+
 
   return (
     <div className="min-h-screen bg-[#F7F1E3]">
@@ -95,7 +139,6 @@ function Precios() {
           </Link>
         </div>
       )}
-
       {/* Estadísticas */}
       <div className="px-5 md:px-8 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -153,7 +196,49 @@ function Precios() {
           </div>
         </div>
       </div>
+        {/* Clima del día */}
+        <div className="px-5 md:px-8 pb-5">
+          <div className="rounded-2xl border border-[#E7D9BF] bg-[#FFFDF8] px-4 py-3 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E7CF] text-lg shrink-0">
+                  {cargandoClima ? '...' : clima?.actual?.icono || '⛅'}
+                </div>
 
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-bold text-[#2C1A0E]">
+                      {cargandoClima ? 'Cargando clima...' : clima?.actual?.descripcion || 'Sin datos'}
+                    </p>
+                    {!cargandoClima && (
+                      <span className="text-xs text-[#8B7355]">
+                        {clima?.actual?.temperatura ?? '--'}°C
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-xs text-[#6B5A4D] leading-relaxed max-w-2xl">
+                    {cargandoClima
+                      ? 'Consultando condiciones del día.'
+                      : recomendacionClima}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
+                  Lluvia: {cargandoClima ? '--' : `${clima?.actual?.lluvia ?? '--'} mm`}
+                </span>
+                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
+                  Humedad: {cargandoClima ? '--' : `${clima?.actual?.humedad ?? '--'}%`}
+                </span>
+                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
+                  Viento: {cargandoClima ? '--' : `${clima?.actual?.viento ?? '--'} km/h`}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       {/* Filtros y búsqueda */}
       <div className="px-5 md:px-8 pb-5">
         <div className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm">

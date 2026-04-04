@@ -29,7 +29,7 @@ export default function PerfilAdmin() {
       obtenerUsuarios();
       obtenerCompradores();
     }
-  }, [pestana]);
+  }, [pestana, API_URL, token]);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -145,12 +145,12 @@ export default function PerfilAdmin() {
     ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
 
-  const usuariosFiltrados = usuarios.filter(u => {
+  const usuariosFiltrados = usuarios.filter((u) => {
     if (filtroUsuarios === 'todos') return true;
     return u.rol === filtroUsuarios || u.estado === filtroUsuarios;
   });
 
-  const comprадoresPendientes = usuarios.filter(u => u.rol === 'comprador' && u.estado === 'pendiente');
+  const compradoresPendientes = usuarios.filter((u) => u.rol === 'comprador' && u.estado === 'pendiente');
 
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
@@ -174,9 +174,9 @@ export default function PerfilAdmin() {
               </div>
             </div>
           </div>
-          {comprадореsPendientes.length > 0 && (
+          {compradoresPendientes.length > 0 && (
             <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold">
-              ⚠️ {comprадореsPendientes.length} comprador(es) pendiente(s)
+              ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s)
             </div>
           )}
         </div>
@@ -198,9 +198,9 @@ export default function PerfilAdmin() {
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'gestion' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-users-gear"></i>
             Gestionar usuarios
-            {comprадореsPendientes.length > 0 && (
+            {compradoresPendientes.length > 0 && (
               <span className="bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                {comprадореsPendientes.length}
+                {compradoresPendientes.length}
               </span>
             )}
           </button>
@@ -268,16 +268,16 @@ export default function PerfilAdmin() {
         {/* PESTAÑA GESTIÓN */}
         {pestana === 'gestion' && (
           <div className="space-y-6">
-            {comprадореsPendientes.length > 0 && (
+            {compradoresPendientes.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
                   <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-bold">
                     ⚠️ Pendientes de aprobación
                   </span>
-                  <span className="text-gray-400 text-sm">{comprадореsPendientes.length} comprador(es)</span>
+                  <span className="text-gray-400 text-sm">{compradoresPendientes.length} comprador(es)</span>
                 </div>
                 <div className="p-4 space-y-3">
-                  {comprадореsPendientes.map((u, i) => {
+                  {compradoresPendientes.map((u, i) => {
                     const comp = compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
                     return (
                       <div key={i} className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-100 rounded-xl">

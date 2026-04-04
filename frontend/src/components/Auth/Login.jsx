@@ -43,7 +43,7 @@ export default function Login() {
         else navigate("/precios");
       }, 1500)
 
-    } catch (err) {
+    } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
