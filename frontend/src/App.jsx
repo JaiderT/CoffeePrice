@@ -48,9 +48,7 @@ function App() {
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
-          <PrivateRoute roles={['productor', 'admin']}>
             <LayoutPrivado><Precios /></LayoutPrivado>
-          </PrivateRoute>
         } />
         <Route path="/perfil" element={
           <PrivateRoute roles={['productor']}>
