@@ -14,16 +14,16 @@ import Noticias from "./components/Home/Noticias.jsx";
 
 // Páginas privadas — Productor
 import Precios from "./components/Home/Precios.jsx";
-import PerfilProductor from "./components/Home/PerfilProductor.jsx";
+import PerfilProductor from "./components/Home/Perfilproductor.jsx";
 import Alertas from "./components/Home/Alertas.jsx";
 import Historial from "./components/Home/Historial.jsx";
 
 // Páginas privadas — Comprador
 import DashboardComprador from "./components/Home/DashboardComprador.jsx";
-import PerfilComprador from "./components/Home/PerfilComprador.jsx";
+import PerfilComprador from "./components/Home/Perfilcomprador.jsx";
 
 // Páginas privadas — Admin
-import PerfilAdmin from "./components/Home/PerfilAdmin.jsx";
+import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
 import Configuracion from "./components/Home/Configuracion.jsx";
 
 // Layouts y protección de rutas

@@ -20,25 +20,29 @@ export default function PerfilComprador() {
     if (usuario) {
       setDatos({ nombre: usuario.nombre || '', apellido: usuario.apellido || '', celular: usuario.celular || '' });
     }
-    obtenerComprador();
-  }, [usuario]);
 
-  const obtenerComprador = async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setComprador(data);
-      setEmpresa({
-        nombreempresa: data.nombreempresa || '',
-        direccion: data.direccion || '',
-        telefono: data.telefono || '',
-        horario: data.horario || '',
-      });
-    } catch (err) {
-      console.error('Error al obtener comprador:', err);
-    }
-  };
+    const obtenerComprador = async () => {
+      try {
+        if (!usuarioId) return;
+
+        const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        setComprador(data);
+        setEmpresa({
+          nombreempresa: data.nombreempresa || '',
+          direccion: data.direccion || '',
+          telefono: data.telefono || '',
+          horario: data.horario || '',
+        });
+      } catch (error) {
+        console.error('Error al obtener comprador:', error);
+      }
+    };
+
+    obtenerComprador();
+  }, [API_URL, token, usuarioId, usuario]);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -71,7 +75,18 @@ export default function PerfilComprador() {
       });
       mostrarMensaje('exito', 'Datos de empresa actualizados');
       setModo('ver');
-      obtenerComprador();
+
+      const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setComprador(data);
+      setEmpresa({
+        nombreempresa: data.nombreempresa || '',
+        direccion: data.direccion || '',
+        telefono: data.telefono || '',
+        horario: data.horario || '',
+      });
     } catch {
       mostrarMensaje('error', 'Error al actualizar la empresa');
     } finally {

@@ -27,7 +27,7 @@ export default function GoogleAuth() {
     } else {
       navigate('/login?error=' + (error || 'google_failed'), { replace: true })
     }
-  }, [])
+  }, [navigate, params])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2]">
