@@ -65,7 +65,7 @@ export default function Register() {
 
       setSuccess(true);
 
-    } catch (err) {
+    } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);

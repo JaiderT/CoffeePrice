@@ -17,20 +17,15 @@ function Inicio() {
       try {
         const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
-        if (data.length >= 2){
-          const max = data[0]?.preciocarga || 0;
-          const min = data[data.length-1]?.preciocarga || 0;
-          const variacion = max > 0 ? ((max - min) / min * 100).toFixed(1) : 0;
-          const compradores = new Set(data.map(p => p.comprador?._id)).size;
-        }
       } catch (error) {
         console.error('Error al obtener precios:', error);
       } finally {
         setCargando(false);
       }
     };
+
     obtenerPrecios();
-  }, []);
+  }, [API_URL]);
 
   const handleComoFunciona = () => {
     setMostrarComoFunciona(true);
@@ -155,7 +150,7 @@ function Inicio() {
               Ver todos los precios →
             </Link>
           </div>
-          <div className="w-full lg:w-96 h-48">
+          <div className="w-full lg:w-96 h-48 min-h-48[192px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={datosGrafica}>
                 <Line type="monotone" dataKey="precio" stroke="#C8A96E" strokeWidth={3} dot={false} />
@@ -248,7 +243,7 @@ function Inicio() {
       </div>
       <Footer />
     </div>
-  )
+  );
 }
 
-export default Inicio
+export default Inicio;

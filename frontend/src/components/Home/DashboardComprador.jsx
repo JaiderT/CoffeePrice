@@ -17,26 +17,6 @@ function DashboardComprador() {
   });
   const [mensaje, setMensaje] = useState(null);
 
-  useEffect(() => {
-    obtenerComprador();
-  }, []);
-
-  const obtenerComprador = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const usuarioId = usuario?.id;
-      const { data } = await axios.get(
-        `${API_URL}/api/comprador/usuario/${usuarioId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setComprador(data);
-      obtenerPrecios(data._id);
-    } catch (error) {
-      console.error('Error al obtener comprador:', error);
-      setCargando(false);
-    }
-  };
-
   const obtenerPrecios = async (compradorId) => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
@@ -47,6 +27,33 @@ function DashboardComprador() {
       setCargando(false);
     }
   };
+
+  useEffect(() => {
+    const obtenerComprador = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const usuarioId = usuario?.id;
+
+        if (!usuarioId) {
+          setCargando(false);
+          return;
+        }
+
+        const { data } = await axios.get(
+          `${API_URL}/api/comprador/usuario/${usuarioId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setComprador(data);
+        await obtenerPrecios(data._id);
+      } catch (error) {
+        console.error('Error al obtener comprador:', error);
+        setCargando(false);
+      }
+    };
+
+    obtenerComprador();
+  }, [API_URL, usuario?.id]);
 
   const handlePublicar = async (e) => {
     e.preventDefault();
@@ -60,7 +67,7 @@ function DashboardComprador() {
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
       obtenerPrecios(comprador._id);
-    } catch (error) {
+    } catch {
       setMensaje({ tipo: 'error', texto: 'Error al publicar el precio' });
     }
     setTimeout(() => setMensaje(null), 3000);
@@ -78,7 +85,7 @@ function DashboardComprador() {
       setMostrarEditar(false);
       setPrecioEditar(null);
       obtenerPrecios(comprador._id);
-    } catch (error) {
+    } catch {
       setMensaje({ tipo: 'error', texto: 'Error al actualizar el precio' });
     }
     setTimeout(() => setMensaje(null), 3000);
@@ -93,7 +100,7 @@ function DashboardComprador() {
       );
       setMensaje({ tipo: 'exito', texto: 'Precio eliminado correctamente' });
       obtenerPrecios(comprador._id);
-    } catch (error) {
+    } catch {
       setMensaje({ tipo: 'error', texto: 'Error al eliminar el precio' });
     }
     setTimeout(() => setMensaje(null), 3000);
@@ -303,7 +310,7 @@ function DashboardComprador() {
       )}
 
     </div>
-  )
+  );
 }
 
 export default DashboardComprador;

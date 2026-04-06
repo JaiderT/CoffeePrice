@@ -55,7 +55,7 @@ export default function CompletarPerfil() {
       localStorage.setItem("usuarioId", payload.id);
       setSuccess(true);
 
-    } catch (err) {
+    } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);

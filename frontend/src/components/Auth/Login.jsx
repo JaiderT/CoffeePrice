@@ -33,17 +33,17 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.rol, data.name, data.apellido, data.id );
+      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email,);
 
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
-        if (data.rol === "admin") navigate("/admin/perfil");
-        else if (data.rol === "comprador") navigate("/comprador/dashboard");
+        if (data.role === "admin") navigate("/admin/perfil");
+        else if (data.role === "comprador") navigate("/comprador/dashboard");
         else navigate("/precios");
       }, 1500)
 
-    } catch (err) {
+    } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
