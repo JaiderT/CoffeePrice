@@ -51,7 +51,7 @@ function Navbar() {
             <li><Link to="/" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Inicio</Link></li>
             <li><Link to="/precios" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Precios</Link></li>
             <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Funciones</Link></li>
-            <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Testimonios</Link></li>
+            <li><Link to="/noticias" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Noticias</Link></li>
           </ul>
           <div className="flex flex-col gap-3 mt-6">
             <Link to="/login" className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm text-center hover:bg-[#2C1A0E] hover:text-white transition-colors" onClick={() => setMenuAbierto(false)}>

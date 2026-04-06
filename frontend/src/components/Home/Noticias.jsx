@@ -17,7 +17,7 @@ const noticias = [
   {
     id: 2,
     categoria: 'Clima y cosechas',
-    emoji: '🌦️',
+    imagen: 'https://lavozdelaregion.co/wp-content/uploads/2021/11/Invierno-fenomeno-de-la-nina.jpeg',
     titulo: 'Fenómeno La Niña podría afectar la cosecha principal en el sur del Huila',
     descripcion: 'El IDEAM advierte lluvias por encima del promedio entre octubre y diciembre.',
     fuente: 'Cenicafé · IDEAM',
@@ -27,7 +27,7 @@ const noticias = [
   {
     id: 3,
     categoria: 'Mercado internacional',
-    emoji: '🌍',
+    imagen: 'https://caldas.federaciondecafeteros.org/app/uploads/sites/11/2021/04/CAD-621-2.jpg',
     titulo: 'Bolsa de Nueva York: el café arábico cierra semana al alza por tercer mes consecutivo',
     descripcion: 'El contrato "C" subió 3.2% impulsado por bajos inventarios en Brasil y Vietnam.',
     fuente: 'Reuters · Bloomberg',
@@ -37,7 +37,7 @@ const noticias = [
   {
     id: 4,
     categoria: 'Noticias del sector',
-    emoji: '🏛️',
+    imagen: 'https://federaciondecafeteros.org/app/uploads/2019/11/home-noticis-1.jpg',
     titulo: 'Federación Nacional de Cafeteros anuncia subsidio para renovación de cafetales en el Huila',
     descripcion: 'El programa beneficiará a más de 4.000 familias cafeteras con hasta $800.000 por hectárea renovada.',
     fuente: 'FNC Colombia',
@@ -47,7 +47,7 @@ const noticias = [
   {
     id: 5,
     categoria: 'Precios del café',
-    emoji: '📊',
+    imagen: 'https://cafecostal.com/wp-content/uploads/2025/06/precios-del-cafe.webp',
     titulo: '¿Por qué el café colombiano cotiza por encima del promedio mundial este trimestre?',
     descripcion: 'Expertos explican el diferencial positivo del café suave colombiano frente a otros orígenes.',
     fuente: 'Portafolio',
@@ -70,10 +70,10 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   );
 
   const categorias = [
-    { id: 'Precios del café',      emoji: '📈', desc: 'Cuando el precio suba o baje' },
-    { id: 'Mercado internacional', emoji: '🌍', desc: 'Bolsa de NY y mercados globales' },
-    { id: 'Clima y cosechas',      emoji: '🌦️', desc: 'Alertas de clima y cosechas' },
-    { id: 'Noticias del sector',   emoji: '🏛️', desc: 'FNC, subsidios y política cafetera' },
+    { id: 'Precios del café',      imagen: 'https://cafecostal.com/wp-content/uploads/2025/06/precios-del-cafe.webp', desc: 'Cuando el precio suba o baje' },
+    { id: 'Mercado internacional', imagen: 'https://caldas.federaciondecafeteros.org/app/uploads/sites/11/2021/04/CAD-621-2.jpg', desc: 'Bolsa de NY y mercados globales' },
+    { id: 'Clima y cosechas',      imagen: 'https://lavozdelaregion.co/wp-content/uploads/2021/11/Invierno-fenomeno-de-la-nina.jpeg', desc: 'Alertas de clima y cosechas' },
+    { id: 'Noticias del sector',   imagen: 'https://federaciondecafeteros.org/app/uploads/2019/11/home-noticis-1.jpg', desc: 'FNC, subsidios y política cafetera' },
   ];
 
   const toggleCategoria = (id) => {
@@ -83,7 +83,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   };
 
   const activarNotificaciones = async () => {
-    if (!('Notification' in window)) {
+    if (!('Notificacion' in window)) {
       alert('Tu navegador no soporta notificaciones push.');
       return;
     }
@@ -293,7 +293,13 @@ export default function Noticias() {
                   rel="noopener noreferrer"
                   className="bg-white rounded-2xl overflow-hidden shadow-sm group cursor-pointer hover:-translate-y-1 transition-transform duration-300"
                 >
-                  <div className="bg-[#F5ECD7] h-28 flex items-center justify-center text-5xl">{noticia.emoji}</div>
+                  <div className="bg-[#e2d9c6] h-60 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={noticia.imagen}
+                      alt={noticia.categoria}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div className="p-5">
                     <span className={`text-xs font-semibold px-3 py-1 rounded-full ${categoriaBadgeColors[noticia.categoria] || 'bg-gray-100 text-gray-600'}`}>
                       {noticia.categoria}
