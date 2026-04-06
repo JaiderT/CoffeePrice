@@ -49,7 +49,7 @@ app.use("/api/alertas", alertaRoutes);
 app.use("/api/noticias", noticiaRoutes);
 app.use("/api/precios", precioRoutes);
 app.use("/api/predicciones", prediccionRoutes);
-app.use("/api/resenas", resenaRoutes);
+app.use("/api/reseñas", resenaRoutes);
 app.use("/api/solicitudes", solicitudRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/comprador", compradorRoutes);
