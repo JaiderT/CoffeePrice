@@ -84,3 +84,17 @@ export const eliminarMiCuenta = async (req, res) => {
         res.status(500).json({ message: "Error al eliminar tu cuenta", error: error.message });
     }
 };
+export const cambiarestado = async (req, res) => {
+    try {
+        const { estado } = req.body;
+        const usuario = await Usuario.findByIdAndUpdate(
+            req.params.id,
+            { estado },
+            { new: true, runValidators: true }
+        ).select("-password");
+        if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+        res.json(usuario);
+    } catch (error) {
+        res.status(400).json({ message: "Error al cambiar estado", error: error.message });
+    }
+};
