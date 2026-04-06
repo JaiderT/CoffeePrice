@@ -7,11 +7,13 @@ import {
   updateusuario,
   cambiarpassword,
   eliminarusuario,
+  eliminarMiCuenta,
 } from "../controllers/usuario.js"; 
+import roleMiddleware from "../middlewares/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getusuario);
+router.get("/", authMiddleware, roleMiddleware("admin"), getusuario);
 
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {
@@ -42,9 +44,10 @@ router.put("/password", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Error al cambiar contraseña", error: error.message});
   }
 });
+router.delete("/perfil", authMiddleware, eliminarMiCuenta);
 
-router.put("/:id/actualizar", updateusuario);
-router.put("/:id/password", cambiarpassword);
-router.delete("/:id", eliminarusuario);
+router.put("/:id/actualizar", authMiddleware, roleMiddleware("admin"), updateusuario);
+router.put("/:id/password", authMiddleware, roleMiddleware("admin"), cambiarpassword);
+router.delete("/:id", authMiddleware, roleMiddleware("admin"), eliminarusuario);
 
 export default router;

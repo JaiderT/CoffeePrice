@@ -38,18 +38,34 @@ export const updatecomprador = async (req, res) => {
     try {
         const { nombreempresa, direccion, telefono, horario } = req.body;
 
-        const comprador = await CompradorModel.findByIdAndUpdate(
-            req.params.id,
-            { nombreempresa, direccion, telefono, horario },
-            { new: true, runValidators: true }
-        );
+        const compradorExistente = await CompradorModel.findById(req.params.id);
 
-        if (!comprador) return res.status(404).json({ message: "Comprador no encontrado" });
-        res.json(comprador);
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para actualizar este comprador"
+            });
+        }
+
+        compradorExistente.nombreempresa = nombreempresa ?? compradorExistente.nombreempresa;
+        compradorExistente.direccion = direccion ?? compradorExistente.direccion;
+        compradorExistente.telefono = telefono ?? compradorExistente.telefono;
+        compradorExistente.horario = horario ?? compradorExistente.horario;
+
+        await compradorExistente.save();
+
+        res.json(compradorExistente);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar comprador", error: error.message });
     }
 };
+
 
 export const deletecomprador = async (req, res) => {
     try {
@@ -63,14 +79,25 @@ export const deletecomprador = async (req, res) => {
 
 export const getcompradorByUsuario = async (req, res) => {
     try {
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = req.params.usuarioId === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para ver este comprador"
+            });
+        }
+
         const comprador = await CompradorModel.findOne({ usuario: req.params.usuarioId })
             .populate("usuario", "nombre apellido email");
 
-        if (!comprador) return res.status(404).json({ message: "Comprador no encontrado" });
+        if (!comprador) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
 
         res.json(comprador);
     } catch (error) {
-        console.log("ERROR getcompradorByUsuario:", error.message); // ← agrega esto
         res.status(500).json({ message: "Error al obtener comprador", error: error.message });
     }
 };
+

@@ -12,20 +12,35 @@ export const getusuario = async (req, res) => {
 
 export const updateusuario = async (req, res) => {
     try {
-        const { nombre, apellido, celular } = req.body;
+        const { nombre, apellido, celular, estado, rol } = req.body;
+
+        const datosActualizados = {};
+
+        if (nombre !== undefined) datosActualizados.nombre = nombre;
+        if (apellido !== undefined) datosActualizados.apellido = apellido;
+        if (celular !== undefined) datosActualizados.celular = celular;
+
+        if (req.user?.rol === "admin") {
+            if (estado !== undefined) datosActualizados.estado = estado;
+            if (rol !== undefined) datosActualizados.rol = rol;
+        }
 
         const usuario = await Usuario.findByIdAndUpdate(
             req.params.id,
-            { nombre, apellido, celular },
+            datosActualizados,
             { new: true, runValidators: true }
-        ).select("-password"); // ✅ era .select("password") sin el -
+        ).select("-password");
 
-        if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
         res.json(usuario);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar", error: error.message });
     }
 };
+
 
 export const cambiarpassword = async (req, res) => {
     try {
@@ -54,5 +69,18 @@ export const eliminarusuario = async (req, res) => {
         res.json({ message: "Usuario eliminado" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar usuario", error: error.message });
+    }
+};
+export const eliminarMiCuenta = async (req, res) => {
+    try {
+        const usuario = await Usuario.findByIdAndDelete(req.user.id);
+
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({ message: "Tu cuenta fue eliminada correctamente" });
+    } catch (error) {
+        res.status(500).json({ message: "Error al eliminar tu cuenta", error: error.message });
     }
 };
