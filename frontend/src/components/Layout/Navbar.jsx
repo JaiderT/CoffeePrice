@@ -16,7 +16,7 @@ function Navbar() {
 
         {/* Links - solo en pantallas grandes */}
         <ul className="hidden lg:flex items-center gap-8">
-          <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">¿Cómo funciona?</Link></li>
+          <li><Link to="/" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Inicio</Link></li>
           <li><Link to="/precios" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Precios</Link></li>
           <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Funciones</Link></li>
           <li><Link to="/noticias" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">Noticias</Link></li>
@@ -48,7 +48,7 @@ function Navbar() {
       {menuAbierto && (
         <div className="lg:hidden mt-4 pb-4 border-t border-[#E0D0B0]">
           <ul className="flex flex-col gap-4 mt-4">
-            <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>¿Cómo funciona?</Link></li>
+            <li><Link to="/" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Inicio</Link></li>
             <li><Link to="/precios" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Precios</Link></li>
             <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Funciones</Link></li>
             <li><Link to="#" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block" onClick={() => setMenuAbierto(false)}>Testimonios</Link></li>
