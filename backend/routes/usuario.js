@@ -9,7 +9,7 @@ import {
   eliminarusuario,
   eliminarMiCuenta,
 } from "../controllers/usuario.js"; 
-import roleMiddleware from "../middlewares/roleMiddleware.js";
+import roleMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
