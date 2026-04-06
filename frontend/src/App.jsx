@@ -26,6 +26,9 @@ import PerfilComprador from "./components/Home/Perfilcomprador.jsx";
 import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
 import Configuracion from "./components/Home/Configuracion.jsx";
 
+// Perfil público
+import PerfilPublicoComprador from "./components/Home/PerfilPublicoComprador.jsx";
+
 // Layouts y protección de rutas
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
@@ -45,10 +48,11 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/noticias" element={<Noticias />} />
+        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
-            <LayoutPrivado><Precios /></LayoutPrivado>
+          <LayoutPrivado><Precios /></LayoutPrivado>
         } />
         <Route path="/perfil" element={
           <PrivateRoute roles={['productor']}>

@@ -12,12 +12,12 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const estado = rol === 'comprador' ? 'pendiente' : 'activo' // ← agregar
+    const estado = rol === 'comprador' ? 'pendiente' : 'activo';
 
-    const newUsuario = new Usuario({ 
-      nombre, apellido, email, 
-      password: hashedPassword, 
-      celular, rol, estado // ← agregar estado
+    const newUsuario = new Usuario({
+      nombre, apellido, email,
+      password: hashedPassword,
+      celular, rol, estado
     });
     await newUsuario.save();
 
@@ -37,17 +37,21 @@ export const login = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // ← usuario registrado con Google no tiene password
     if (!user.password) {
-      return res.status(400).json({ 
-        message: "Esta cuenta usa Google. Inicia sesión con Google." 
+      return res.status(400).json({
+        message: "Esta cuenta usa Google. Inicia sesión con Google."
       });
     }
 
-    // ← comprador pendiente no puede entrar
     if (user.estado === 'pendiente') {
-      return res.status(403).json({ 
-        message: "Tu cuenta está pendiente de aprobación" 
+      return res.status(403).json({
+        message: "Tu cuenta está pendiente de aprobación"
+      });
+    }
+
+    if (user.estado === 'rechazado') {
+      return res.status(403).json({
+        message: "Tu cuenta ha sido rechazada. Contacta al administrador."
       });
     }
 
@@ -56,46 +60,52 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
-    const token = jwt.sign(
-      { id: user._id, 
-        rol: user.rol,
-      },
-      process.env.JWT_SECRET, 
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
-    )
+    // Guardar última conexión
+    await Usuario.findByIdAndUpdate(user._id, { ultimaConexion: new Date() });
 
-    res.status(200).json({ token, role: user.rol, name: user.nombre, apellido: user.apellido, id: user._id, celular: user.celular, email: user.email, });
+    const token = jwt.sign(
+      { id: user._id, rol: user.rol },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+    );
+
+    res.status(200).json({
+      token,
+      role: user.rol,
+      name: user.nombre,
+      apellido: user.apellido,
+      id: user._id,
+      celular: user.celular,
+      email: user.email,
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
   }
 };
 
-// ← función nueva para el callback de Google
 export const googleCallback = (req, res) => {
   try {
     const token = jwt.sign(
-          {
-            id: req.user._id,
-            rol: req.user.rol,
-            name: req.user.nombre,
-            apellido: req.user.apellido,
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
-        )
+      {
+        id: req.user._id,
+        rol: req.user.rol,
+        name: req.user.nombre,
+        apellido: req.user.apellido,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+    );
 
-
-    // comprador nuevo va a completar perfil empresarial
     if (req.user.estado === 'pendiente') {
       return res.redirect(
         `${process.env.FRONTEND_URL}/completar-perfil?token=${token}`
-      )
+      );
     }
 
-    res.redirect(`${process.env.FRONTEND_URL}/auth/google?token=${token}`)
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google?token=${token}`);
 
   } catch (error) {
-    res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`)
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
   }
-}
+};

@@ -43,6 +43,11 @@ const usuarioSchema = new mongoose.Schema({
     enum: ["activo", "pendiente", "rechazado"],
     default: "activo"
   },
+  ultimaConexion: {
+    type: Date,
+    default: null,
+  },
+  
   codigoRecuperacion: {
     type: String,
     default: null,
@@ -50,7 +55,7 @@ const usuarioSchema = new mongoose.Schema({
   codigoExpiracion: {
     type: Date,
     default: null,
-  }
+  },
 }, 
 { timestamps: true }
 );

@@ -386,9 +386,11 @@ function Precios() {
                   {/* Botón ver detalle - solo para logueados */}
                   {usuario && (
                     <div className="mt-3 flex justify-end">
-                      <button className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-4 py-2 rounded-xl font-semibold hover:bg-[#E0D0B0] transition-colors">
+                      <Link
+                        to={`/comprador/${item.comprador?._id}`}
+                        className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-4 py-2 rounded-xl font-semibold hover:bg-[#E0D0B0] transition-colors">
                         <i className="fa-solid fa-eye mr-1"></i> Ver detalles
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </div>

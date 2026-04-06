@@ -10,7 +10,9 @@ function DashboardComprador() {
   const [cargando, setCargando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarEditar, setMostrarEditar] = useState(false);
+  const [mostrarEliminar, setMostrarEliminar] = useState(false);
   const [precioEditar, setPrecioEditar] = useState(null);
+  const [precioEliminar, setPrecioEliminar] = useState(null);
   const [nuevoPrecio, setNuevoPrecio] = useState({
     preciocarga: '',
     tipocafe: 'pergamino_seco'
@@ -33,17 +35,11 @@ function DashboardComprador() {
       try {
         const token = localStorage.getItem('token');
         const usuarioId = usuario?.id;
-
-        if (!usuarioId) {
-          setCargando(false);
-          return;
-        }
-
+        if (!usuarioId) { setCargando(false); return; }
         const { data } = await axios.get(
           `${API_URL}/api/comprador/usuario/${usuarioId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         setComprador(data);
         await obtenerPrecios(data._id);
       } catch (error) {
@@ -51,7 +47,6 @@ function DashboardComprador() {
         setCargando(false);
       }
     };
-
     obtenerComprador();
   }, [API_URL, usuario?.id]);
 
@@ -91,14 +86,15 @@ function DashboardComprador() {
     setTimeout(() => setMensaje(null), 3000);
   };
 
-  const handleEliminar = async (id) => {
-    if (!window.confirm('¿Eliminar este precio?')) return;
+  const handleEliminar = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/precios/${id}`,
+      await axios.delete(`${API_URL}/api/precios/${precioEliminar._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMensaje({ tipo: 'exito', texto: 'Precio eliminado correctamente' });
+      setMostrarEliminar(false);
+      setPrecioEliminar(null);
       obtenerPrecios(comprador._id);
     } catch {
       setMensaje({ tipo: 'error', texto: 'Error al eliminar el precio' });
@@ -174,8 +170,7 @@ function DashboardComprador() {
           precios.map((item, i) => (
             <div key={i} className="grid grid-cols-5 gap-4 px-4 py-4 bg-white rounded-xl mb-3 items-center hover:shadow-md transition-shadow">
               <div>
-                <span className={`text-xs px-2 py-1 rounded-full font-semibold
-                  ${item.tipocafe === 'especial' ? 'bg-purple-100 text-purple-700' :
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${item.tipocafe === 'especial' ? 'bg-purple-100 text-purple-700' :
                     item.tipocafe === 'organico' ? 'bg-green-100 text-green-700' :
                       item.tipocafe === 'verde' ? 'bg-emerald-100 text-emerald-700' :
                         'bg-amber-100 text-amber-700'}`}>
@@ -202,7 +197,7 @@ function DashboardComprador() {
                   <i className="fa-solid fa-pen"></i>
                 </button>
                 <button
-                  onClick={() => handleEliminar(item._id)}
+                  onClick={() => { setPrecioEliminar(item); setMostrarEliminar(true); }}
                   className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200 transition-colors">
                   <i className="fa-solid fa-trash"></i>
                 </button>
@@ -305,6 +300,35 @@ function DashboardComprador() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal eliminar precio */}
+      {mostrarEliminar && precioEliminar && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fa-solid fa-trash text-red-500 text-2xl"></i>
+            </div>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar precio?</h3>
+            <p className="text-gray-400 text-sm mb-1">Vas a eliminar el precio de</p>
+            <p className="text-[#2C1A0E] font-bold text-base mb-1">
+              {precioEliminar.preciocarga?.toLocaleString()} COP/carga
+            </p>
+            <p className="text-gray-400 text-xs mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setMostrarEliminar(false); setPrecioEliminar(null); }}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleEliminar}
+                className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}

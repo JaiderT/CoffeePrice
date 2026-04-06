@@ -141,6 +141,12 @@ export default function PerfilAdmin() {
     }
   };
 
+  const estaActivo = (ultimaConexion) => {
+    if (!ultimaConexion) return false;
+    const diff = new Date() - new Date(ultimaConexion);
+    return diff < 5 * 60 * 1000;
+  };
+
   const iniciales = usuario
     ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
@@ -334,8 +340,13 @@ export default function PerfilAdmin() {
                         <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : u.rol === 'comprador' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                           {u.rol}
                         </span>
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.estado === 'activo' ? 'bg-green-100 text-green-700' : u.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                          {u.estado}
+                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                            u.estado === 'rechazado' ? 'bg-red-100 text-red-700' :
+                              estaActivo(u.ultimaConexion) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                          {u.estado === 'pendiente' ? '⏳ Pendiente' :
+                            u.estado === 'rechazado' ? '✕ Rechazado' :
+                              estaActivo(u.ultimaConexion) ? '● En línea' : '○ Ausente'}
                         </span>
                         {u._id !== usuario?.id && (
                           <button onClick={() => handleEliminarUsuario(u._id)}

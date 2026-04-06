@@ -8,12 +8,14 @@ import {
   cambiarpassword,
   eliminarusuario,
   eliminarMiCuenta,
+  cambiarestado,
 } from "../controllers/usuario.js"; 
-import roleMiddleware from "../middlewares/rolMiddleware.js";
+import rolMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, roleMiddleware("admin"), getusuario);
+router.get("/", authMiddleware, rolMiddleware("admin"), getusuario);
+router.put("/:id/estado", authMiddleware, cambiarestado);
 
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {
@@ -46,8 +48,9 @@ router.put("/password", authMiddleware, async (req, res) => {
 });
 router.delete("/perfil", authMiddleware, eliminarMiCuenta);
 
-router.put("/:id/actualizar", authMiddleware, roleMiddleware("admin"), updateusuario);
-router.put("/:id/password", authMiddleware, roleMiddleware("admin"), cambiarpassword);
-router.delete("/:id", authMiddleware, roleMiddleware("admin"), eliminarusuario);
+router.put("/:id/actualizar", authMiddleware, rolMiddleware("admin"), updateusuario);
+router.put("/:id/password", authMiddleware, rolMiddleware("admin"), cambiarpassword);
+router.delete("/:id", authMiddleware, rolMiddleware("admin"), eliminarusuario);
 
 export default router;
+
