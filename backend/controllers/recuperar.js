@@ -36,12 +36,19 @@ export const solicitarCodigo = async (req, res) => {
                 message: "Si el correo está registrado, recibirá un código de verificación"
             });
             }
+            if (!usuarioEncontrado.password) {
+            return res.status(200).json({
+            message: "Si el correo está registrado, recibirá un código de verificación"
+            });
+            }
+
 
         const codigo = generarCodigo();
-
-        usuarioEncontrado.codigoRecuperacion = codigo;
+        const codigoHash = await bcrypt.hash(codigo, 10);
+        usuarioEncontrado.codigoRecuperacion = codigoHash;
         usuarioEncontrado.codigoExpiracion = Date.now() + 900000;
         await usuarioEncontrado.save();
+
 
 
         const mailOptions = {
@@ -124,16 +131,26 @@ export const cambiarPassword = async (req, res) => {
             });
         }
         const usuarioEncontrado = await usuario.findOne({ email });
-        if (
-            !usuarioEncontrado ||
-            usuarioEncontrado.codigoRecuperacion !== codigo ||
-            !usuarioEncontrado.codigoExpiracion ||
-            usuarioEncontrado.codigoExpiracion < Date.now()
-            ) {
+            if (!usuarioEncontrado || !usuarioEncontrado.codigoRecuperacion || !usuarioEncontrado.codigoExpiracion) {
             return res.status(400).json({
                 message: "Código inválido o expirado"
             });
-            }
+        }
+
+        if (usuarioEncontrado.codigoExpiracion < Date.now()) {
+            return res.status(400).json({
+                message: "Código inválido o expirado"
+            });
+        }
+
+        const codigoValido = await bcrypt.compare(codigo, usuarioEncontrado.codigoRecuperacion);
+
+        if (!codigoValido) {
+            return res.status(400).json({
+                message: "Código inválido o expirado"
+            });
+        }
+
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
@@ -141,8 +158,8 @@ export const cambiarPassword = async (req, res) => {
         // Actualizar contraseña y limpiar codigo
 
         usuarioEncontrado.password = hashedPassword;
-        usuarioEncontrado.codigoRecuperacion = undefined;
-        usuarioEncontrado.codigoExpiracion = undefined;
+        usuarioEncontrado.codigoRecuperacion = null;
+        usuarioEncontrado.codigoExpiracion = null;
         await usuarioEncontrado.save();
 
 
