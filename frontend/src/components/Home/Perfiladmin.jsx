@@ -63,7 +63,7 @@ export default function PerfilAdmin() {
 
   const handleAprobarComprador = async (usuarioId) => {
     try {
-      await axios.put(`${API_URL}/api/usuario/${usuarioId}/actualizar`,
+      await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'activo' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -77,7 +77,7 @@ export default function PerfilAdmin() {
 
   const handleRechazarComprador = async (usuarioId) => {
     try {
-      await axios.put(`${API_URL}/api/usuario/${usuarioId}/actualizar`,
+      await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'rechazado' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
