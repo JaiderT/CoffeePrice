@@ -8,6 +8,11 @@ const noticiaSchema = new mongoose.Schema(
             trim: true,
         },
 
+        imagen: {
+            type: String,
+            required: true
+        },
+
         resumen: {
             type: String,
             required: [true, "El resumen es obligatorio"],

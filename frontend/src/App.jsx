@@ -34,20 +34,34 @@ import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
 import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
 
+/* AGREGADO */
+import LayoutPublico from "./components/Layout/LayoutPublico.jsx";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
         {/* ── PÚBLICAS ── */}
-        <Route path="/" element={<Inicio />} />
+        <Route path="/" element={
+          <LayoutPublico>
+            <Inicio />
+          </LayoutPublico>
+        } />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/google" element={<GoogleAuth />} />
         <Route path="/completar-perfil" element={<CompletarPerfil />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
-        <Route path="/noticias" element={<Noticias />} />
+
+        <Route path="/noticias" element={
+          <LayoutPublico>
+            <Noticias />
+          </LayoutPublico>
+        } />
+
         <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
         {/* ── PRODUCTOR ── */}

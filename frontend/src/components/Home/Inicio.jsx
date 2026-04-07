@@ -241,7 +241,6 @@ function Inicio() {
           <p className="text-gray-500 text-xs mt-6">✓ Gratis para caficultores · ✓ Sin tarjeta de crédito · ✓ Cancela cuando quieras</p>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

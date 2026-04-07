@@ -24,9 +24,9 @@ export const getNoticiaById = async (req, res) => {
 
 export const createNoticia = async (req, res) => {
     try {
-        const { titulo, resumen, contenido, categoria, fuente } = req.body;
+        const { titulo, resumen, contenido, categoria, fuente, imagen } = req.body;
 
-        const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente });
+        const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente, imagen });
         await noticia.save();
 
         res.status(201).json(noticia);
