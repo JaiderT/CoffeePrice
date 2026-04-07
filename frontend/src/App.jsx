@@ -48,7 +48,6 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/noticias" element={<Noticias />} />
-        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
@@ -81,6 +80,9 @@ function App() {
             <LayoutComprador><PerfilComprador /></LayoutComprador>
           </PrivateRoute>
         } />
+
+        {/* ── PERFIL PÚBLICO — debe ir después de /comprador/dashboard y /comprador/perfil ── */}
+        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
         {/* ── ADMIN ── */}
         <Route path="/admin/perfil" element={
