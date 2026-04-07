@@ -490,7 +490,7 @@ export default function PerfilAdmin() {
   );
 }
 
-function Campo({ label, valor }) {
+function Campo({ label, valor }) { 
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-semibold text-gray-400 uppercase">{label}</span>
