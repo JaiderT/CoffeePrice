@@ -355,8 +355,6 @@ export default function Noticias() {
           setAlertasActivas={setAlertasActivas}
         />
       )}
-
-      <Footer />
     </div>
   );
 }

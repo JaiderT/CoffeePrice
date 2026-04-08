@@ -53,7 +53,7 @@ const rutaPanel = usuario
   }));
 
   return (
-    <div className="min-h-screen bg-[#F5ECD7]">
+    <div className="w-full bg-[#F5ECD7]">
       <Navbar />
       {/* Hero Section */}
       <div className="w-full bg-[#3D1F0F] py-12 md:py-20">

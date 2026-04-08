@@ -1,12 +1,12 @@
-import Footer from "../Layout/Footer";
+import Footer from './Footer';
 
 function LayoutPublico({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
 
-      <div className="flex-1">
+      <main className="grow">
         {children}
-      </div>
+      </main>
 
       <Footer />
 
