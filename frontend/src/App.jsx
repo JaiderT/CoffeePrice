@@ -68,6 +68,7 @@ function App() {
         <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
         <Route path="/noticias" element={<Noticias />} />
 
+        <Route path="/noticias" element={<Noticias />} />
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
