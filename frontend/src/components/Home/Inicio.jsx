@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../context/AuthContex.jsx';
 import axios from 'axios';
 import Navbar from '../Layout/Navbar';
 import Footer from '../Layout/Footer';
@@ -11,6 +12,16 @@ function Inicio() {
   const [cargando, setCargando] = useState(true);
   const [mostrarComoFunciona, setMostrarComoFunciona] = useState(false);
   const comoFuncionaRef = useRef(null);
+  const { usuario } = useAuth();
+
+const rutaPanel = usuario
+  ? usuario.rol === 'admin'
+    ? '/admin/perfil'
+    : usuario.rol === 'comprador'
+    ? '/comprador/dashboard'
+    : '/perfil'
+  : '/register';
+
 
   useEffect(() => {
     const obtenerPrecios = async () => {
@@ -60,15 +71,30 @@ function Inicio() {
               Consulta los precios de todos los compradores de tu municipio en tiempo real. Sin recorrer el pueblo, sin intermediarios. Vende siempre al mejor precio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center lg:justify-start">
-              <Link to="/precios" className="bg-[#C8A96E] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors text-center">
+              <Link
+                to="/precios"
+                className="bg-[#C8A96E] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors text-center"
+              >
                 ☕ Ver precios ahora
               </Link>
-              <button
-                onClick={handleComoFunciona}
-                className="border border-white text-white px-6 py-3 rounded-full text-sm hover:bg-white hover:text-[#3D1F0F] transition-colors text-center">
-                ▶ Cómo funciona
-              </button>
+
+              {usuario ? (
+                <Link
+                  to={rutaPanel}
+                  className="border border-white text-white px-6 py-3 rounded-full text-sm hover:bg-white hover:text-[#3D1F0F] transition-colors text-center"
+                >
+                  Ir a mi panel
+                </Link>
+              ) : (
+                <button
+                  onClick={handleComoFunciona}
+                  className="border border-white text-white px-6 py-3 rounded-full text-sm hover:bg-white hover:text-[#3D1F0F] transition-colors text-center"
+                >
+                  ▶ Cómo funciona
+                </button>
+              )}
             </div>
+
             <div className="flex justify-center lg:justify-start gap-8 mt-10">
               <div>
                 <p className="text-white text-2xl font-bold">+240</p>
@@ -231,13 +257,30 @@ function Inicio() {
           <h2 className="text-white text-4xl md:text-5xl font-bold">¿Listo para vender <br /> al mejor precio?</h2>
           <p className="text-gray-400 text-sm mt-4">Únete a los caficultores del Huila que ya consultan CoffePrice antes de vender.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-            <Link to="/register" className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors">
-              ☕ Crear cuenta gratis
-            </Link>
-            <Link to="/precios" className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-[#3D1F0F] transition-colors">
+            {usuario ? (
+              <Link
+                to={rutaPanel}
+                className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors"
+              >
+                Ir a mi panel
+              </Link>
+            ) : (
+              <Link
+                to="/register"
+                className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors"
+              >
+                ☕ Crear cuenta gratis
+              </Link>
+            )}
+
+            <Link
+              to="/precios"
+              className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-[#3D1F0F] transition-colors"
+            >
               Ver precios sin registrarse →
             </Link>
           </div>
+
           <p className="text-gray-500 text-xs mt-6">✓ Gratis para caficultores · ✓ Sin tarjeta de crédito · ✓ Cancela cuando quieras</p>
         </div>
       </div>

@@ -13,6 +13,8 @@ function Precios() {
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState('todos');
   const [tendencia, setTendencia] = useState(null);
+  const [prediccion, setPrediccion] = useState(null);
+  const [cargandoPrediccion, setCargandoPrediccion] = useState(true);
 
   useEffect(() => {
     const obtenerPrecios = async () => {
@@ -45,9 +47,19 @@ function Precios() {
         setCargandoClima(false);
       }
     };
-
+    const obtenerPrediccion = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/predicciones/resumen`);
+        setPrediccion(data);
+      } catch (error) {
+        console.error('Error al obtener predicción:', error);
+      } finally {
+        setCargandoPrediccion(false);
+      }
+    };
     obtenerPrecios();
     obtenerClima();
+    obtenerPrediccion();
   }, [API_URL]);
 
   const filtros = ['todos', 'pergamino_seco', 'especial', 'organico', 'verde'];
@@ -270,6 +282,84 @@ function Precios() {
                    f === 'organico' ? 'Orgánico' : 'Verde'}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-5 md:px-8 pb-5">
+  <div className="rounded-2xl border border-[#D9BC81] bg-[linear-gradient(135deg,#FFF8E7_0%,#F3E2B8_100%)] px-5 py-4 shadow-sm">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="max-w-2xl">
+        <span className="inline-flex items-center rounded-full bg-[#2C1A0E] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5ECD7]">
+          Predicción del mercado
+        </span>
+
+        <h2 className="mt-3 text-xl md:text-2xl font-black text-[#2C1A0E]">
+          {cargandoPrediccion
+            ? 'Cargando predicción...'
+            : prediccion
+            ? `Estimado para ${new Date(prediccion.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}`
+            : 'Predicción no disponible'}
+        </h2>
+
+        <p className="mt-2 text-sm text-[#6A4321] leading-relaxed">
+          {cargandoPrediccion
+            ? 'Consultando la proyección más reciente del precio del café.'
+            : prediccion?.mensaje || 'No hay una predicción disponible por el momento.'}
+        </p>
+
+        {!cargandoPrediccion && prediccion && (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
+              Tendencia: {prediccion.tendencia}
+            </span>
+            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
+              Confianza: {prediccion.confianza}%
+            </span>
+            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
+              Modelo: {prediccion.modelVersion}
+            </span>
+          </div>
+        )}
+      </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-full lg:min-w-[420px]">
+              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
+                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
+                  Precio estimado
+                </p>
+                <p className="mt-2 text-xl font-bold text-[#2C1A0E]">
+                  {cargandoPrediccion || !prediccion
+                    ? '--'
+                    : prediccion.precioestimado.toLocaleString()}
+                </p>
+                <p className="text-xs text-[#8B7355]">COP/carga</p>
+              </div>
+
+              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
+                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
+                  Precio mínimo
+                </p>
+                <p className="mt-2 text-xl font-bold text-[#B42318]">
+                  {cargandoPrediccion || !prediccion
+                    ? '--'
+                    : prediccion.preciominimo.toLocaleString()}
+                </p>
+                <p className="text-xs text-[#8B7355]">COP/carga</p>
+              </div>
+
+              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
+                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
+                  Precio máximo
+                </p>
+                <p className="mt-2 text-xl font-bold text-[#2D6A4F]">
+                  {cargandoPrediccion || !prediccion
+                    ? '--'
+                    : prediccion.preciomaximo.toLocaleString()}
+                </p>
+                <p className="text-xs text-[#8B7355]">COP/carga</p>
+              </div>
             </div>
           </div>
         </div>

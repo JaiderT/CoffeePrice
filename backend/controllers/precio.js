@@ -32,6 +32,27 @@ export const createprecio = async (req, res) => {
     try {
         const { comprador, preciocarga, tipocafe } = req.body;
 
+        if (!comprador || preciocarga === undefined || !tipocafe) {
+            return res.status(400).json({
+                message: "Comprador, precio por carga y tipo de café son obligatorios"
+            });
+        }
+
+        const precioNumerico = Number(preciocarga);
+        const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+
+        if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
+            return res.status(400).json({
+                message: "El precio por carga debe ser un número mayor a 0"
+            });
+        }
+
+        if (!tiposPermitidos.includes(tipocafe)) {
+            return res.status(400).json({
+                message: "Tipo de café no válido"
+            });
+        }
+
         const compradorExistente = await CompradorModel.findById(comprador);
 
         if (!compradorExistente) {
@@ -49,7 +70,7 @@ export const createprecio = async (req, res) => {
 
         const nuevoPrecio = new PrecioModel({
             comprador,
-            preciocarga: Number(preciocarga),
+            preciocarga: precioNumerico,
             tipocafe
         });
 
@@ -83,8 +104,29 @@ export const updateprecio = async (req, res) => {
             });
         }
 
-        precio.preciocarga = preciocarga !== undefined ? Number(preciocarga) : precio.preciocarga;
-        precio.tipocafe = tipocafe ?? precio.tipocafe;
+        if (preciocarga !== undefined) {
+            const precioNumerico = Number(preciocarga);
+
+            if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
+                return res.status(400).json({
+                    message: "El precio por carga debe ser un número mayor a 0"
+                });
+            }
+
+            precio.preciocarga = precioNumerico;
+        }
+
+        if (tipocafe !== undefined) {
+            const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+
+            if (!tiposPermitidos.includes(tipocafe)) {
+                return res.status(400).json({
+                    message: "Tipo de café no válido"
+                });
+            }
+
+            precio.tipocafe = tipocafe;
+        }
 
         await precio.save();
 
