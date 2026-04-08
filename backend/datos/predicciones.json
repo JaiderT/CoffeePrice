@@ -2,301 +2,301 @@
   {
     "fecha": "2026-04-07",
     "precioestimado": 2066325.0,
-    "preciominimo": 1879051.0,
-    "preciomaximo": 2262745.0,
+    "preciominimo": 1874751.0,
+    "preciomaximo": 2253964.0,
     "tendencia": "estable",
     "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-08",
     "precioestimado": 2069419.0,
-    "preciominimo": 1865719.0,
-    "preciomaximo": 2259087.0,
+    "preciominimo": 1851453.0,
+    "preciomaximo": 2264161.0,
     "tendencia": "estable",
-    "confianza": 62,
+    "confianza": 60,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-09",
     "precioestimado": 2073157.0,
-    "preciominimo": 1894240.0,
-    "preciomaximo": 2258353.0,
+    "preciominimo": 1893193.0,
+    "preciomaximo": 2261540.0,
     "tendencia": "estable",
-    "confianza": 65,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-10",
     "precioestimado": 2077500.0,
-    "preciominimo": 1899120.0,
-    "preciomaximo": 2270157.0,
+    "preciominimo": 1898944.0,
+    "preciomaximo": 2272916.0,
     "tendencia": "estable",
     "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-11",
     "precioestimado": 2082392.0,
-    "preciominimo": 1882109.0,
-    "preciomaximo": 2275537.0,
+    "preciominimo": 1892987.0,
+    "preciomaximo": 2274467.0,
     "tendencia": "estable",
-    "confianza": 62,
+    "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-12",
     "precioestimado": 2087767.0,
-    "preciominimo": 1895906.0,
-    "preciomaximo": 2293775.0,
+    "preciominimo": 1895229.0,
+    "preciomaximo": 2266695.0,
     "tendencia": "estable",
-    "confianza": 62,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-13",
     "precioestimado": 2093541.0,
-    "preciominimo": 1905133.0,
-    "preciomaximo": 2295207.0,
+    "preciominimo": 1905773.0,
+    "preciomaximo": 2281711.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-14",
     "precioestimado": 2099619.0,
-    "preciominimo": 1902279.0,
-    "preciomaximo": 2298523.0,
+    "preciominimo": 1895724.0,
+    "preciomaximo": 2286140.0,
     "tendencia": "estable",
-    "confianza": 62,
+    "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-15",
     "precioestimado": 2105895.0,
-    "preciominimo": 1910865.0,
-    "preciomaximo": 2312370.0,
+    "preciominimo": 1922416.0,
+    "preciomaximo": 2298235.0,
     "tendencia": "sube",
-    "confianza": 62,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-16",
     "precioestimado": 2112254.0,
-    "preciominimo": 1908360.0,
-    "preciomaximo": 2302312.0,
+    "preciominimo": 1914067.0,
+    "preciomaximo": 2306233.0,
     "tendencia": "estable",
     "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-17",
     "precioestimado": 2118573.0,
-    "preciominimo": 1936512.0,
-    "preciomaximo": 2323575.0,
+    "preciominimo": 1936229.0,
+    "preciomaximo": 2320772.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-18",
     "precioestimado": 2124726.0,
-    "preciominimo": 1931782.0,
-    "preciomaximo": 2327222.0,
+    "preciominimo": 1923903.0,
+    "preciomaximo": 2331337.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 62,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-19",
     "precioestimado": 2130585.0,
-    "preciominimo": 1931898.0,
-    "preciomaximo": 2315636.0,
+    "preciominimo": 1948089.0,
+    "preciomaximo": 2337401.0,
     "tendencia": "estable",
-    "confianza": 64,
+    "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-20",
     "precioestimado": 2136023.0,
-    "preciominimo": 1945567.0,
-    "preciomaximo": 2334115.0,
+    "preciominimo": 1926045.0,
+    "preciomaximo": 2343031.0,
     "tendencia": "estable",
-    "confianza": 64,
+    "confianza": 61,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-21",
     "precioestimado": 2140915.0,
-    "preciominimo": 1955134.0,
-    "preciomaximo": 2351506.0,
+    "preciominimo": 1944795.0,
+    "preciomaximo": 2350551.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 62,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-22",
     "precioestimado": 2145145.0,
-    "preciominimo": 1955487.0,
-    "preciomaximo": 2323055.0,
+    "preciominimo": 1946913.0,
+    "preciomaximo": 2350897.0,
     "tendencia": "estable",
-    "confianza": 66,
+    "confianza": 62,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-23",
     "precioestimado": 2148605.0,
-    "preciominimo": 1953653.0,
-    "preciomaximo": 2350290.0,
+    "preciominimo": 1949824.0,
+    "preciomaximo": 2337500.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-24",
     "precioestimado": 2151199.0,
-    "preciominimo": 1956569.0,
-    "preciomaximo": 2343067.0,
+    "preciominimo": 1956803.0,
+    "preciomaximo": 2349010.0,
     "tendencia": "estable",
     "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-25",
     "precioestimado": 2152843.0,
-    "preciominimo": 1949581.0,
-    "preciomaximo": 2343522.0,
+    "preciominimo": 1949206.0,
+    "preciomaximo": 2344833.0,
     "tendencia": "estable",
     "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-26",
     "precioestimado": 2153471.0,
-    "preciominimo": 1959673.0,
-    "preciomaximo": 2347031.0,
+    "preciominimo": 1965506.0,
+    "preciomaximo": 2353758.0,
     "tendencia": "estable",
     "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-27",
     "precioestimado": 2153035.0,
-    "preciominimo": 1948894.0,
-    "preciomaximo": 2349174.0,
+    "preciominimo": 1966636.0,
+    "preciomaximo": 2345602.0,
     "tendencia": "estable",
-    "confianza": 63,
+    "confianza": 65,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-28",
     "precioestimado": 2151503.0,
-    "preciominimo": 1948671.0,
-    "preciomaximo": 2337512.0,
+    "preciominimo": 1956876.0,
+    "preciomaximo": 2345299.0,
     "tendencia": "estable",
     "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-29",
     "precioestimado": 2148865.0,
-    "preciominimo": 1949310.0,
-    "preciomaximo": 2331625.0,
+    "preciominimo": 1952943.0,
+    "preciomaximo": 2350855.0,
     "tendencia": "estable",
-    "confianza": 64,
+    "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-04-30",
     "precioestimado": 2145130.0,
-    "preciominimo": 1936140.0,
-    "preciomaximo": 2338886.0,
+    "preciominimo": 1964116.0,
+    "preciomaximo": 2352386.0,
     "tendencia": "estable",
-    "confianza": 62,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-01",
     "precioestimado": 2140329.0,
-    "preciominimo": 1949265.0,
-    "preciomaximo": 2335013.0,
+    "preciominimo": 1954397.0,
+    "preciomaximo": 2351186.0,
     "tendencia": "estable",
-    "confianza": 64,
+    "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-02",
     "precioestimado": 2134509.0,
-    "preciominimo": 1938245.0,
-    "preciomaximo": 2339984.0,
+    "preciominimo": 1944677.0,
+    "preciomaximo": 2315293.0,
     "tendencia": "baja",
-    "confianza": 62,
+    "confianza": 65,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-03",
     "precioestimado": 2127738.0,
-    "preciominimo": 1924731.0,
-    "preciomaximo": 2324393.0,
+    "preciominimo": 1933630.0,
+    "preciomaximo": 2318683.0,
     "tendencia": "baja",
-    "confianza": 62,
+    "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-04",
     "precioestimado": 2120101.0,
-    "preciominimo": 1925666.0,
-    "preciomaximo": 2313267.0,
+    "preciominimo": 1916219.0,
+    "preciomaximo": 2312317.0,
     "tendencia": "baja",
     "confianza": 63,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-05",
     "precioestimado": 2111699.0,
-    "preciominimo": 1917950.0,
-    "preciomaximo": 2304938.0,
+    "preciominimo": 1903489.0,
+    "preciomaximo": 2303791.0,
     "tendencia": "baja",
-    "confianza": 63,
+    "confianza": 62,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   },
   {
     "fecha": "2026-05-06",
     "precioestimado": 2102644.0,
-    "preciominimo": 1910707.0,
-    "preciomaximo": 2292204.0,
+    "preciominimo": 1920788.0,
+    "preciomaximo": 2301771.0,
     "tendencia": "estable",
     "confianza": 64,
     "modelVersion": "prophet-v1",
-    "generatedAt": "2026-04-07T22:10:34.295853"
+    "generatedAt": "2026-04-08T13:37:53.970319"
   }
 ]

@@ -1,6 +1,19 @@
 import Sidebar from './Sidebar';
+import Navbar from './Navbar';
+import { useAuth } from '../../context/AuthContex.jsx';
 
 function LayoutPrivado({ children }) {
+  const { usuario } = useAuth();
+
+  if (!usuario) {
+    return (
+      <div className="min-h-screen bg-[#F5ECD7]">
+        <Navbar />
+        <div>{children}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F5ECD7]">
       <Sidebar />
@@ -8,7 +21,7 @@ function LayoutPrivado({ children }) {
         {children}
       </div>
     </div>
-  )
+  );
 }
 
 export default LayoutPrivado;

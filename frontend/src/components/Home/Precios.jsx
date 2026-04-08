@@ -6,35 +6,28 @@ import { useAuth } from '../../context/AuthContex.jsx';
 function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
+
   const [precios, setPrecios] = useState([]);
   const [clima, setClima] = useState(null);
+  const [prediccion, setPrediccion] = useState(null);
+
   const [cargando, setCargando] = useState(true);
   const [cargandoClima, setCargandoClima] = useState(true);
+  const [cargandoPrediccion, setCargandoPrediccion] = useState(true);
+
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState('todos');
-  const [tendencia, setTendencia] = useState(null);
-  const [prediccion, setPrediccion] = useState(null);
-  const [cargandoPrediccion, setCargandoPrediccion] = useState(true);
 
   useEffect(() => {
     const obtenerPrecios = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/api/precios`);
         setPrecios(data);
-
-        if (data.length >= 2) {
-          const preciosOrdenados = data.map((p) => p.preciocarga).sort((a, b) => b - a);
-          const mejor = preciosOrdenados[0];
-          const peor = preciosOrdenados[preciosOrdenados.length - 1];
-          const diff = mejor - peor;
-          const pct = peor > 0 ? ((diff / peor) * 100).toFixed(1) : 0;
-          setTendencia({ pct, diff });
-        }
-        } catch (error) {
-          console.error('Error al obtener precios:', error);
-        } finally {
-          setCargando(false);
-        }
+      } catch (error) {
+        console.error('Error al obtener precios:', error);
+      } finally {
+        setCargando(false);
+      }
     };
 
     const obtenerClima = async () => {
@@ -47,16 +40,22 @@ function Precios() {
         setCargandoClima(false);
       }
     };
+
     const obtenerPrediccion = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/api/predicciones/resumen`);
         setPrediccion(data);
       } catch (error) {
-        console.error('Error al obtener predicción:', error);
+        if (error.response?.status === 404) {
+          setPrediccion(null);
+        } else {
+          console.error('Error al obtener predicción:', error);
+        }
       } finally {
         setCargandoPrediccion(false);
       }
     };
+
     obtenerPrecios();
     obtenerClima();
     obtenerPrediccion();
@@ -65,432 +64,369 @@ function Precios() {
   const filtros = ['todos', 'pergamino_seco', 'especial', 'organico', 'verde'];
 
   const preciosFiltrados = precios
-    .filter(p => filtro === 'todos' || p.tipocafe === filtro)
-    .filter(p => p.comprador?.nombreempresa?.toLowerCase().includes(busqueda.toLowerCase()));
+    .filter((p) => filtro === 'todos' || p.tipocafe === filtro)
+    .filter((p) =>
+      p.comprador?.nombreempresa?.toLowerCase().includes(busqueda.toLowerCase())
+    );
+
+  const preciosVisibles = usuario ? preciosFiltrados : preciosFiltrados.slice(0, 3);
 
   const mejorPrecio = precios[0]?.preciocarga || 0;
-  const precioPromedio = precios.length > 0
-    ? Math.round(precios.reduce((acc, p) => acc + p.preciocarga, 0) / precios.length)
-    : 0;
-  const precioMinimo = precios.length > 0
-    ? Math.min(...precios.map(p => p.preciocarga))
-    : 0;
+  const mejorComprador = precios[0]?.comprador?.nombreempresa || 'Sin registros';
+  const precioPromedio =
+    precios.length > 0
+      ? Math.round(precios.reduce((acc, p) => acc + p.preciocarga, 0) / precios.length)
+      : 0;
+
+  const diferencia =
+    precios.length > 1
+      ? precios[0].preciocarga - precios[precios.length - 1].preciocarga
+      : 0;
+
   const obtenerRecomendacionClima = () => {
-    if (!clima?.actual) {
-      return 'Consulta el clima antes de salir a vender o mover café.';
-    }
+    if (!clima?.actual) return 'Consulta el clima antes de mover o secar café.';
 
     const { lluvia, humedad, descripcion, viento } = clima.actual;
 
-    if (lluvia >= 5) {
-      return 'Se esperan lluvias fuertes. Mejor proteger el café y evitar dejarlo al aire libre.';
-    }
-
+    if (lluvia >= 5) return 'Se esperan lluvias fuertes. Protege el café.';
     if (lluvia > 0 || descripcion?.toLowerCase().includes('lluvia')) {
-      return 'Puede llover durante la jornada. Conviene cubrir el café y estar atento al cambio del tiempo.';
+      return 'Puede llover durante la jornada. Mantén el café cubierto.';
     }
+    if (humedad >= 80) return 'La humedad está alta. Ten cuidado con el secado.';
+    if (viento >= 20) return 'Hay bastante viento. Revisa lonas y cubiertas.';
 
-    if (humedad >= 80) {
-      return 'La humedad está alta. Si vas a secar café, mejor hacerlo bajo cubierta o con más cuidado.';
-    }
-
-    if (viento >= 20) {
-      return 'Hay bastante viento. Revisa bien lonas, cubiertas o espacios de secado.';
-    }
-
-      return 'El clima se ve estable. Puede ser un buen momento para las labores del día.';
-    };
-
-    const recomendacionClima = obtenerRecomendacionClima();
-
+    return 'El clima se ve estable para la jornada.';
+  };
 
   return (
-    <div className="min-h-screen bg-[#F7F1E3]">
-
-      {/* Header */}
-      <div className="px-5 md:px-8 pt-6 md:pt-8 pb-5 border-b border-[#E7D9BF] bg-[linear-gradient(180deg,#F7EEDC_0%,#F7F1E3_100%)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center rounded-full bg-[#2C1A0E] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5ECD7]">
-              Precios del dia
-            </span>
-            <h1 className="mt-3 text-3xl md:text-4xl font-black tracking-tight text-[#2C1A0E]">
-              Comparador de precios
-            </h1>
-            <p className="mt-2 text-sm md:text-base text-[#6B5A4D] leading-relaxed">
-              Revisa rapidamente quien esta pagando mejor el café hoy en el Pital, Huila y compara los valores por carga de forma clara.
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs md:text-sm">
-              <span className="rounded-full bg-white px-3 py-1.5 font-semibold text-[#2C1A0E] border border-[#E7D9BF]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
+      <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
+        <section className="overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8D8C1]">
                 Pital, Huila
               </span>
-              <span className="rounded-full bg-[#E8F5EA] px-3 py-1.5 font-semibold text-[#2D6A4F]">
-                ● {precios.length} compradores activos hoy
-              </span>
-            </div>
-          </div>
-          <button className="inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-[#2C1A0E] px-5 py-3 text-sm font-bold text-[#F5ECD7] shadow-[0_10px_30px_rgba(44,26,14,0.18)] transition-all hover:bg-[#3D2415] hover:-translate-y-px">
-            <i className="fa-solid fa-calculator"></i>
-            Calcular ganancia
-          </button>
-        </div>
-      </div>
 
-      {/* Banner visitante */}
-      {!usuario && (
-        <div className="mx-5 md:mx-8 mt-6 bg-[#FFF8E7] border border-[#C8A96E]/30 rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <i className="fa-solid fa-lock text-[#C8A96E] text-lg"></i>
-            <div>
-              <p className="text-[#2C1A0E] font-semibold text-sm">Estás viendo precios como visitante</p>
-              <p className="text-gray-500 text-xs mt-0.5">Inicia sesión para ver detalles, distancia y calificaciones</p>
-            </div>
-          </div>
-          <Link to="/login" className="bg-[#2C1A0E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors whitespace-nowrap">
-            Iniciar sesión
-          </Link>
-        </div>
-      )}
-      {/* Estadísticas */}
-      <div className="px-5 md:px-8 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Precio promedio</p>
-              <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#F5ECD7] text-[#7A4020]">
-                <i className="fa-solid fa-chart-column"></i>
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-bold text-[#2C1A0E]">{precioPromedio.toLocaleString()}</p>
-            <p className="mt-1 text-xs text-[#8B7355]">COP por carga de 125 kg</p>
-          </div>
+              <h1 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">
+                Revisa cuánto están pagando hoy por tu café
+              </h1>
 
-          <div className="rounded-2xl bg-[#2C1A0E] p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#D8C7A8]">Mejor pago</p>
-              <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#C8A96E] text-white">
-                <i className="fa-solid fa-trophy"></i>
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-bold text-[#F8F2E8]">{mejorPrecio.toLocaleString()}</p>
-            <p className="mt-1 text-xs text-[#D8C7A8]">{precios[0]?.comprador?.nombreempresa || 'Sin registros aún'}</p>
-          </div>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#E6D7C2] md:text-base">
+                Compara los precios publicados por los compradores de la zona y mira si mañana podría subir, bajar o seguir parecido.
+              </p>
 
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Pago mas bajo</p>
-              <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#FDEAEA] text-[#B42318]">
-                <i className="fa-solid fa-arrow-trend-down"></i>
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-bold text-[#B42318]">{precioMinimo.toLocaleString()}</p>
-            <p className="mt-1 text-xs text-[#8B7355]">{precios[precios.length - 1]?.comprador?.nombreempresa || 'Sin registros aún'}</p>
-          </div>
-
-          <div className="rounded-2xl bg-[linear-gradient(135deg,#EFE3C8_0%,#E2C690_100%)] border border-[#D9BC81] p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#6A4321]">Diferencia entre precios</p>
-              <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-white/70 text-[#7A4020]">
-                <i className="fa-solid fa-wave-square"></i>
-              </span>
-            </div>
-            {tendencia ? (
-              <>
-                <p className="mt-4 text-2xl font-bold text-[#2C1A0E]">+{tendencia.pct}%</p>
-                <p className="mt-1 text-xs text-[#6A4321]">Hay una diferencia de ${tendencia.diff.toLocaleString()} entre el precio mas alto y el mas bajo.</p>
-              </>
-            ) : (
-              <>
-                <p className="mt-4 text-2xl font-bold text-[#2C1A0E]">--</p>
-                <p className="mt-1 text-xs text-[#6A4321]">Aún no hay suficientes datos para calcular la brecha.</p>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-        {/* Clima del día */}
-        <div className="px-5 md:px-8 pb-5">
-          <div className="rounded-2xl border border-[#E7D9BF] bg-[#FFFDF8] px-4 py-3 shadow-sm">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E7CF] text-lg shrink-0">
-                  {cargandoClima ? '...' : clima?.actual?.icono || '⛅'}
-                </div>
-
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-bold text-[#2C1A0E]">
-                      {cargandoClima ? 'Cargando clima...' : clima?.actual?.descripcion || 'Sin datos'}
-                    </p>
-                    {!cargandoClima && (
-                      <span className="text-xs text-[#8B7355]">
-                        {clima?.actual?.temperatura ?? '--'}°C
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 text-xs text-[#6B5A4D] leading-relaxed max-w-2xl">
-                    {cargandoClima
-                      ? 'Consultando condiciones del día.'
-                      : recomendacionClima}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-[#D7C2A7]">
+                    Mejor pago hoy
+                  </p>
+                  <p className="mt-1 text-2xl font-black">
+                    ${mejorPrecio.toLocaleString()}
                   </p>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
-                  Lluvia: {cargandoClima ? '--' : `${clima?.actual?.lluvia ?? '--'} mm`}
-                </span>
-                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
-                  Humedad: {cargandoClima ? '--' : `${clima?.actual?.humedad ?? '--'}%`}
-                </span>
-                <span className="rounded-full bg-white border border-[#EDE2CC] px-3 py-1.5 text-[#6B5A4D]">
-                  Viento: {cargandoClima ? '--' : `${clima?.actual?.viento ?? '--'} km/h`}
-                </span>
+                <div className="rounded-2xl bg-[#DDBA83] px-4 py-3 text-[#2F241C]">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-[#6A4321]">
+                    Compradores reportados
+                  </p>
+                  <p className="mt-1 text-2xl font-black">{precios.length}</p>
+                </div>
               </div>
             </div>
+
+            {usuario && (
+              <button className="inline-flex items-center justify-center rounded-2xl bg-[#F3E5CE] px-5 py-3 text-sm font-bold text-[#2F241C] shadow-[0_10px_24px_rgba(0,0,0,0.14)] transition hover:bg-[#F7EBD8]">
+                Calcular ganancia
+              </button>
+            )}
           </div>
-        </div>
-      {/* Filtros y búsqueda */}
-      <div className="px-5 md:px-8 pb-5">
-        <div className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm">
+        </section>
+
+        <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
+          <article className="group relative overflow-hidden rounded-[28px] bg-[#F8F1E6] p-5 shadow-[0_12px_30px_rgba(96,73,47,0.10)] ring-1 ring-[#E8D8BF]/80 transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(96,73,47,0.14)]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
+              Así está el precio hoy
+            </p>
+
+            <p className="mt-3 text-3xl font-black text-[#2F241C]">
+              ${precioPromedio.toLocaleString()}
+            </p>
+
+            <p className="mt-3 text-sm font-semibold text-[#5F452C]">
+              Hoy el mercado está variado
+            </p>
+
+            <p className="mt-1 text-sm text-[#6D5E53]">
+              Hay una diferencia de ${diferencia.toLocaleString()} entre el valor más alto y el más bajo.
+            </p>
+          </article>
+
+          <article className="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#2F241C_0%,#3B2C22_100%)] p-5 text-[#F8F2E8] shadow-[0_14px_34px_rgba(47,36,28,0.22)] transition hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(47,36,28,0.28)]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D4C2A5]">
+              El mejor pago de hoy
+            </p>
+
+            <p className="mt-3 text-3xl font-black">
+              ${mejorPrecio.toLocaleString()}
+            </p>
+
+            <p className="mt-3 text-sm font-semibold text-[#F1E3D0]">
+              {mejorComprador}
+            </p>
+
+            <p className="mt-1 text-sm text-[#D9C9AF]">
+              En este momento es el comprador que mejor está pagando.
+            </p>
+          </article>
+
+          <article className="rounded-[28px] bg-[linear-gradient(135deg,#E7D0A7_0%,#F3E5CB_100%)] p-5 shadow-[0_12px_30px_rgba(145,100,48,0.12)] ring-1 ring-[#DFC18E]/70 md:col-span-2 xl:col-span-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7A5428]">
+              Precio esperado para mañana
+            </p>
+
+            {cargandoPrediccion ? (
+              <p className="mt-3 text-sm text-[#6A543F]">Cargando predicción...</p>
+            ) : prediccion ? (
+              <>
+                <p className="mt-3 text-3xl font-black text-[#2F241C]">
+                  ${prediccion.precioestimado.toLocaleString()}
+                </p>
+
+                <p className="mt-1 text-sm text-[#6A543F]">
+                  Para el{' '}
+                  {new Date(prediccion.fecha).toLocaleDateString('es-CO', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </p>
+
+                <p className="mt-3 text-sm font-semibold text-[#5F452C]">
+                  {prediccion.tendencia === 'sube'
+                    ? 'Mañana podría pagar mejor'
+                    : prediccion.tendencia === 'baja'
+                    ? 'Mañana podría bajar un poco'
+                    : 'Mañana seguiría parecido a hoy'}
+                </p>
+
+                <p className="mt-1 text-sm text-[#6A543F]">
+                  Seguridad del pronóstico: {prediccion.confianza}%
+                </p>
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-[#6A543F]">
+                No hay predicción disponible.
+              </p>
+            )}
+          </article>
+        </section>
+
+        <section className="mt-6 rounded-[28px] bg-[linear-gradient(180deg,#EAD9C2_0%,#E5D2BA_100%)] p-4 shadow-[0_12px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#DEC7A7]/70">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-sm">
-              <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#8B7355] text-sm"></i>
+            <div className="relative w-full xl:max-w-md">
               <input
                 type="text"
-                placeholder="Buscar comprador..."
+                placeholder="Busca por nombre del comprador"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full rounded-xl border border-[#DCC9A6] bg-[#FCFAF6] py-2.5 pl-10 pr-4 text-sm text-[#2C1A0E] placeholder:text-[#9B8A7B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/30"
+                className="w-full rounded-2xl border border-[#D7C0A1] bg-[#F9F4EC] px-4 py-3 text-sm text-[#2F241C] outline-none placeholder:text-[#9B8775] focus:border-[#B78E59]"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              {filtros.map((f, i) => (
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {filtros.map((f) => (
                 <button
-                  key={i}
+                  key={f}
                   onClick={() => setFiltro(f)}
-                  className={`rounded-full px-3 py-2 text-xs font-bold transition-colors ${
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     filtro === f
-                      ? 'bg-[#2C1A0E] text-[#F5ECD7]'
-                      : 'bg-[#F8F3EA] border border-[#E7D9BF] text-[#6B5A4D] hover:bg-[#EFE4CF]'
+                      ? 'bg-[#2F241C] text-[#F9F3EA] shadow-[0_6px_18px_rgba(47,36,28,0.18)]'
+                      : 'bg-[#F5EBDD] text-[#6B5A4D] hover:bg-[#F0E2D0]'
                   }`}
                 >
-                  {f === 'todos' ? 'Todos' :
-                   f === 'pergamino_seco' ? 'Pergamino' :
-                   f === 'especial' ? 'Especial' :
-                   f === 'organico' ? 'Orgánico' : 'Verde'}
+                  {f === 'todos'
+                    ? 'Ver todos'
+                    : f === 'pergamino_seco'
+                    ? 'Pergamino seco'
+                    : f === 'especial'
+                    ? 'Especial'
+                    : f === 'organico'
+                    ? 'Orgánico'
+                    : 'Verde'}
                 </button>
               ))}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="px-5 md:px-8 pb-5">
-  <div className="rounded-2xl border border-[#D9BC81] bg-[linear-gradient(135deg,#FFF8E7_0%,#F3E2B8_100%)] px-5 py-4 shadow-sm">
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="max-w-2xl">
-        <span className="inline-flex items-center rounded-full bg-[#2C1A0E] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#F5ECD7]">
-          Predicción del mercado
-        </span>
-
-        <h2 className="mt-3 text-xl md:text-2xl font-black text-[#2C1A0E]">
-          {cargandoPrediccion
-            ? 'Cargando predicción...'
-            : prediccion
-            ? `Estimado para ${new Date(prediccion.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}`
-            : 'Predicción no disponible'}
-        </h2>
-
-        <p className="mt-2 text-sm text-[#6A4321] leading-relaxed">
-          {cargandoPrediccion
-            ? 'Consultando la proyección más reciente del precio del café.'
-            : prediccion?.mensaje || 'No hay una predicción disponible por el momento.'}
-        </p>
-
-        {!cargandoPrediccion && prediccion && (
-          <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
-              Tendencia: {prediccion.tendencia}
-            </span>
-            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
-              Confianza: {prediccion.confianza}%
-            </span>
-            <span className="rounded-full bg-white/80 border border-[#E7D9BF] px-3 py-1.5 text-[#6B5A4D] font-semibold">
-              Modelo: {prediccion.modelVersion}
-            </span>
-          </div>
-        )}
-      </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-full lg:min-w-[420px]">
-              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
-                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
-                  Precio estimado
-                </p>
-                <p className="mt-2 text-xl font-bold text-[#2C1A0E]">
-                  {cargandoPrediccion || !prediccion
-                    ? '--'
-                    : prediccion.precioestimado.toLocaleString()}
-                </p>
-                <p className="text-xs text-[#8B7355]">COP/carga</p>
-              </div>
-
-              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
-                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
-                  Precio mínimo
-                </p>
-                <p className="mt-2 text-xl font-bold text-[#B42318]">
-                  {cargandoPrediccion || !prediccion
-                    ? '--'
-                    : prediccion.preciominimo.toLocaleString()}
-                </p>
-                <p className="text-xs text-[#8B7355]">COP/carga</p>
-              </div>
-
-              <div className="rounded-2xl bg-white/85 border border-[#E7D9BF] p-4">
-                <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">
-                  Precio máximo
-                </p>
-                <p className="mt-2 text-xl font-bold text-[#2D6A4F]">
-                  {cargandoPrediccion || !prediccion
-                    ? '--'
-                    : prediccion.preciomaximo.toLocaleString()}
-                </p>
-                <p className="text-xs text-[#8B7355]">COP/carga</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Listado */}
-      <div className="px-5 md:px-8 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-[#2C1A0E] font-bold text-lg">Listado de compradores</h2>
-            <p className="text-xs text-[#8B7355] mt-1">Organizados desde el valor mas alto hasta el mas bajo.</p>
-          </div>
-          <span className="hidden md:inline-flex rounded-full bg-white border border-[#E7D9BF] px-3 py-1.5 text-xs font-semibold text-[#6B5A4D]">
-            {preciosFiltrados.length} resultados
-          </span>
-        </div>
-
-        <div className="mb-4 rounded-2xl border border-[#E7D9BF] bg-[#FFF9ED] px-4 py-3">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F3E2B8] text-[#7A4020] text-sm">
-              <i className="fa-solid fa-circle-info"></i>
-            </span>
+        <section className="mt-7">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-[#2C1A0E]">Ten presente</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#6B5A4D]">
-                Los precios pueden cambiar en cualquier momento. Antes de llevar tu café, confirma el valor con el comprador.
+              <h2 className="text-2xl font-black text-[#2F241C]">Compradores de hoy</h2>
+              <p className="text-sm text-[#705F51]">
+                Revisa quién está pagando mejor hoy y compáralo antes de tomar una decisión.
               </p>
             </div>
-          </div>
-        </div>
 
-        {cargando ? (
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] py-12 text-center text-sm text-[#8B7355]">
-            Cargando precios...
+            <span className="self-start rounded-full bg-[#F7EFE4] px-3 py-1 text-xs font-semibold text-[#6B5A4D] ring-1 ring-[#E3D0B8]">
+              {usuario
+                ? `${preciosFiltrados.length} resultados`
+                : `Mostrando ${preciosVisibles.length} de ${preciosFiltrados.length}`}
+            </span>
           </div>
-        ) : preciosFiltrados.length === 0 ? (
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] py-12 text-center">
-            <p className="text-sm font-semibold text-[#2C1A0E]">No se encontraron compradores</p>
-            <p className="mt-1 text-xs text-[#8B7355]">Prueba con otro nombre o cambia el tipo de café.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {preciosFiltrados.map((item, i) => {
-              const porcentaje = mejorPrecio ? Math.round((item.preciocarga / mejorPrecio) * 100) : 0;
-              const medallas = ['🥇', '🥈', '🥉'];
 
-              return (
-                <div key={i} className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5ECD7] text-sm font-bold text-[#7A4020]">
-                        {i < 3 ? medallas[i] : i + 1}
+          {cargando ? (
+            <div className="rounded-[28px] bg-[#F9F4EC] py-12 text-center text-sm text-[#7B6A5C] shadow-[0_10px_24px_rgba(96,73,47,0.06)] ring-1 ring-[#E8D8C2]">
+              Cargando precios...
+            </div>
+          ) : preciosFiltrados.length === 0 ? (
+            <div className="rounded-[28px] bg-[#F9F4EC] py-12 text-center shadow-[0_10px_24px_rgba(96,73,47,0.06)] ring-1 ring-[#E8D8C2]">
+              <p className="font-semibold text-[#2F241C]">
+                No encontramos compradores con ese filtro
+              </p>
+              <p className="mt-1 text-sm text-[#7B6A5C]">
+                Prueba con otro nombre o cambia el tipo de café.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {preciosVisibles.map((item, i) => (
+                <article
+                  key={i}
+                  className="rounded-[28px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)]"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-black text-[#2F241C]">
+                          {item.comprador?.nombreempresa || 'Sin nombre'}
+                        </h3>
+
+                        <span className="rounded-full bg-[#E8D8C1] px-3 py-1 text-xs font-semibold text-[#5D4A3D]">
+                          {item.tipocafe === 'pergamino_seco'
+                            ? 'Compra pergamino'
+                            : item.tipocafe === 'especial'
+                            ? 'Compra café especial'
+                            : item.tipocafe === 'organico'
+                            ? 'Compra café orgánico'
+                            : 'Compra café verde'}
+                        </span>
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm md:text-base font-bold text-[#2C1A0E]">
-                            {item.comprador?.nombreempresa || 'Sin nombre'}
-                          </p>
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                            item.tipocafe === 'especial' ? 'bg-[#F3E8FF] text-[#7E22CE]' :
-                            item.tipocafe === 'organico' ? 'bg-[#E8F5EA] text-[#2D6A4F]' :
-                            item.tipocafe === 'verde' ? 'bg-[#E6F6F0] text-[#147D64]' :
-                            'bg-[#FFF4D6] text-[#9A6700]'
-                          }`}>
-                            {item.tipocafe === 'pergamino_seco' ? 'Pergamino' :
-                             item.tipocafe === 'especial' ? 'Especial' :
-                             item.tipocafe === 'organico' ? 'Orgánico' : 'Verde'}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-[#8B7355]">
-                          {item.comprador?.direccion || 'Dirección no disponible'}
-                        </p>
-                        <p className="mt-2 text-xs text-[#8B7355]">
-                          Actualizado el{' '}
-                          {new Date(item.updatedAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
-                        </p>
-                      </div>
+
+                      <p className="mt-2 text-sm text-[#746456]">
+                        {item.comprador?.direccion || 'Dirección no disponible'}
+                      </p>
+
+                      <p className="mt-2 text-sm font-semibold text-[#5F452C]">
+                        Actualizó su precio el{' '}
+                        {new Date(item.updatedAt).toLocaleDateString('es-CO', {
+                          day: 'numeric',
+                          month: 'long',
+                        })}
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 md:flex md:items-center md:gap-6">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Precio por carga</p>
-                        <p className="mt-1 text-xl font-bold text-[#2C1A0E]">{item.preciocarga?.toLocaleString()}</p>
-                        <p className="text-xs text-[#8B7355]">COP</p>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 xl:gap-6">
+                      <div className="min-w-[150px] rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
+                          Paga por carga
+                        </p>
+                        <p className="mt-1 text-2xl font-black text-[#2F241C]">
+                          ${item.preciocarga?.toLocaleString()}
+                        </p>
                       </div>
 
-                      {/* Precio por kilo - solo para usuarios logueados */}
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Precio por kilo</p>
+                      <div className="min-w-[150px] rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
+                          Paga por kilo
+                        </p>
+
                         {usuario ? (
-                          <>
-                            <p className="mt-1 text-base font-semibold text-[#2C1A0E]">{item.preciokg?.toLocaleString()}</p>
-                            <p className="text-xs text-[#8B7355]">COP/kg</p>
-                          </>
+                          <p className="mt-1 text-lg font-bold text-[#2F241C]">
+                            ${item.preciokg?.toLocaleString()}
+                          </p>
                         ) : (
-                          <Link to="/login" className="mt-1 flex items-center gap-1 text-xs text-[#C8A96E] font-semibold hover:underline">
-                            <i className="fa-solid fa-lock text-xs"></i> Iniciar sesión
+                          <Link
+                            to="/login"
+                            className="mt-1 inline-block text-sm font-semibold text-[#8A5A2B]"
+                          >
+                            Disponible al iniciar sesión
                           </Link>
                         )}
                       </div>
+
+                      {usuario && (
+                        <Link
+                          to={`/comprador/${item.comprador?._id}`}
+                          className="inline-flex w-full items-center justify-center rounded-2xl bg-[#2F241C] px-4 py-3 text-sm font-semibold text-[#F7F1E8] transition hover:bg-[#443126] md:w-auto"
+                        >
+                          Ver detalles
+                        </Link>
+                      )}
                     </div>
                   </div>
+                </article>
+              ))}
 
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-[#8B7355]">
-                      <span>Frente al mejor valor del dia</span>
-                      <span>{porcentaje}%</span>
-                    </div>
-                    <div className="mt-1.5 h-2 rounded-full bg-[#F1E7D3] overflow-hidden">
-                      <div className="h-full rounded-full bg-[#B8894F]" style={{ width: `${porcentaje}%` }}></div>
-                    </div>
+              {!usuario && preciosFiltrados.length > 3 && (
+                <div className="rounded-[28px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_100%)] p-6 text-[#F8F2E8] shadow-[0_16px_36px_rgba(47,36,28,0.18)]">
+                  <p className="text-sm font-semibold text-[#DCC9AF]">
+                    Estás viendo una muestra del mercado
+                  </p>
+
+                  <h3 className="mt-2 text-2xl font-black">
+                    Inicia sesión para ver todos los compradores
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-relaxed text-[#E8DCCB]">
+                    También podrás consultar el precio por kilo y ver más detalles de cada comprador antes de vender.
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center justify-center rounded-2xl bg-[#F3E5CE] px-4 py-3 text-sm font-semibold text-[#2F241C] transition hover:bg-[#F7EBD8]"
+                    >
+                      Iniciar sesión
+                    </Link>
+
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center justify-center rounded-2xl border border-[#CDB79A] px-4 py-3 text-sm font-semibold text-[#F8F2E8] transition hover:bg-white/5"
+                    >
+                      Crear cuenta
+                    </Link>
                   </div>
-
-                  {/* Botón ver detalle - solo para logueados */}
-                  {usuario && (
-                    <div className="mt-3 flex justify-end">
-                      <Link
-                        to={`/comprador/${item.comprador?._id}`}
-                        className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-4 py-2 rounded-xl font-semibold hover:bg-[#E0D0B0] transition-colors">
-                        <i className="fa-solid fa-eye mr-1"></i> Ver detalles
-                      </Link>
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <article className="rounded-[28px] bg-[linear-gradient(135deg,#F7EFE4_0%,#EEDFCA_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E3D0B8]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
+              Cómo está el clima hoy
+            </p>
+            <p className="mt-3 text-base font-bold text-[#2F241C]">
+              {cargandoClima ? 'Cargando clima...' : clima?.actual?.descripcion || 'Sin datos'}
+            </p>
+            <p className="mt-2 text-sm text-[#6D5E53]">{obtenerRecomendacionClima()}</p>
+          </article>
+
+          <article className="rounded-[28px] bg-[linear-gradient(135deg,#D9E0C8_0%,#EEF1E3_100%)] p-5 shadow-[0_10px_24px_rgba(80,95,52,0.10)] ring-1 ring-[#CBD3B8]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#66714C]">
+              Antes de vender
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-[#556041]">
+              Los precios pueden cambiar durante el día. Antes de llevar tu café,
+              confirma el valor directamente con el comprador.
+            </p>
+          </article>
+        </section>
       </div>
     </div>
-  )
+  );
 }
 
 export default Precios;
