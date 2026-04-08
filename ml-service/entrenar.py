@@ -30,7 +30,7 @@ print('Columnas del archivo TRM: ' + str(list(df_trm.columns)))
 
 # Renombrar columnas al formato estandar
 df_trm = df_trm.rename(columns={
-    'DateTime': 'ds',
+    'Periodo(MMM DD, AAAA)': 'ds',
     'Tasa Representativa del Mercado (TRM)': 'trm'
 })
 df_trm['ds'] = pd.to_datetime(df_trm['ds'])

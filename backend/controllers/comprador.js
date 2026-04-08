@@ -12,20 +12,44 @@ export const getcompradores = async (req, res) => {
 export const createcomprador = async (req, res) => {
     try {
         const { nombreempresa, direccion, telefono, horario } = req.body;
+
+        if (!nombreempresa || !direccion || !telefono || !horario) {
+            return res.status(400).json({
+                message: "Nombre de empresa, dirección, teléfono y horario son obligatorios"
+            });
+        }
+
+        const nombreempresaLimpio = nombreempresa.trim();
+        const direccionLimpia = direccion.trim();
+        const telefonoLimpio = telefono.trim();
+        const horarioLimpio = horario.trim();
+
+        if (!nombreempresaLimpio || !direccionLimpia || !telefonoLimpio || !horarioLimpio) {
+            return res.status(400).json({
+                message: "Todos los campos del perfil comprador deben estar completos"
+            });
+        }
+
         const usuario = req.user.id;
         const yaexiste = await CompradorModel.findOne({ usuario });
-        if (yaexiste) return res.status(400).json({ message: "Este usuario ya tiene un perfil de comprador" });
+
+        if (yaexiste) {
+            return res.status(400).json({
+                message: "Este usuario ya tiene un perfil de comprador"
+            });
+        }
 
         const nuevoComprador = new CompradorModel({
             usuario,
-            nombreempresa,
-            direccion,
-            telefono,
-            horario,
+            nombreempresa: nombreempresaLimpio,
+            direccion: direccionLimpia,
+            telefono: telefonoLimpio,
+            horario: horarioLimpio,
         });
 
         await nuevoComprador.save();
-        res.status(201).json({ 
+
+        res.status(201).json({
             comprador: nuevoComprador,
             message: "Perfil creado. Tu cuenta está pendiente de aprobación."
         });
@@ -53,10 +77,45 @@ export const updatecomprador = async (req, res) => {
             });
         }
 
-        compradorExistente.nombreempresa = nombreempresa ?? compradorExistente.nombreempresa;
-        compradorExistente.direccion = direccion ?? compradorExistente.direccion;
-        compradorExistente.telefono = telefono ?? compradorExistente.telefono;
-        compradorExistente.horario = horario ?? compradorExistente.horario;
+        if (nombreempresa !== undefined) {
+            const nombreempresaLimpio = nombreempresa.trim();
+            if (!nombreempresaLimpio) {
+                return res.status(400).json({
+                    message: "El nombre de la empresa no puede estar vacío"
+                });
+            }
+            compradorExistente.nombreempresa = nombreempresaLimpio;
+        }
+
+        if (direccion !== undefined) {
+            const direccionLimpia = direccion.trim();
+            if (!direccionLimpia) {
+                return res.status(400).json({
+                    message: "La dirección no puede estar vacía"
+                });
+            }
+            compradorExistente.direccion = direccionLimpia;
+        }
+
+        if (telefono !== undefined) {
+            const telefonoLimpio = telefono.trim();
+            if (!telefonoLimpio) {
+                return res.status(400).json({
+                    message: "El teléfono no puede estar vacío"
+                });
+            }
+            compradorExistente.telefono = telefonoLimpio;
+        }
+
+        if (horario !== undefined) {
+            const horarioLimpio = horario.trim();
+            if (!horarioLimpio) {
+                return res.status(400).json({
+                    message: "El horario no puede estar vacío"
+                });
+            }
+            compradorExistente.horario = horarioLimpio;
+        }
 
         await compradorExistente.save();
 
@@ -65,6 +124,7 @@ export const updatecomprador = async (req, res) => {
         res.status(400).json({ message: "Error al actualizar comprador", error: error.message });
     }
 };
+
 
 
 export const deletecomprador = async (req, res) => {
