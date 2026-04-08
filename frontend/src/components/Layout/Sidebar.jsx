@@ -75,26 +75,30 @@ function Sidebar() {
         ))}
 
         {/* Perfil y logout abajo */}
-        <div className="mt-auto flex flex-col items-center gap-2">
-          <div className="relative group w-10 h-10 rounded-full bg-[#C8A96E] flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:bg-[#B8994E] transition-colors">
-            {iniciales}
-            <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
-              {usuario?.nombre} {usuario?.apellido}
-            </span>
+          {usuario && (
+          <div className="mt-auto flex flex-col items-center gap-2">
+            <div className="relative group w-10 h-10 rounded-full bg-[#C8A96E] flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:bg-[#B8994E] transition-colors">
+              {iniciales}
+              <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
+                {usuario?.nombre} {usuario?.apellido}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setMostrarModal(true)}
+              className="relative group w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-900 hover:text-red-300 transition-all duration-200"
+            >
+              <i className="fa-solid fa-right-from-bracket text-sm"></i>
+              <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
+                Cerrar sesión
+              </span>
+            </button>
           </div>
-          <button
-            onClick={() => setMostrarModal(true)}
-            className="relative group w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-900 hover:text-red-300 transition-all duration-200">
-            <i className="fa-solid fa-right-from-bracket text-sm"></i>
-            <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
-              Cerrar sesión
-            </span>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Modal cerrar sesión */}
-      {mostrarModal && (
+      {usuario && mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
             <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">
