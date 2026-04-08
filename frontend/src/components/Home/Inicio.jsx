@@ -120,7 +120,7 @@ function Inicio() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5ECD7]">
+    <div className="w-full bg-[#F5ECD7]">
       <Navbar />
 
       {/* Hero Section */}

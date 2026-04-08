@@ -7,6 +7,7 @@ import GoogleAuth from "./components/Auth/GoogleAuth.jsx";
 import CompletarPerfil from "./components/Auth/CompletarPerfil.jsx";
 import ForgotPassword from "./components/Auth/ForgotPassword.jsx";
 import VerifyCode from "./components/Auth/VerifyCode.jsx";
+import Contacto from './components/Home/Contacto.jsx';
 
 // Páginas públicas
 import Inicio from "./components/Home/Inicio.jsx";
@@ -55,6 +56,18 @@ function App() {
         <Route path="/completar-perfil" element={<CompletarPerfil />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
+        <Route path="/contacto" element={<Contacto />} />
+
+
+        <Route path="/noticias" element={
+          <LayoutPublico>
+            <Noticias />
+          </LayoutPublico>
+        } />
+
+        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
+        <Route path="/noticias" element={<Noticias />} />
+
         <Route path="/noticias" element={<Noticias />} />
 
         {/* ── PRODUCTOR ── */}
