@@ -24,14 +24,22 @@ export default function PerfilAdmin() {
   const [compradores, setCompradores] = useState([]);
   const [reseñas, setReseñas] = useState([]);
   const [reseñasPlataforma, setReseñasPlataforma] = useState([]);
+  const [noticias, setNoticias] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [cargandoReseñas, setCargandoReseñas] = useState(false);
   const [cargandoPlataforma, setCargandoPlataforma] = useState(false);
+  const [cargandoNoticias, setCargandoNoticias] = useState(false);
   const [filtroUsuarios, setFiltroUsuarios] = useState('todos');
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalEliminarReseña, setModalEliminarReseña] = useState(null);
   const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
+  const [modalEliminarNoticia, setModalEliminarNoticia] = useState(null);
+  const [mostrarFormNoticia, setMostrarFormNoticia] = useState(false);
+  const [noticiaEditar, setNoticiaEditar] = useState(null);
+  const [formNoticia, setFormNoticia] = useState({
+    titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: ''
+  });
 
   useEffect(() => {
     if (usuario) {
@@ -47,6 +55,9 @@ export default function PerfilAdmin() {
     if (pestana === 'resenas') {
       obtenerTodasReseñas();
       obtenerReseñasPlataforma();
+    }
+    if (pestana === 'noticias') {
+      obtenerNoticias();
     }
   }, [pestana, API_URL, token]);
 
@@ -115,6 +126,18 @@ export default function PerfilAdmin() {
     }
   };
 
+  const obtenerNoticias = async () => {
+    setCargandoNoticias(true);
+    try {
+      const { data } = await axios.get(`${API_URL}/api/noticias`);
+      setNoticias(data);
+    } catch {
+      mostrarMensaje('error', 'Error al obtener noticias');
+    } finally {
+      setCargandoNoticias(false);
+    }
+  };
+
   const handleEliminarReseña = async () => {
     try {
       await axios.delete(`${API_URL}/api/resenas/${modalEliminarReseña}`, {
@@ -151,6 +174,55 @@ export default function PerfilAdmin() {
     } catch {
       mostrarMensaje('error', 'Error al eliminar reseña');
     }
+  };
+
+  const handleGuardarNoticia = async (e) => {
+    e.preventDefault();
+    try {
+      if (noticiaEditar) {
+        await axios.put(`${API_URL}/api/noticias/${noticiaEditar._id}`, formNoticia, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        mostrarMensaje('exito', 'Noticia actualizada correctamente');
+      } else {
+        await axios.post(`${API_URL}/api/noticias`, formNoticia, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        mostrarMensaje('exito', 'Noticia publicada correctamente');
+      }
+      setMostrarFormNoticia(false);
+      setNoticiaEditar(null);
+      setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' });
+      obtenerNoticias();
+    } catch {
+      mostrarMensaje('error', 'Error al guardar noticia');
+    }
+  };
+
+  const handleEliminarNoticia = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/noticias/${modalEliminarNoticia}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      mostrarMensaje('exito', 'Noticia eliminada correctamente');
+      setModalEliminarNoticia(null);
+      obtenerNoticias();
+    } catch {
+      mostrarMensaje('error', 'Error al eliminar noticia');
+    }
+  };
+
+  const abrirEditar = (noticia) => {
+    setNoticiaEditar(noticia);
+    setFormNoticia({
+      titulo: noticia.titulo,
+      resumen: noticia.resumen,
+      contenido: noticia.contenido,
+      categoria: noticia.categoria,
+      fuente: noticia.fuente || '',
+      imagen: noticia.imagen || '',
+    });
+    setMostrarFormNoticia(true);
   };
 
   const handleAprobarComprador = async (usuarioId) => {
@@ -319,6 +391,11 @@ export default function PerfilAdmin() {
               </span>
             )}
           </button>
+          <button onClick={() => setPestana('noticias')}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'noticias' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
+            <i className="fa-solid fa-newspaper"></i>
+            Noticias
+          </button>
         </div>
 
         {/* PESTAÑA PERFIL */}
@@ -370,7 +447,7 @@ export default function PerfilAdmin() {
             <div className="mt-6 bg-[#2C1A0E]/5 border border-[#C8A96E]/20 rounded-2xl p-5">
               <p className="text-xs font-bold text-[#7A4020] uppercase mb-3">Permisos de administrador</p>
               <div className="grid grid-cols-2 gap-2">
-                {['Gestionar usuarios', 'Aprobar compradores', 'Ver todos los precios', 'Gestionar reseñas'].map((p, i) => (
+                {['Gestionar usuarios', 'Aprobar compradores', 'Publicar noticias', 'Gestionar reseñas'].map((p, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-[#2C1A0E]">
                     <span className="text-green-500">✓</span> {p}
                   </div>
@@ -475,8 +552,6 @@ export default function PerfilAdmin() {
         {/* PESTAÑA RESEÑAS */}
         {pestana === 'resenas' && (
           <div className="space-y-6">
-
-            {/* Reseñas de compradores */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de compradores</h3>
@@ -503,9 +578,7 @@ export default function PerfilAdmin() {
                             </span>
                             <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
                           </div>
-                          <p className="text-[#2C1A0E] text-sm font-semibold">
-                            {r.productor?.nombre} {r.productor?.apellido}
-                          </p>
+                          <p className="text-[#2C1A0E] text-sm font-semibold">{r.productor?.nombre} {r.productor?.apellido}</p>
                           <p className="text-gray-400 text-xs mb-2">
                             {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </p>
@@ -531,7 +604,6 @@ export default function PerfilAdmin() {
               )}
             </div>
 
-            {/* Reseñas de la plataforma */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de la plataforma</h3>
@@ -591,11 +663,146 @@ export default function PerfilAdmin() {
                 </div>
               )}
             </div>
+          </div>
+        )}
 
+        {/* PESTAÑA NOTICIAS */}
+        {pestana === 'noticias' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[#2C1A0E] font-bold text-lg">Gestionar noticias</h3>
+              <button
+                onClick={() => { setNoticiaEditar(null); setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' }); setMostrarFormNoticia(true); }}
+                className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
+                <i className="fa-solid fa-plus"></i> Nueva noticia
+              </button>
+            </div>
+
+            {cargandoNoticias ? (
+              <div className="text-center py-8 text-gray-400">Cargando noticias...</div>
+            ) : noticias.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+                <i className="fa-solid fa-newspaper text-gray-200 text-4xl mb-3"></i>
+                <p className="text-gray-400 text-sm">No hay noticias publicadas aún</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {noticias.map((n, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                    {n.imagen ? (
+                      <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center flex-shrink-0 text-2xl">
+                        📰
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#FFF8E7] text-[#C8A96E] border border-[#C8A96E]/30 font-semibold capitalize">
+                          {n.categoria}
+                        </span>
+                        <span className="text-gray-400 text-xs">
+                          {new Date(n.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <p className="text-[#2C1A0E] font-semibold text-sm leading-snug truncate">{n.titulo}</p>
+                      <p className="text-gray-400 text-xs mt-1 line-clamp-2">{n.resumen}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <button onClick={() => abrirEditar(n)}
+                        className="bg-[#F5ECD7] text-[#2C1A0E] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
+                        <i className="fa-solid fa-pen"></i>
+                      </button>
+                      <button onClick={() => setModalEliminarNoticia(n._id)}
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors text-center">
+                        <i className="fa-solid fa-trash text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
       </div>
+
+      {/* Modal crear/editar noticia */}
+      {mostrarFormNoticia && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[#2C1A0E] font-bold text-lg">
+                {noticiaEditar ? 'Editar noticia' : 'Nueva noticia'}
+              </h3>
+              <button onClick={() => setMostrarFormNoticia(false)} className="text-gray-400 hover:text-gray-600">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <form onSubmit={handleGuardarNoticia} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Título</label>
+                <input type="text" required value={formNoticia.titulo}
+                  onChange={e => setFormNoticia({ ...formNoticia, titulo: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
+                  placeholder="Título de la noticia" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Categoría</label>
+                <select value={formNoticia.categoria}
+                  onChange={e => setFormNoticia({ ...formNoticia, categoria: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]">
+                  <option value="mercado">📈 Precios del café</option>
+                  <option value="internacional">🌎 Mercado internacional</option>
+                  <option value="clima">🌧️ Clima y cosechas</option>
+                  <option value="fnc">🏛️ Federación Cafeteros</option>
+                  <option value="produccion">🌱 Producción</option>
+                  <option value="consejos">💡 Consejos para caficultores</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Resumen</label>
+                <textarea required value={formNoticia.resumen}
+                  onChange={e => setFormNoticia({ ...formNoticia, resumen: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-20"
+                  placeholder="Resumen breve de la noticia" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contenido</label>
+                <textarea required value={formNoticia.contenido}
+                  onChange={e => setFormNoticia({ ...formNoticia, contenido: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-32"
+                  placeholder="Contenido completo de la noticia" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Fuente (opcional)</label>
+                <input type="text" value={formNoticia.fuente}
+                  onChange={e => setFormNoticia({ ...formNoticia, fuente: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
+                  placeholder="Ej: FNC Colombia" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">URL de imagen (opcional)</label>
+                <input type="text" value={formNoticia.imagen}
+                  onChange={e => setFormNoticia({ ...formNoticia, imagen: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
+                  placeholder="https://..." />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setMostrarFormNoticia(false)}
+                  className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit"
+                  className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+                  {noticiaEditar ? 'Guardar cambios' : 'Publicar noticia'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal eliminar reseña comprador */}
       {modalEliminarReseña && (
@@ -606,7 +813,7 @@ export default function PerfilAdmin() {
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
-            <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer. La reseña será eliminada permanentemente.</p>
+            <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3">
               <button onClick={() => setModalEliminarReseña(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -637,6 +844,30 @@ export default function PerfilAdmin() {
                 Cancelar
               </button>
               <button onClick={handleEliminarPlataforma}
+                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal eliminar noticia */}
+      {modalEliminarNoticia && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fa-solid fa-newspaper text-red-400 text-2xl"></i>
+            </div>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar noticia?</h3>
+            <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setModalEliminarNoticia(null)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleEliminarNoticia}
                 className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
                 Eliminar
               </button>

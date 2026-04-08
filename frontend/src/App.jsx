@@ -55,18 +55,7 @@ function App() {
         <Route path="/completar-perfil" element={<CompletarPerfil />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
-<<<<<<< HEAD
-
-        <Route path="/noticias" element={
-          <LayoutPublico>
-            <Noticias />
-          </LayoutPublico>
-        } />
-
-        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
-=======
         <Route path="/noticias" element={<Noticias />} />
->>>>>>> 36533fbd2e1e3298404c8d871c7d5ce9762ab151
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
