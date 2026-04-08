@@ -101,7 +101,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
                       <div className="flex-1">
                         <p className={`text-xs font-bold ${activa ? 'text-[#3D1F0F]' : 'text-gray-600'}`}>{cat.label}</p>
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${activa ? 'bg-[#C8A96E] border-[#C8A96E]' : 'border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${activa ? 'bg-[#C8A96E] border-[#C8A96E]' : 'border-gray-300'}`}>
                         {activa && <span className="text-white text-xs font-bold">✓</span>}
                       </div>
                     </button>
