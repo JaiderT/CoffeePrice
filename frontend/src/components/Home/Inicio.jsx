@@ -388,13 +388,15 @@ function Inicio() {
                 Ir a mi panel
               </Link>
             ) : (
-              <Link to="/register" className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors">
-                ☕ Crear cuenta gratis
-              </Link>
+              <>
+                <Link to="/register" className="bg-[#C8A96E] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#B8994E] transition-colors">
+                  ☕ Crear cuenta gratis
+                </Link>
+                <Link to="/precios" className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-[#3D1F0F] transition-colors">
+                  Ver precios sin registrarse →
+                </Link>
+              </>
             )}
-            <Link to="/precios" className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-[#3D1F0F] transition-colors">
-              Ver precios sin registrarse →
-            </Link>
           </div>
           <p className="text-gray-500 text-xs mt-6">✓ Gratis para caficultores · ✓ Sin tarjeta de crédito · ✓ Cancela cuando quieras</p>
         </div>

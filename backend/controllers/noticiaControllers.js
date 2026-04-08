@@ -37,11 +37,11 @@ export const createNoticia = async (req, res) => {
 
 export const updateNoticia = async (req, res) => {
     try {
-        const { titulo, resumen, contenido, categoria, fuente } = req.body;
-
+        const { titulo, resumen, contenido, categoria, fuente, imagen } = req.body;
+        
         const noticia = await Noticia.findByIdAndUpdate(
             req.params.id,
-            { titulo, resumen, contenido, categoria, fuente },
+            { titulo, resumen, contenido, categoria, fuente, imagen },
             { new: true, runValidators: true }
         );
 
