@@ -34,6 +34,14 @@ const prediccionSchema = new mongoose.Schema(
         min: 0,
         max: 100,
     },
+    generatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    modelVersion: {
+        type: String,
+        default: "prophet-v1",
+    },
 },
     { timestamps: true }
 );

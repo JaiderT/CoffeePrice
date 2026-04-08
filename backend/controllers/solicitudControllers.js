@@ -82,12 +82,39 @@ export const createSolicitud = async (req, res) => {
     try {
         const { comprador, cantidadcargas, tipocafe, mensaje } = req.body;
 
+        if (!comprador || cantidadcargas === undefined || !tipocafe) {
+            return res.status(400).json({
+                message: "Comprador, cantidad de cargas y tipo de café son obligatorios"
+            });
+        }
+
+        const cantidadNumerica = Number(cantidadcargas);
+        const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+
+        if (Number.isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
+            return res.status(400).json({
+                message: "La cantidad de cargas debe ser un número mayor a 0"
+            });
+        }
+
+        if (!tiposPermitidos.includes(tipocafe)) {
+            return res.status(400).json({
+                message: "Tipo de café no válido"
+            });
+        }
+
+        const compradorExistente = await Comprador.findById(comprador);
+
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
+
         const solicitud = new Solicitud({
             productor: req.user.id,
             comprador,
-            cantidadcargas,
+            cantidadcargas: cantidadNumerica,
             tipocafe,
-            mensaje
+            mensaje: mensaje?.trim() || ""
         });
 
         await solicitud.save();
@@ -107,6 +134,9 @@ export const responderSolicitud = async (req, res) => {
                 message: "La respuesta del comprador es obligatoria"
             });
         }
+
+        const respuestaLimpia = respuestaComprador.trim();
+
 
         const solicitud = await Solicitud.findById(req.params.id);
 
@@ -129,7 +159,7 @@ export const responderSolicitud = async (req, res) => {
             });
         }
 
-        solicitud.respuestaComprador = respuestaComprador;
+        solicitud.respuestaComprador = respuestaLimpia;
         solicitud.fechaRespuesta = new Date();
         solicitud.estado = "respondida";
 

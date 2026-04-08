@@ -5,8 +5,35 @@ import jwt from "jsonwebtoken";
 export const register = async (req, res) => {
   try {
     const { nombre, apellido, email, password, celular, rol } = req.body;
+        if (!nombre || !apellido || !email || !password || !rol) {
+          return res.status(400).json({
+            message: "Nombre, apellido, correo, contraseña y rol son obligatorios"
+          });
+        }
 
-    const existeUsuario = await Usuario.findOne({ email });
+        const emailNormalizado = email.trim().toLowerCase();
+        const rolesPermitidos = ["productor", "comprador"];
+
+        if (!rolesPermitidos.includes(rol)) {
+          return res.status(400).json({
+            message: "Rol no válido"
+          });
+        }
+
+        if (password.length < 8) {
+          return res.status(400).json({
+            message: "La contraseña debe tener al menos 8 caracteres"
+          });
+        }
+
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailValido.test(emailNormalizado)) {
+          return res.status(400).json({
+            message: "Correo electrónico no válido"
+          });
+        }
+
+    const existeUsuario = await Usuario.findOne({ email: emailNormalizado });
     if (existeUsuario) {
       return res.status(400).json({ message: "El correo ya está registrado" });
     }
@@ -14,11 +41,16 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const estado = rol === 'comprador' ? 'pendiente' : 'activo';
 
-    const newUsuario = new Usuario({
-      nombre, apellido, email,
+    const newUsuario = new Usuario({ 
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      email: emailNormalizado,
       password: hashedPassword,
-      celular, rol, estado
+      celular,
+      rol,
+      estado
     });
+
     await newUsuario.save();
 
     res.status(201).json({ message: "Usuario registrado exitosamente" });
@@ -31,8 +63,23 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+      if (!email || !password) {
+    return res.status(400).json({
+      message: "Correo y contraseña son obligatorios"
+    });
+  }
 
-    const user = await Usuario.findOne({ email });
+  const emailNormalizado = email.trim().toLowerCase();
+
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailValido.test(emailNormalizado)) {
+    return res.status(400).json({
+      message: "Correo electrónico no válido"
+    });
+  }
+
+
+    const user = await Usuario.findOne({ email: emailNormalizado });
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
