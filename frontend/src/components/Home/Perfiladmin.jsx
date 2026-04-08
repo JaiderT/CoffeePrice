@@ -23,11 +23,15 @@ export default function PerfilAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [compradores, setCompradores] = useState([]);
   const [reseñas, setReseñas] = useState([]);
+  const [reseñasPlataforma, setReseñasPlataforma] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [cargandoReseñas, setCargandoReseñas] = useState(false);
+  const [cargandoPlataforma, setCargandoPlataforma] = useState(false);
   const [filtroUsuarios, setFiltroUsuarios] = useState('todos');
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [modalEliminarReseña, setModalEliminarReseña] = useState(null);
+  const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
 
   useEffect(() => {
     if (usuario) {
@@ -42,6 +46,7 @@ export default function PerfilAdmin() {
     }
     if (pestana === 'resenas') {
       obtenerTodasReseñas();
+      obtenerReseñasPlataforma();
     }
   }, [pestana, API_URL, token]);
 
@@ -96,14 +101,53 @@ export default function PerfilAdmin() {
     }
   };
 
-  const handleEliminarReseña = async (id) => {
-    if (!window.confirm('¿Eliminar esta reseña permanentemente?')) return;
+  const obtenerReseñasPlataforma = async () => {
+    setCargandoPlataforma(true);
     try {
-      await axios.delete(`${API_URL}/api/resenas/${id}`, {
+      const { data } = await axios.get(`${API_URL}/api/resenas-plataforma/todas`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReseñasPlataforma(data);
+    } catch {
+      mostrarMensaje('error', 'Error al obtener reseñas de plataforma');
+    } finally {
+      setCargandoPlataforma(false);
+    }
+  };
+
+  const handleEliminarReseña = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/resenas/${modalEliminarReseña}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       mostrarMensaje('exito', 'Reseña eliminada correctamente');
+      setModalEliminarReseña(null);
       obtenerTodasReseñas();
+    } catch {
+      mostrarMensaje('error', 'Error al eliminar reseña');
+    }
+  };
+
+  const handleAprobarPlataforma = async (id) => {
+    try {
+      await axios.put(`${API_URL}/api/resenas-plataforma/${id}/aprobar`, {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      mostrarMensaje('exito', 'Reseña aprobada correctamente');
+      obtenerReseñasPlataforma();
+    } catch {
+      mostrarMensaje('error', 'Error al aprobar reseña');
+    }
+  };
+
+  const handleEliminarPlataforma = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/resenas-plataforma/${modalEliminarPlataforma}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      mostrarMensaje('exito', 'Reseña eliminada correctamente');
+      setModalEliminarPlataforma(null);
+      obtenerReseñasPlataforma();
     } catch {
       mostrarMensaje('error', 'Error al eliminar reseña');
     }
@@ -269,6 +313,11 @@ export default function PerfilAdmin() {
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'resenas' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-star"></i>
             Gestionar reseñas
+            {reseñasPlataforma.filter(r => !r.aprobada).length > 0 && (
+              <span className="bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                {reseñasPlataforma.filter(r => !r.aprobada).length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -425,72 +474,182 @@ export default function PerfilAdmin() {
 
         {/* PESTAÑA RESEÑAS */}
         {pestana === 'resenas' && (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[#2C1A0E] font-bold">Todas las reseñas</h3>
-              <span className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-semibold">
-                {reseñas.length} reseñas
-              </span>
+          <div className="space-y-6">
+
+            {/* Reseñas de compradores */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-[#2C1A0E] font-bold">Reseñas de compradores</h3>
+                <span className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-semibold">
+                  {reseñas.length} reseñas
+                </span>
+              </div>
+              {cargandoReseñas ? (
+                <div className="text-center py-8 text-gray-400">Cargando reseñas...</div>
+              ) : reseñas.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
+                  <p className="text-gray-400 text-sm">No hay reseñas aún</p>
+                </div>
+              ) : (
+                <div className="p-4 space-y-3">
+                  {reseñas.map((r, i) => (
+                    <div key={i} className="bg-[#F5ECD7]/50 rounded-xl p-4 hover:bg-[#F5ECD7] transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold text-[#C8A96E] bg-[#FFF8E7] px-2 py-0.5 rounded-full border border-[#C8A96E]/30">
+                              🏢 {r.compradorNombre}
+                            </span>
+                            <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
+                          </div>
+                          <p className="text-[#2C1A0E] text-sm font-semibold">
+                            {r.productor?.nombre} {r.productor?.apellido}
+                          </p>
+                          <p className="text-gray-400 text-xs mb-2">
+                            {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          {r.comentario && <p className="text-[#6B5A4D] text-sm mb-2">{r.comentario}</p>}
+                          {r.tags?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {r.tags.map((tag, j) => (
+                                <span key={j} className="bg-[#FFF8E7] text-[#7A4020] text-xs px-2 py-0.5 rounded-full border border-[#C8A96E]/30">
+                                  {TAGS.find(t => t.value === tag)?.label || tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => setModalEliminarReseña(r._id)}
+                          className="ml-4 text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                          <i className="fa-solid fa-trash text-sm"></i>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {cargandoReseñas ? (
-              <div className="text-center py-8 text-gray-400">Cargando reseñas...</div>
-            ) : reseñas.length === 0 ? (
-              <div className="text-center py-8">
-                <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
-                <p className="text-gray-400 text-sm">No hay reseñas aún</p>
+            {/* Reseñas de la plataforma */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-[#2C1A0E] font-bold">Reseñas de la plataforma</h3>
+                <div className="flex items-center gap-2">
+                  <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-semibold">
+                    {reseñasPlataforma.filter(r => !r.aprobada).length} pendientes
+                  </span>
+                  <span className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-semibold">
+                    {reseñasPlataforma.length} total
+                  </span>
+                </div>
               </div>
-            ) : (
-              <div className="p-4 space-y-3">
-                {reseñas.map((r, i) => (
-                  <div key={i} className="bg-[#F5ECD7]/50 rounded-xl p-4 hover:bg-[#F5ECD7] transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-[#C8A96E] bg-[#FFF8E7] px-2 py-0.5 rounded-full border border-[#C8A96E]/30">
-                            🏢 {r.compradorNombre}
-                          </span>
-                          <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
-                        </div>
-                        <p className="text-[#2C1A0E] text-sm font-semibold">
-                          {r.productor?.nombre} {r.productor?.apellido}
-                        </p>
-                        <p className="text-gray-400 text-xs mb-2">
-                          {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </p>
-                        {r.comentario && (
-                          <p className="text-[#6B5A4D] text-sm mb-2">{r.comentario}</p>
-                        )}
-                        {r.tags?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {r.tags.map((tag, j) => (
-                              <span key={j} className="bg-[#FFF8E7] text-[#7A4020] text-xs px-2 py-0.5 rounded-full border border-[#C8A96E]/30">
-                                {TAGS.find(t => t.value === tag)?.label || tag}
-                              </span>
-                            ))}
+              {cargandoPlataforma ? (
+                <div className="text-center py-8 text-gray-400">Cargando reseñas...</div>
+              ) : reseñasPlataforma.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
+                  <p className="text-gray-400 text-sm">No hay reseñas de la plataforma aún</p>
+                </div>
+              ) : (
+                <div className="p-4 space-y-3">
+                  {reseñasPlataforma.map((r, i) => (
+                    <div key={i} className={`rounded-xl p-4 transition-colors ${r.aprobada ? 'bg-green-50 border border-green-100' : 'bg-yellow-50 border border-yellow-100'}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${r.aprobada ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'}`}>
+                              {r.aprobada ? '✓ Aprobada' : '⏳ Pendiente'}
+                            </span>
+                            <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
                           </div>
-                        )}
+                          <p className="text-[#2C1A0E] text-sm font-semibold">
+                            {r.usuario?.nombre} {r.usuario?.apellido}
+                            <span className="text-gray-400 text-xs font-normal ml-2">· {r.usuario?.rol}</span>
+                          </p>
+                          {r.lugar && <p className="text-gray-400 text-xs">{r.lugar}</p>}
+                          <p className="text-gray-400 text-xs mb-2">
+                            {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-[#6B5A4D] text-sm">{r.comentario}</p>
+                        </div>
+                        <div className="flex flex-col gap-2 ml-4">
+                          {!r.aprobada && (
+                            <button onClick={() => handleAprobarPlataforma(r._id)}
+                              className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
+                              ✓ Aprobar
+                            </button>
+                          )}
+                          <button onClick={() => setModalEliminarPlataforma(r._id)}
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors text-center">
+                            <i className="fa-solid fa-trash text-sm"></i>
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => handleEliminarReseña(r._id)}
-                        className="ml-4 text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                        title="Eliminar reseña">
-                        <i className="fa-solid fa-trash text-sm"></i>
-                      </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 
       </div>
+
+      {/* Modal eliminar reseña comprador */}
+      {modalEliminarReseña && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
+            </div>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
+            <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer. La reseña será eliminada permanentemente.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setModalEliminarReseña(null)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleEliminarReseña}
+                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal eliminar reseña plataforma */}
+      {modalEliminarPlataforma && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
+            </div>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
+            <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setModalEliminarPlataforma(null)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleEliminarPlataforma}
+                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
 
-function Campo({ label, valor }) { 
+function Campo({ label, valor }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-semibold text-gray-400 uppercase">{label}</span>
