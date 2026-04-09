@@ -12,22 +12,26 @@ const TAGS = [
   { value: 'bascula_justa', label: 'Báscula justa' },
 ];
 
+const TIPOS_CAFE = [
+  { value: 'pergamino_seco', label: 'Pergamino seco', color: 'bg-amber-50 text-amber-800 border-amber-200' },
+  { value: 'especial', label: 'Especial / Fino', color: 'bg-green-50 text-green-800 border-green-200' },
+  { value: 'organico', label: 'Orgánico', color: 'bg-purple-50 text-purple-800 border-purple-200' },
+  { value: 'verde', label: 'Café verde', color: 'bg-sky-50 text-sky-800 border-sky-200' },
+];
+
 function Estrellas({ valor, onChange }) {
   const [hover, setHover] = useState(0);
   return (
     <div className="flex gap-2">
       {[1, 2, 3, 4, 5].map(n => (
-        <button
-          key={n}
-          type="button"
+        <button key={n} type="button"
           onClick={() => onChange && onChange(n)}
           onMouseEnter={() => onChange && setHover(n)}
           onMouseLeave={() => onChange && setHover(0)}
           className={`w-10 h-10 rounded-xl border text-lg transition-all duration-150 ${(hover || valor) >= n
               ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#C8A96E]'
               : 'bg-white border-gray-200 text-gray-300'
-            } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
-        >
+            } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}>
           ★
         </button>
       ))}
@@ -53,6 +57,7 @@ export default function PerfilPublicoComprador() {
 
   const [comprador, setComprador] = useState(null);
   const [precios, setPrecios] = useState([]);
+  const [historialPrecios, setHistorialPrecios] = useState([]);
   const [reseñas, setReseñas] = useState([]);
   const [promedio, setPromedio] = useState(0);
   const [cargando, setCargando] = useState(true);
@@ -61,6 +66,9 @@ export default function PerfilPublicoComprador() {
   const [comentario, setComentario] = useState('');
   const [tagsSeleccionados, setTagsSeleccionados] = useState([]);
   const [enviando, setEnviando] = useState(false);
+  const [periodoHistorial, setPeriodoHistorial] = useState('7D');
+  const [numCargas, setNumCargas] = useState(1);
+  const [precioAlerta, setPrecioAlerta] = useState('');
 
   useEffect(() => {
     obtenerDatos();
@@ -68,27 +76,30 @@ export default function PerfilPublicoComprador() {
 
   const obtenerDatos = async () => {
     try {
-      const [compradorRes, reseñasRes] = await Promise.all([
+      const token = localStorage.getItem('token');
+      const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
         axios.get(`${API_URL}/api/comprador/${id}`),
         axios.get(`${API_URL}/api/resenas/comprador/${id}`),
+        axios.get(`${API_URL}/api/precios/comprador/${id}`),
       ]);
       setComprador(compradorRes.data);
       setReseñas(reseñasRes.data.reseñas || []);
       setPromedio(reseñasRes.data.promedio || 0);
-      await obtenerPrecios(id);
+      setPrecios(preciosRes.data);
+
+      // Historial de precios
+      try {
+        const histRes = await axios.get(
+          `${API_URL}/api/historial-precios/comprador/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setHistorialPrecios(histRes.data);
+      } catch { /* historial opcional */ }
+
     } catch (error) {
       console.error('Error al obtener datos:', error);
     } finally {
       setCargando(false);
-    }
-  };
-
-  const obtenerPrecios = async (compradorId) => {
-    try {
-      const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
-      setPrecios(data);
-    } catch (error) {
-      console.error('Error al obtener precios:', error);
     }
   };
 
@@ -133,6 +144,30 @@ export default function PerfilPublicoComprador() {
   const iniciales = (nombre) =>
     nombre ? nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
 
+  const precioActual = precios[0];
+
+  // Calcular variación vs precio anterior en historial
+  const precioHoy = historialPrecios[0]?.preciocarga;
+  const precioAyer = historialPrecios[1]?.preciocarga;
+  const variacion = precioHoy && precioAyer ? precioHoy - precioAyer : null;
+  const variacionPct = variacion && precioAyer ? ((variacion / precioAyer) * 100).toFixed(1) : null;
+
+  // Historial filtrado por periodo
+  const diasFiltro = periodoHistorial === '7D' ? 7 : 30;
+  const historialFiltrado = historialPrecios.slice(0, diasFiltro);
+  const maxPrecioHistorial = historialFiltrado.length > 0
+    ? Math.max(...historialFiltrado.map(h => h.preciocarga))
+    : 1;
+
+  // Distribución de estrellas
+  const distribucion = [5, 4, 3, 2, 1].map(n => ({
+    estrellas: n,
+    cantidad: reseñas.filter(r => Math.round(r.calificacion) === n).length,
+    porcentaje: reseñas.length > 0
+      ? Math.round((reseñas.filter(r => Math.round(r.calificacion) === n).length / reseñas.length) * 100)
+      : 0,
+  }));
+
   if (cargando) return (
     <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
       <p className="text-[#8B7355]">Cargando...</p>
@@ -145,189 +180,406 @@ export default function PerfilPublicoComprador() {
     </div>
   );
 
-  const precioActual = precios[0];
-
   return (
-    <div className="min-h-screen bg-[#F7F1E3] px-4 py-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-[#F7F1E3]">
 
-        {/* Botón volver */}
+      {/* Botón volver */}
+      <div className="px-4 md:px-8 pt-6">
         <button onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-[#8B7355] text-sm mb-6 hover:text-[#2C1A0E] transition-colors">
-          <i className="fa-solid fa-arrow-left text-xs"></i> Volver
+          className="flex items-center gap-2 text-[#8B7355] text-sm mb-4 hover:text-[#2C1A0E] transition-colors">
+          <i className="fa-solid fa-arrow-left text-xs"></i> Volver a precios
         </button>
+      </div>
 
-        {/* Header */}
-        <div className="bg-white rounded-2xl border border-[#E7D9BF] p-6 mb-4 shadow-sm">
+      <div className="px-4 md:px-8 pb-8 max-w-6xl mx-auto">
 
-          {/* Banner */}
-          <div className="h-20 bg-gradient-to-r from-[#3D1F0F] to-[#7A4020] rounded-xl mb-4 relative">
-            <div className="absolute -bottom-6 left-6">
-              <div className="w-14 h-14 rounded-xl bg-[#C8A96E] flex items-center justify-center text-white text-xl font-bold border-4 border-white shadow">
+        {/* Header con banner */}
+        <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
+          <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
+            <div className="absolute bottom-0 left-6 translate-y-1/2">
+              <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {iniciales(comprador.nombreempresa)}
               </div>
             </div>
           </div>
 
-          <div className="flex items-start justify-between mt-8">
-            <div>
-              <h1 className="text-[#2C1A0E] text-xl font-bold">{comprador.nombreempresa}</h1>
-              <p className="text-[#8B7355] text-sm mt-1">
-                <i className="fa-solid fa-location-dot mr-1"></i>
-                {comprador.direccion || 'Dirección no registrada'}
-              </p>
-              {comprador.horario && (
-                <p className="text-[#8B7355] text-xs mt-1">
-                  <i className="fa-solid fa-clock mr-1"></i>
-                  {comprador.horario}
+          <div className="pt-14 px-6 pb-6">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-[#2C1A0E] text-2xl font-bold">{comprador.nombreempresa}</h1>
+                  <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+                    ✓ Verificado
+                  </span>
+                </div>
+                <p className="text-[#8B7355] text-sm mt-1">
+                  <i className="fa-solid fa-location-dot mr-1"></i>
+                  {comprador.direccion || 'Pitalito, Huila'}
                 </p>
-              )}
+              </div>
+              <div className="flex gap-2">
+                {comprador.telefono && (
+                  <a href={`tel:${comprador.telefono}`}
+                    className="flex items-center gap-2 bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
+                    <i className="fa-solid fa-phone text-xs"></i> Contactar
+                  </a>
+                )}
+                <button className="flex items-center gap-2 border border-[#E7D9BF] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F7F1E3] transition-colors">
+                  <i className="fa-solid fa-map text-xs"></i> Cómo llegar
+                </button>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-[#2C1A0E]">{Number(promedio).toFixed(1)}</p>
-              <div className="text-sm mt-0.5">{renderEstrellas(promedio)}</div>
-              <p className="text-[#8B7355] text-xs mt-1">{reseñas.length} reseñas</p>
-            </div>
-          </div>
 
-          <hr className="border-[#E7D9BF] my-4" />
-
-          {/* Stats precios */}
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-[#F7F1E3] rounded-xl p-3">
-              <p className="text-[#2C1A0E] text-lg font-bold">
-                {precioActual ? precioActual.preciocarga?.toLocaleString() : '---'}
-              </p>
-              <p className="text-[#8B7355] text-xs mt-1">Precio/carga hoy</p>
-            </div>
-            <div className="bg-[#F7F1E3] rounded-xl p-3">
-              <p className="text-[#2C1A0E] text-lg font-bold">
-                {precioActual ? precioActual.preciokg?.toLocaleString() : '---'}
-              </p>
-              <p className="text-[#8B7355] text-xs mt-1">COP/kg</p>
-            </div>
-            <div className="bg-[#F7F1E3] rounded-xl p-3">
-              <p className="text-[#2C1A0E] text-xs font-semibold leading-tight">
-                {comprador.telefono || 'No registrado'}
-              </p>
-              <p className="text-[#8B7355] text-xs mt-1">Teléfono</p>
+            {/* Stats rápidos */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-5">
+              <div className="text-center">
+                <p className="text-[#C8A96E] text-lg font-bold">
+                  {precioActual ? precioActual.preciocarga?.toLocaleString() : '---'}
+                </p>
+                <p className="text-[#8B7355] text-xs">COP/carga hoy</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[#2C1A0E] text-lg font-bold flex items-center justify-center gap-1">
+                  ⭐ {Number(promedio).toFixed(1)}
+                </p>
+                <p className="text-[#8B7355] text-xs">{reseñas.length} reseñas</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[#2C1A0E] text-lg font-bold">
+                  {comprador.telefono ? <i className="fa-solid fa-phone text-[#C8A96E]"></i> : '---'}
+                </p>
+                <p className="text-[#8B7355] text-xs">{comprador.telefono || 'Sin teléfono'}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[#2C1A0E] text-lg font-bold text-sm">{comprador.horario?.split(' ')[0] || '---'}</p>
+                <p className="text-[#8B7355] text-xs">Horario hoy</p>
+              </div>
+              <div className="text-center">
+                <p className="text-green-600 text-lg font-bold">Abierto</p>
+                <p className="text-[#8B7355] text-xs">Estado actual</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Formulario reseña - solo productores */}
-        {usuario?.rol === 'productor' && (
-          <div className="bg-white rounded-2xl border border-[#E7D9BF] p-6 mb-4 shadow-sm">
-            <h2 className="text-[#2C1A0E] font-bold text-base mb-4">
-              <i className="fa-solid fa-star text-[#C8A96E] mr-2"></i>
-              Dejar una reseña
-            </h2>
+        {/* Layout de dos columnas */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {mensaje && (
-              <div className={`px-4 py-3 rounded-xl mb-4 text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
+          {/* Columna principal */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Precio actual */}
+            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+              <h2 className="text-[#2C1A0E] font-bold text-base mb-4">
+                💰 Precio actual
+              </h2>
+              <div className="bg-[#2C1A0E] rounded-xl p-4 mb-4">
+                <p className="text-[#D8C7A8] text-xs uppercase font-semibold mb-1">
+                  PRECIO HOY · {precioActual?.tipocafe?.replace('_', ' ').toUpperCase() || 'CAFÉ'}
+                </p>
+                <p className="text-white text-4xl font-bold">
+                  {precioActual ? precioActual.preciocarga?.toLocaleString() : '---'}
+                </p>
+                <p className="text-[#D8C7A8] text-sm mt-1">COP por carga de 125 kg</p>
+                {variacion !== null && (
+                  <div className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-xs font-semibold ${variacion >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                    }`}>
+                    {variacion >= 0 ? '▲' : '▼'} {variacionPct}% vs ayer · {variacion >= 0 ? '+' : ''}{variacion?.toLocaleString()}
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#F7F1E3] rounded-xl p-3 text-center">
+                  <p className="text-[#2C1A0E] text-lg font-bold">{precioActual?.preciokg?.toLocaleString() || '---'}</p>
+                  <p className="text-[#8B7355] text-xs">COP por kilogramo</p>
+                </div>
+                <div className="bg-[#F7F1E3] rounded-xl p-3 text-center">
+                  <p className="text-[#2C1A0E] text-lg font-bold">
+                    ${precioActual ? (precioActual.preciocarga * numCargas)?.toLocaleString() : '---'}
+                  </p>
+                  <p className="text-[#8B7355] text-xs">Si vendes {numCargas} carga{numCargas > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Historial de precios */}
+            {historialFiltrado.length > 0 && (
+              <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[#2C1A0E] font-bold text-base">📈 Historial de precios</h2>
+                  <div className="flex gap-1">
+                    {['7D', '30D'].map(p => (
+                      <button key={p} onClick={() => setPeriodoHistorial(p)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${periodoHistorial === p
+                            ? 'bg-[#C8A96E] text-white'
+                            : 'bg-[#F7F1E3] text-[#8B7355] hover:bg-[#E7D9BF]'
+                          }`}>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {historialFiltrado.map((h, i) => {
+                    const anterior = historialFiltrado[i + 1];
+                    const diff = anterior ? h.preciocarga - anterior.preciocarga : null;
+                    const pct = diff && anterior ? ((diff / anterior.preciocarga) * 100).toFixed(1) : null;
+                    const barWidth = Math.round((h.preciocarga / maxPrecioHistorial) * 100);
+                    const diasAtras = i === 0 ? 'Hoy' : i === 1 ? 'Ayer' : `Hace ${i}d`;
+
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-[#8B7355] text-xs w-14 shrink-0">{diasAtras}</span>
+                        <div className="flex-1 bg-[#F7F1E3] rounded-full h-2 overflow-hidden">
+                          <div className="h-full rounded-full bg-[#C8A96E]" style={{ width: `${barWidth}%` }}></div>
+                        </div>
+                        <span className="text-[#2C1A0E] text-xs font-semibold w-24 text-right">
+                          {h.preciocarga?.toLocaleString()}
+                        </span>
+                        {pct !== null && (
+                          <span className={`text-xs font-semibold w-14 text-right ${diff >= 0 ? 'text-green-600' : 'text-red-500'
+                            }`}>
+                            {diff >= 0 ? '▲' : '▼'} {Math.abs(pct)}%
+                          </span>
+                        )}
+                        {pct === null && <span className="text-xs text-gray-400 w-14 text-right">— 0%</span>}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleEnviarReseña}>
-              <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Calificación</p>
-              <div className="mb-4">
-                <Estrellas valor={calificacion} onChange={setCalificacion} />
+            {/* Tipos de café */}
+            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+              <h2 className="text-[#2C1A0E] font-bold text-base mb-4">☕ Tipos de café que compran</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {TIPOS_CAFE.map((tipo, i) => {
+                  const precioTipo = precios.find(p => p.tipocafe === tipo.value);
+                  return (
+                    <div key={i} className={`rounded-xl p-4 border ${tipo.color}`}>
+                      <p className="font-semibold text-sm">{tipo.label}</p>
+                      {precioTipo ? (
+                        <p className="text-xs mt-1 font-bold">{precioTipo.preciocarga?.toLocaleString()} COP/carga</p>
+                      ) : (
+                        <p className="text-xs mt-1 opacity-60">No disponible</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            </div>
 
-              <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Tags (opcional)</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {TAGS.map(tag => (
-                  <button key={tag.value} type="button" onClick={() => toggleTag(tag.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${tagsSeleccionados.includes(tag.value)
-                        ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#7A4020]'
-                        : 'bg-white border-gray-200 text-[#8B7355] hover:border-[#C8A96E]'
-                      }`}>
-                    {tag.label}
+            {/* Reseñas */}
+            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[#2C1A0E] font-bold text-base">⭐ Reseñas de caficultores</h2>
+                {usuario?.rol === 'productor' && (
+                  <button
+                    onClick={() => document.getElementById('form-resena').scrollIntoView({ behavior: 'smooth' })}
+                    className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#B8994E] transition-colors">
+                    + Dejar reseña
                   </button>
-                ))}
+                )}
               </div>
 
-              <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Comentario (opcional)</p>
-              <textarea
-                value={comentario}
-                onChange={e => setComentario(e.target.value)}
-                placeholder="Escribe tu experiencia con este comprador..."
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none h-20 focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E] placeholder-gray-400"
-              />
-              <button type="submit" disabled={enviando}
-                className="mt-3 w-full py-3 rounded-xl bg-[#2C1A0E] text-white text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
-                {enviando ? 'Publicando...' : 'Publicar reseña'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Banner login para visitantes */}
-        {!usuario && (
-          <div className="bg-[#FFF8E7] border border-[#C8A96E]/30 rounded-2xl px-6 py-4 mb-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <i className="fa-solid fa-lock text-[#C8A96E]"></i>
-              <p className="text-[#2C1A0E] text-sm font-semibold">Inicia sesión para dejar una reseña</p>
-            </div>
-            <Link to="/login"
-              className="bg-[#2C1A0E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors whitespace-nowrap">
-              Iniciar sesión
-            </Link>
-          </div>
-        )}
-
-        {/* Lista de reseñas */}
-        <div className="bg-white rounded-2xl border border-[#E7D9BF] p-6 shadow-sm">
-          <h2 className="text-[#2C1A0E] font-bold text-base mb-4">
-            Reseñas ({reseñas.length})
-          </h2>
-
-          {reseñas.length === 0 ? (
-            <div className="text-center py-8">
-              <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
-              <p className="text-[#8B7355] text-sm">Aún no hay reseñas para este comprador</p>
-              <p className="text-gray-400 text-xs mt-1">Sé el primero en dejar una reseña</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {reseñas.map((r, i) => (
-                <div key={i} className="bg-[#F7F1E3] rounded-xl p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#C8A96E] flex items-center justify-center text-white text-xs font-bold">
-                        {iniciales(`${r.productor?.nombre} ${r.productor?.apellido}`)}
-                      </div>
-                      <div>
-                        <p className="text-[#2C1A0E] text-sm font-semibold">
-                          {r.productor?.nombre} {r.productor?.apellido}
-                        </p>
-                        <p className="text-[#8B7355] text-xs">
-                          {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
+              {reseñas.length > 0 && (
+                <div className="flex gap-6 mb-6">
+                  <div className="text-center">
+                    <p className="text-5xl font-bold text-[#2C1A0E]">{Number(promedio).toFixed(1)}</p>
+                    <div className="text-lg mt-1">{renderEstrellas(promedio)}</div>
+                    <p className="text-[#8B7355] text-xs mt-1">{reseñas.length} reseñas</p>
                   </div>
-                  {r.comentario && (
-                    <p className="text-[#6B5A4D] text-sm mb-2">{r.comentario}</p>
-                  )}
-                  {r.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {r.tags.map((tag, j) => (
-                        <span key={j} className="bg-[#FFF8E7] text-[#7A4020] text-xs px-2.5 py-1 rounded-full border border-[#C8A96E]/30">
-                          {TAGS.find(t => t.value === tag)?.label || tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex-1 space-y-1.5">
+                    {distribucion.map((d, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-[#8B7355] w-3">{d.estrellas}</span>
+                        <div className="flex-1 bg-[#F7F1E3] rounded-full h-2 overflow-hidden">
+                          <div className="h-full rounded-full bg-[#C8A96E]" style={{ width: `${d.porcentaje}%` }}></div>
+                        </div>
+                        <span className="text-xs text-[#8B7355] w-6 text-right">{d.cantidad}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              )}
 
+              {reseñas.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
+                  <p className="text-[#8B7355] text-sm">Aún no hay reseñas</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reseñas.map((r, i) => (
+                    <div key={i} className="border-b border-[#E7D9BF] pb-4 last:border-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#C8A96E] flex items-center justify-center text-white text-xs font-bold">
+                            {iniciales(`${r.productor?.nombre} ${r.productor?.apellido}`)}
+                          </div>
+                          <div>
+                            <p className="text-[#2C1A0E] text-sm font-semibold">
+                              {r.productor?.nombre} {r.productor?.apellido}
+                            </p>
+                            <p className="text-[#8B7355] text-xs">
+                              {new Date(r.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
+                      </div>
+                      {r.comentario && <p className="text-[#6B5A4D] text-sm mb-2 italic">"{r.comentario}"</p>}
+                      {r.tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {r.tags.map((tag, j) => (
+                            <span key={j} className="bg-[#FFF8E7] text-[#7A4020] text-xs px-2.5 py-1 rounded-full border border-[#C8A96E]/30">
+                              ✅ {TAGS.find(t => t.value === tag)?.label || tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Formulario reseña */}
+            {usuario?.rol === 'productor' && (
+              <div id="form-resena" className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">
+                  <i className="fa-solid fa-star text-[#C8A96E] mr-2"></i>
+                  Dejar una reseña
+                </h2>
+                {mensaje && (
+                  <div className={`px-4 py-3 rounded-xl mb-4 text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                    {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
+                  </div>
+                )}
+                <form onSubmit={handleEnviarReseña}>
+                  <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Calificación</p>
+                  <div className="mb-4"><Estrellas valor={calificacion} onChange={setCalificacion} /></div>
+                  <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Tags (opcional)</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {TAGS.map(tag => (
+                      <button key={tag.value} type="button" onClick={() => toggleTag(tag.value)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${tagsSeleccionados.includes(tag.value)
+                            ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#7A4020]'
+                            : 'bg-white border-gray-200 text-[#8B7355] hover:border-[#C8A96E]'
+                          }`}>
+                        {tag.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Comentario (opcional)</p>
+                  <textarea value={comentario} onChange={e => setComentario(e.target.value)}
+                    placeholder="Escribe tu experiencia con este comprador..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none h-20 focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E] placeholder-gray-400 mb-3" />
+                  <button type="submit" disabled={enviando}
+                    className="w-full py-3 rounded-xl bg-[#2C1A0E] text-white text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
+                    {enviando ? 'Publicando...' : 'Publicar reseña'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {!usuario && (
+              <div className="bg-[#FFF8E7] border border-[#C8A96E]/30 rounded-2xl px-6 py-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <i className="fa-solid fa-lock text-[#C8A96E]"></i>
+                  <p className="text-[#2C1A0E] text-sm font-semibold">Inicia sesión para dejar una reseña</p>
+                </div>
+                <Link to="/login" className="bg-[#2C1A0E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors whitespace-nowrap">
+                  Iniciar sesión
+                </Link>
+              </div>
+            )}
+
+          </div>
+
+          {/* Columna lateral */}
+          <div className="space-y-4">
+
+            {/* Información */}
+            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+              <h3 className="text-[#2C1A0E] font-bold text-sm mb-4">📋 Información</h3>
+              <div className="space-y-3">
+                {comprador.direccion && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-location-dot text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.direccion}</p>
+                      <p className="text-[#8B7355] text-xs">Dirección</p>
+                    </div>
+                  </div>
+                )}
+                {comprador.telefono && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-phone text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.telefono}</p>
+                      <p className="text-[#8B7355] text-xs">Teléfono</p>
+                    </div>
+                  </div>
+                )}
+                {comprador.horario && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-clock text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.horario}</p>
+                      <p className="text-[#8B7355] text-xs">Horario de compra</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Calculadora */}
+            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+              <h3 className="text-[#2C1A0E] font-bold text-sm mb-3">🧮 ¿Cuánto recibirías?</h3>
+              <p className="text-[#8B7355] text-xs mb-3">Calcula tu ganancia vendiendo aquí hoy</p>
+              <label className="text-xs font-semibold text-[#8B7355] uppercase mb-2 block">Número de cargas</label>
+              <input
+                type="number"
+                min="1"
+                value={numCargas}
+                onChange={e => setNumCargas(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E] mb-3"
+              />
+              {precioActual && (
+                <div className="bg-[#2C1A0E] rounded-xl p-4 text-center">
+                  <p className="text-[#D8C7A8] text-xs mb-1">Recibirías</p>
+                  <p className="text-white text-2xl font-bold">
+                    ${(precioActual.preciocarga * numCargas)?.toLocaleString()}
+                  </p>
+                  <p className="text-[#D8C7A8] text-xs mt-1">COP en efectivo o transferencia</p>
+                </div>
+              )}
+            </div>
+
+            {/* Alerta de precio */}
+            {usuario && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm">
+                <h3 className="text-green-800 font-bold text-sm mb-1">🔔 Alerta de precio</h3>
+                <p className="text-green-700 text-xs mb-3">Avísame cuando este comprador suba su precio</p>
+                <label className="text-xs font-semibold text-green-700 uppercase mb-2 block">Precio mínimo de alerta</label>
+                <input
+                  type="number"
+                  placeholder="Ej: 2.100.000"
+                  value={precioAlerta}
+                  onChange={e => setPrecioAlerta(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 bg-white text-[#2C1A0E] mb-3"
+                />
+                <button className="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors">
+                  🔔 Activar alerta
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
       </div>
     </div>
   );
