@@ -7,11 +7,11 @@ import GoogleAuth from "./components/Auth/GoogleAuth.jsx";
 import CompletarPerfil from "./components/Auth/CompletarPerfil.jsx";
 import ForgotPassword from "./components/Auth/ForgotPassword.jsx";
 import VerifyCode from "./components/Auth/VerifyCode.jsx";
-import Contacto from './components/Home/Contacto.jsx';
 
 // Páginas públicas
 import Inicio from "./components/Home/Inicio.jsx";
 import Noticias from "./components/Home/Noticias.jsx";
+import Contacto from './components/Home/Contacto.jsx';
 
 // Páginas privadas — Productor
 import Precios from "./components/Home/Precios.jsx";
@@ -33,10 +33,8 @@ import PerfilPublicoComprador from "./components/Home/PerfilPublicoComprador.jsx
 // Layouts y protección de rutas
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
-import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
-
-/* AGREGADO */
 import LayoutPublico from "./components/Layout/LayoutPublico.jsx";
+import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
 
 function App() {
   return (
@@ -49,7 +47,6 @@ function App() {
             <Inicio />
           </LayoutPublico>
         } />
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/google" element={<GoogleAuth />} />
@@ -57,17 +54,6 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/contacto" element={<Contacto />} />
-
-
-        <Route path="/noticias" element={
-          <LayoutPublico>
-            <Noticias />
-          </LayoutPublico>
-        } />
-
-        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
-        <Route path="/noticias" element={<Noticias />} />
-
         <Route path="/noticias" element={<Noticias />} />
 
         {/* ── PRODUCTOR ── */}
@@ -102,7 +88,7 @@ function App() {
           </PrivateRoute>
         } />
 
-        {/* ── PERFIL PÚBLICO — debe ir después de /comprador/dashboard y /comprador/perfil ── */}
+        {/* ── PERFIL PÚBLICO ── debe ir después de /comprador/dashboard y /comprador/perfil ── */}
         <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
         {/* ── ADMIN ── */}
