@@ -19,6 +19,7 @@ import compradorRoutes from "./routes/comprador.js";
 import RecuperarPassword from "./routes/recuperar.js";
 import Clima from './routes/clima.js'
 import resenaPlataformaRoutes from "./routes/resenaPlataforma.js";
+import Contacto from "./routes/contacto.js";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/usuario", usuarioRoutes);
 app.use("/api/comprador", compradorRoutes);
 app.use("/api/recuperar", RecuperarPassword);
 app.use('/api/clima', Clima);
-app.use("/api/resenas-plataforma", resenaPlataformaRoutes)
+app.use("/api/resenas-plataforma", resenaPlataformaRoutes);
+app.use("/api", Contacto);
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));

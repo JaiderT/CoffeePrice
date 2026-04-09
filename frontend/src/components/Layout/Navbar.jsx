@@ -38,6 +38,11 @@ function Navbar() {
               Noticias
             </Link>
           </li>
+          <li>
+            <Link to="/contacto" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">
+              Contacto
+            </Link>
+          </li>
         </ul>
 
         <div className="hidden lg:flex items-center gap-3">
@@ -112,6 +117,15 @@ function Navbar() {
                 onClick={() => setMenuAbierto(false)}
               >
                 Noticias
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/contacto"
+                className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block"
+                onClick={() => setMenuAbierto(false)}
+              >
+                Contacto
               </Link>
             </li>
           </ul>

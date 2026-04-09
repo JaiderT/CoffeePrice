@@ -9,12 +9,12 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: '📈 Precios del café' },
-  { value: 'internacional', label: '🌎 Mercado internacional' },
-  { value: 'clima', label: '🌧️ Clima y cosechas' },
-  { value: 'fnc', label: '🏛️ Federación Cafeteros' },
-  { value: 'produccion', label: '🌱 Producción' },
-  { value: 'consejos', label: '💡 Consejos para caficultores' },
+  { value: 'mercado', label: ' Precios del café' },
+  { value: 'internacional', label: ' Mercado internacional' },
+  { value: 'clima', label: ' Clima y cosechas' },
+  { value: 'fnc', label: ' Federación Cafeteros' },
+  { value: 'produccion', label: ' Producción' },
+  { value: 'consejos', label: ' Consejos para caficultores' },
 ];
 
 const categoriaBadgeColors = {
@@ -101,7 +101,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
                       <div className="flex-1">
                         <p className={`text-xs font-bold ${activa ? 'text-[#3D1F0F]' : 'text-gray-600'}`}>{cat.label}</p>
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${activa ? 'bg-[#C8A96E] border-[#C8A96E]' : 'border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${activa ? 'bg-[#C8A96E] border-[#C8A96E]' : 'border-gray-300'}`}>
                         {activa && <span className="text-white text-xs font-bold">✓</span>}
                       </div>
                     </button>
@@ -288,7 +288,7 @@ export default function Noticias() {
             <span className="text-3xl">{alertasActivas.activas ? '🔔' : '🔕'}</span>
             <div>
               <p className="text-white font-bold text-sm">
-                {alertasActivas.activas ? '¡Alertas activas!' : 'Recibe las noticias en tu celular'}
+                {alertasActivas.activas ? '¡Alertas activas!' : 'Recibe las notificaciones en tu dispositivo'}
               </p>
               <p className="text-gray-400 text-xs mt-0.5">
                 {alertasActivas.activas

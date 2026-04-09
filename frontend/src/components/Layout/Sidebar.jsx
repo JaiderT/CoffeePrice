@@ -1,6 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContex.jsx';
 import { useState } from 'react';
+import { icons } from 'lucide-react';
+import path from 'node:path';
 
 const menuProductor = [
   { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
@@ -8,6 +10,7 @@ const menuProductor = [
   { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },
   { icon: 'fa-solid fa-bell', label: 'Alertas', path: '/alertas' },
   { icon: 'fa-solid fa-chart-line', label: 'Historial', path: '/historial' },
+  { icon: 'fa-solid fa-envelope', label: 'Contacto', path: '/contacto'},
   { icon: 'fa-solid fa-user', label: 'Mi perfil', path: '/perfil' },
 ];
 
