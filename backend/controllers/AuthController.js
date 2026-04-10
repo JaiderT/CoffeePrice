@@ -1,37 +1,37 @@
+// controllers/AuthController.js
 import Usuario from "../models/usuario.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { enviarCorreoVerificacion, enviarCorreoBienvenida } from "./emailService.js";
 
 export const register = async (req, res) => {
   try {
     const { nombre, apellido, email, password, celular, rol } = req.body;
-        if (!nombre || !apellido || !email || !password || !rol) {
-          return res.status(400).json({
-            message: "Nombre, apellido, correo, contraseña y rol son obligatorios"
-          });
-        }
 
-        const emailNormalizado = email.trim().toLowerCase();
-        const rolesPermitidos = ["productor", "comprador"];
+    if (!nombre || !apellido || !email || !password || !rol) {
+      return res.status(400).json({
+        message: "Nombre, apellido, correo, contraseña y rol son obligatorios"
+      });
+    }
 
-        if (!rolesPermitidos.includes(rol)) {
-          return res.status(400).json({
-            message: "Rol no válido"
-          });
-        }
+    const emailNormalizado = email.trim().toLowerCase();
+    const rolesPermitidos = ["productor", "comprador"];
 
-        if (password.length < 8) {
-          return res.status(400).json({
-            message: "La contraseña debe tener al menos 8 caracteres"
-          });
-        }
+    if (!rolesPermitidos.includes(rol)) {
+      return res.status(400).json({ message: "Rol no válido" });
+    }
 
-        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailValido.test(emailNormalizado)) {
-          return res.status(400).json({
-            message: "Correo electrónico no válido"
-          });
-        }
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "La contraseña debe tener al menos 8 caracteres"
+      });
+    }
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailValido.test(emailNormalizado)) {
+      return res.status(400).json({ message: "Correo electrónico no válido" });
+    }
 
     const existeUsuario = await Usuario.findOne({ email: emailNormalizado });
     if (existeUsuario) {
@@ -39,45 +39,83 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const estado = rol === 'comprador' ? 'pendiente' : 'activo';
 
-    const newUsuario = new Usuario({ 
+    // Token de verificación (expira en 24h)
+    const tokenVerificacion = crypto.randomBytes(32).toString("hex");
+    const tokenExpiracion = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const newUsuario = new Usuario({
       nombre: nombre.trim(),
       apellido: apellido.trim(),
       email: emailNormalizado,
       password: hashedPassword,
       celular,
       rol,
-      estado
+      estado: "pendiente",
+      codigoRecuperacion: tokenVerificacion,
+      codigoExpiracion: tokenExpiracion,
     });
 
     await newUsuario.save();
 
-    res.status(201).json({ message: "Usuario registrado exitosamente" });
+    // Enviar correo de verificación
+    await enviarCorreoVerificacion(nombre.trim(), emailNormalizado, tokenVerificacion);
+
+    res.status(201).json({
+      message: "Cuenta creada. Revisa tu correo para activarla.",
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
   }
 };
 
+export const verificarEmail = async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    const usuario = await Usuario.findOne({
+      codigoRecuperacion: token,
+      codigoExpiracion: { $gt: new Date() },
+    });
+
+    if (!usuario) {
+      // Token inválido o expirado → página de error en el frontend
+      return res.redirect(`${process.env.FRONTEND_URL}/verificar-email?status=invalido`);
+    }
+
+    // Activar cuenta y limpiar token
+    usuario.estado = "activo";
+    usuario.codigoRecuperacion = null;
+    usuario.codigoExpiracion = null;
+    await usuario.save();
+
+    // Enviar correo de bienvenida
+    await enviarCorreoBienvenida(usuario.nombre, usuario.email);
+
+    // Redirigir al frontend con éxito
+    return res.redirect(`${process.env.FRONTEND_URL}/verificar-email?status=ok`);
+
+  } catch (error) {
+    console.error("Error al verificar email:", error);
+    return res.redirect(`${process.env.FRONTEND_URL}/verificar-email?status=error`);
+  }
+};
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-      if (!email || !password) {
-    return res.status(400).json({
-      message: "Correo y contraseña son obligatorios"
-    });
-  }
 
-  const emailNormalizado = email.trim().toLowerCase();
+    if (!email || !password) {
+      return res.status(400).json({ message: "Correo y contraseña son obligatorios" });
+    }
 
-  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailValido.test(emailNormalizado)) {
-    return res.status(400).json({
-      message: "Correo electrónico no válido"
-    });
-  }
+    const emailNormalizado = email.trim().toLowerCase();
 
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailValido.test(emailNormalizado)) {
+      return res.status(400).json({ message: "Correo electrónico no válido" });
+    }
 
     const user = await Usuario.findOne({ email: emailNormalizado });
     if (!user) {
@@ -90,13 +128,13 @@ export const login = async (req, res) => {
       });
     }
 
-    if (user.estado === 'pendiente') {
+    if (user.estado === "pendiente") {
       return res.status(403).json({
-        message: "Tu cuenta está pendiente de aprobación"
+        message: "Debes verificar tu correo electrónico antes de iniciar sesión."
       });
     }
 
-    if (user.estado === 'rechazado') {
+    if (user.estado === "rechazado") {
       return res.status(403).json({
         message: "Tu cuenta ha sido rechazada. Contacta al administrador."
       });
@@ -107,7 +145,6 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
-    // Guardar última conexión
     await Usuario.findByIdAndUpdate(user._id, { ultimaConexion: new Date() });
 
     const token = jwt.sign(
@@ -144,7 +181,7 @@ export const googleCallback = (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
 
-    if (req.user.estado === 'pendiente') {
+    if (req.user.estado === "pendiente") {
       return res.redirect(
         `${process.env.FRONTEND_URL}/completar-perfil?token=${token}`
       );
