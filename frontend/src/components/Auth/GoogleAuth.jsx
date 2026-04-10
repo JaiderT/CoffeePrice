@@ -8,33 +8,21 @@ export default function GoogleAuth() {
   const { login } = useAuth()
 
   useEffect(() => {
-    const token = params.get('token')
-    const error = params.get('error')
-
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-
-      login(
-        token,
-        payload.rol,
-        payload.name,
-        payload.apellido,
-        payload.id,
-        '',
-        ''
-      )
-
-      if (payload.rol === 'admin') {
-        navigate('/admin/perfil', { replace: true })
-      } else if (payload.rol === 'comprador') {
-        navigate('/comprador/dashboard', { replace: true })
-      } else {
-        navigate('/precios', { replace: true })
-      }
-    } else {
-      navigate('/login?error=' + (error || 'google_failed'), { replace: true })
-    }
-  }, [login, navigate, params])
+    const error = params.get('error');
+    if (error) {navigate('/login?error=' + error, {replace: true}); return; }
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, { credentials: 'include' 
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.token) throw new Error('no token');
+      login(data.token, data.rol, data.nombre, data.apellido, data.id, '', '');
+      if (data.rol === 'admin') navigate('/admin/perfil', {replace: true });
+      else if (data.rol === 'comprador') navigate('/comprador/dashboard', {
+        replace: true });
+        else navigate('/precios', {replace: true });
+    })
+    .catch(() => navigate('/login?error=google_failed', { replace: true }));
+  }, [params, navigate, login]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2]">

@@ -133,6 +133,11 @@ export const login = async (req, res) => {
 
 export const googleCallback = (req, res) => {
   try {
+    if (req.user.estado === 'rechazado'){
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=cuenta_rechazada`
+      );
+    }
     const token = jwt.sign(
       {
         id: req.user._id,
@@ -144,13 +149,17 @@ export const googleCallback = (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
 
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    };
+    res.cookie('auth_token', token, cookieOptions);
     if (req.user.estado === 'pendiente') {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/completar-perfil?token=${token}`
-      );
+      return res.redirect(`${process.env.FRONTEND_URL}/completar-perfil`);
     }
-
-    res.redirect(`${process.env.FRONTEND_URL}/auth/google?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google`);
 
   } catch (error) {
     res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
