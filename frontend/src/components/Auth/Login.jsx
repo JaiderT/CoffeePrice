@@ -153,7 +153,7 @@ export default function Login() {
 
           <div className="flex justify-between items-center mb-6">
             <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-              <input type="checkbox" className="accent-[#C8814A] w-3.5 h-3.5" />
+              <input type="checkbox" required className="accent-[#C8814A] w-3.5 h-3.5" />
               Recordarme
             </label>
             <button type="button" onClick={() => navigate('/forgot-password')} className="text-xs text-black font-semibold hover:underline cursor-pointer">
