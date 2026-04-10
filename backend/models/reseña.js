@@ -25,6 +25,7 @@ const reseñaSchema = new mongoose.Schema(
     },
     tags: [
       {
+        type: String,
         enum: [
           "precio_justo",
           "pago_puntual",

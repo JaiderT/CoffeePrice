@@ -11,22 +11,11 @@ export const getcompradores = async (req, res) => {
 
 export const createcomprador = async (req, res) => {
     try {
-        const { nombreempresa, direccion, telefono, horario } = req.body;
+        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre } = req.body;
 
-        if (!nombreempresa || !direccion || !telefono || !horario) {
+        if (!nombreempresa || !direccion || !telefono) {
             return res.status(400).json({
-                message: "Nombre de empresa, dirección, teléfono y horario son obligatorios"
-            });
-        }
-
-        const nombreempresaLimpio = nombreempresa.trim();
-        const direccionLimpia = direccion.trim();
-        const telefonoLimpio = telefono.trim();
-        const horarioLimpio = horario.trim();
-
-        if (!nombreempresaLimpio || !direccionLimpia || !telefonoLimpio || !horarioLimpio) {
-            return res.status(400).json({
-                message: "Todos los campos del perfil comprador deben estar completos"
+                message: "Nombre de empresa, dirección y teléfono son obligatorios"
             });
         }
 
@@ -41,10 +30,12 @@ export const createcomprador = async (req, res) => {
 
         const nuevoComprador = new CompradorModel({
             usuario,
-            nombreempresa: nombreempresaLimpio,
-            direccion: direccionLimpia,
-            telefono: telefonoLimpio,
-            horario: horarioLimpio,
+            nombreempresa: nombreempresa.trim(),
+            direccion: direccion.trim(),
+            telefono: telefono.trim(),
+            horario: horario?.trim() || null,
+            horarioApertura: horarioApertura || "08:00",
+            horarioCierre: horarioCierre || "17:00",
         });
 
         await nuevoComprador.save();
@@ -60,7 +51,7 @@ export const createcomprador = async (req, res) => {
 
 export const updatecomprador = async (req, res) => {
     try {
-        const { nombreempresa, direccion, telefono, horario } = req.body;
+        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre } = req.body;
 
         const compradorExistente = await CompradorModel.findById(req.params.id);
 
@@ -77,55 +68,19 @@ export const updatecomprador = async (req, res) => {
             });
         }
 
-        if (nombreempresa !== undefined) {
-            const nombreempresaLimpio = nombreempresa.trim();
-            if (!nombreempresaLimpio) {
-                return res.status(400).json({
-                    message: "El nombre de la empresa no puede estar vacío"
-                });
-            }
-            compradorExistente.nombreempresa = nombreempresaLimpio;
-        }
-
-        if (direccion !== undefined) {
-            const direccionLimpia = direccion.trim();
-            if (!direccionLimpia) {
-                return res.status(400).json({
-                    message: "La dirección no puede estar vacía"
-                });
-            }
-            compradorExistente.direccion = direccionLimpia;
-        }
-
-        if (telefono !== undefined) {
-            const telefonoLimpio = telefono.trim();
-            if (!telefonoLimpio) {
-                return res.status(400).json({
-                    message: "El teléfono no puede estar vacío"
-                });
-            }
-            compradorExistente.telefono = telefonoLimpio;
-        }
-
-        if (horario !== undefined) {
-            const horarioLimpio = horario.trim();
-            if (!horarioLimpio) {
-                return res.status(400).json({
-                    message: "El horario no puede estar vacío"
-                });
-            }
-            compradorExistente.horario = horarioLimpio;
-        }
+        if (nombreempresa !== undefined) compradorExistente.nombreempresa = nombreempresa.trim();
+        if (direccion !== undefined) compradorExistente.direccion = direccion.trim();
+        if (telefono !== undefined) compradorExistente.telefono = telefono.trim();
+        if (horario !== undefined) compradorExistente.horario = horario.trim();
+        if (horarioApertura !== undefined) compradorExistente.horarioApertura = horarioApertura;
+        if (horarioCierre !== undefined) compradorExistente.horarioCierre = horarioCierre;
 
         await compradorExistente.save();
-
         res.json(compradorExistente);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar comprador", error: error.message });
     }
 };
-
-
 
 export const deletecomprador = async (req, res) => {
     try {
@@ -160,4 +115,3 @@ export const getcompradorByUsuario = async (req, res) => {
         res.status(500).json({ message: "Error al obtener comprador", error: error.message });
     }
 };
-
