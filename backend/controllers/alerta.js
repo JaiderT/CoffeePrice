@@ -25,7 +25,8 @@ export const getAlertaById = async (req, res) => {
 
 export const createAlerta = async (req, res) => {
   try {
-    const { usuario, comprador, precioMinimo, canales } = req.body;
+    const usuario = req.user.id;
+    const { comprador, precioMinimo, canales } = req.body;
 
     const alerta = new Alerta({ usuario, comprador, precioMinimo, canales });
     await alerta.save();
@@ -69,8 +70,14 @@ export const toggleAlerta = async (req, res) => {
 
 export const deleteAlerta = async (req, res) => {
   try {
-    const alerta = await Alerta.findByIdAndDelete(req.params.id);
+    const alerta = await Alerta.findById(req.params.id);
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
+    const esAdmin = req.user?.rol === "admin";
+    const esPropietario = alerta.usuario.toString() === req.user.id;
+    if (!esAdmin && !esPropietario) {
+      return res.status(403).json({ message: "No tienes permisos para eliminar esta alerta" });
+    }
+    await alerta.deleteOne();
     res.json({ message: "Alerta eliminada correctamente" });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar alerta", error: error.message });

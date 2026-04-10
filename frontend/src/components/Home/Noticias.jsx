@@ -9,12 +9,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: ' Precios del café' },
-  { value: 'internacional', label: ' Mercado internacional' },
-  { value: 'clima', label: ' Clima y cosechas' },
-  { value: 'fnc', label: ' Federación Cafeteros' },
-  { value: 'produccion', label: ' Producción' },
-  { value: 'consejos', label: ' Consejos para caficultores' },
+  { value: 'mercado', label: '📈 Precios del café' },
+  { value: 'internacional', label: '🌎 Mercado internacional' },
+  { value: 'clima', label: '🌧️ Clima y cosechas' },
+  { value: 'fnc', label: '🏛️ Federación Cafeteros' },
+  { value: 'produccion', label: '🌱 Producción' },
+  { value: 'consejos', label: '💡 Consejos para caficultores' },
+  { value: 'el_pital', label: '⛰️ Noticias de El Pital' },
 ];
 
 const categoriaBadgeColors = {
@@ -24,6 +25,7 @@ const categoriaBadgeColors = {
   fnc: 'bg-purple-50 text-purple-700',
   produccion: 'bg-green-50 text-green-700',
   consejos: 'bg-[#FFF3E0] text-[#C8A96E]',
+  el_pital:      'bg-emerald-50 text-emerald-700',
 };
 
 const categoriaEmoji = {
@@ -148,8 +150,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
 }
 
 export default function Noticias() {
-  const { usuario, cargando: cargandoAuth } = useAuth();
-  console.log('cargandoAuth:', cargandoAuth, 'usuario:', !!usuario);
+  const { usuario } = useAuth();
   const [categoriaActiva, setCategoriaActiva] = useState('todas');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [noticias, setNoticias] = useState([]);
@@ -311,22 +312,16 @@ export default function Noticias() {
 
   return (
     <>
-      {!cargandoAuth && usuario ? (
+      {usuario ? (
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="ml-16 flex-1">
-            {contenido}
-          </div>
+          <div className="ml-16 flex-1">{contenido}</div>
         </div>
-      ) : !cargandoAuth && !usuario ? (
+      ) : (
         <div className="bg-[#2C1A0E]">
           <Navbar />
           {contenido}
           <Footer />
-        </div>
-      ) : (
-        <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
-          <p className="text-[#8B7355]">Cargando...</p>
         </div>
       )}
       {modalAbierto && (
@@ -337,5 +332,5 @@ export default function Noticias() {
         />
       )}
     </>
-  );
+);
 }

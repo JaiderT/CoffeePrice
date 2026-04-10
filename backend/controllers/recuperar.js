@@ -97,7 +97,10 @@ export const solicitarCodigo = async (req, res) => {
 
         await transporte.sendMail(mailOptions);
 
-        console.log(`Codigo enviado a ${usuarioEncontrado.email}: ${codigo}`);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[DEV] Codigo enviado a: ${usuarioEncontrado.email}`);
+        }
+
 
         res.status(200).json({
             message: "Si el correo esta registrado, recibiras un codigo de verificacion",
@@ -172,7 +175,7 @@ export const cambiarPassword = async (req, res) => {
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px;">
             <div style="text-align: center; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #3D1F0F, #7A4020);
+            <div style="background: linear-gradient(135deg, #3D1F0F 0%, #7A4020 100%);
             width: 60px;
             height: 60px;
             border-radius: 50%;

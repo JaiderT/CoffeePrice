@@ -10,7 +10,7 @@ const prediccionSchema = new mongoose.Schema(
 
     precioestimado: {
         type: Number,
-        required: [true, "Elprecio estimado es obligarotio"],
+        required: [true, "El precio estimado es obligatorio"],
     },
 
     preciominimo: {

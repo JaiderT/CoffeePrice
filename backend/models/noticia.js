@@ -26,7 +26,7 @@ const noticiaSchema = new mongoose.Schema(
 
         categoria: {
             type: String,
-            enum: ["mercado", "produccion", "internacional", "fnc", "clima", "consejos"],
+            enum: ["mercado", "produccion", "internacional", "fnc", "clima", "consejos", "el_pital"],
         },
 
         fuente: {
@@ -34,9 +34,20 @@ const noticiaSchema = new mongoose.Schema(
             trim: true,
             default: null,
         },
+        autoGenerada: {
+            type: Boolean,
+            default: false,
+        },
+        cicloGeneracion: {
+            type: String,
+            default: null,
+        },
     },
 
     { timestamps: true }
 );
+// Indice para busqueda rapida
+noticiaSchema.index({ createdAt: -1 });
+noticiaSchema.index({ categoria: 1, createdAt: -1 });
 
 export default mongoose.model("noticia", noticiaSchema);

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import './config/env.js'
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import session from 'express-session';
 import passport from './config/passport.js';
@@ -19,6 +20,8 @@ import compradorRoutes from "./routes/comprador.js";
 import RecuperarPassword from "./routes/recuperar.js";
 import Clima from './routes/clima.js'
 import resenaPlataformaRoutes from "./routes/resenaPlataforma.js";
+import { publicLimiter } from "./middlewares/rateLimit.js";
+import { iniciarCronNoticias } from './jobs/noticiaCron.js';
 import Contacto from "./routes/contacto.js";
 import historialPrecioRoutes from "./routes/historialPrecio.js";
 
@@ -30,6 +33,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -47,6 +51,21 @@ app.use(passport.initialize());
 
 // rutas
 
+process.on('unhandledRejection', (reason) => {
+    console.error('[UnhandledRejection]', reason);
+});
+
+if (process.env.NODE_ENV !== 'test') {
+  iniciarCronNoticias();
+  console.log('Noticias automaticas: activas');
+}
+
+app.use('/api/precios', publicLimiter);
+app.use('/api/predicciones', publicLimiter);
+app.use('/api/noticias', publicLimiter);
+app.use('/api/comprador', publicLimiter);
+app.use('/api/resenas', publicLimiter);
+app.use('/api/clima', publicLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/noticias", noticiaRoutes);
@@ -61,5 +80,14 @@ app.use('/api/clima', Clima);
 app.use("/api/resenas-plataforma", resenaPlataformaRoutes);
 app.use("/api", Contacto);
 app.use("/api/historial-precios", historialPrecioRoutes);
+
+app.use((err, req, res, next) => {
+    console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);
+    const statusCode = err.statusCode || err.status || 500;
+    const message = process.env.NODE_ENV === 'production'
+        ? 'Error interno del servidor'
+        : err.message;
+    res.status(statusCode).json({ message });
+});
 
 app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));
