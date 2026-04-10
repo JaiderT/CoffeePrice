@@ -1,5 +1,7 @@
 import { useState } from "react";
-import Sidebar from "../Layout/Sidebar.jsx"; // ✅ import correcto
+import Navbar from "../Layout/Navbar.jsx";
+import Footer from "../Layout/Footer.jsx";
+import { Sidebar } from "lucide-react";
 
 export default function Contacto() {
   const [formData, setFormData] = useState({
@@ -63,13 +65,10 @@ export default function Contacto() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F0E8D5]">
+    <>
+      <Navbar />
 
-      {/* Sidebar fijo a la izquierda */}
-      <Sidebar />
-
-      {/* Contenido desplazado para no quedar debajo del sidebar */}
-      <main className="ml-16 flex-1 font-sans">
+      <main className="bg-[#F0E8D5] font-sans min-h-[70vh]">
         <section className="py-16 px-6">
           <div className="max-w-5xl mx-auto">
 
@@ -202,7 +201,7 @@ export default function Contacto() {
                   <div className="flex flex-col gap-3">
 
                     <div className="flex items-center gap-3 bg-[#faf5ec] border border-[#d4b896] rounded-xl p-4">
-                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center flex-shrink-0">
                         <i className="fas fa-map-marker-alt text-[#6b3c1e] text-sm"></i>
                       </div>
                       <div>
@@ -212,7 +211,7 @@ export default function Contacto() {
                     </div>
 
                     <div className="flex items-center gap-3 bg-[#faf5ec] border border-[#d4b896] rounded-xl p-4">
-                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center flex-shrink-0">
                         <i className="fas fa-phone text-[#6b3c1e] text-sm"></i>
                       </div>
                       <div>
@@ -222,7 +221,7 @@ export default function Contacto() {
                     </div>
 
                     <div className="flex items-center gap-3 bg-[#faf5ec] border border-[#d4b896] rounded-xl p-4">
-                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#f0d9bc] flex items-center justify-center flex-shrink-0">
                         <i className="fas fa-envelope text-[#6b3c1e] text-sm"></i>
                       </div>
                       <div>
@@ -240,7 +239,7 @@ export default function Contacto() {
                   </p>
                   <div className="flex justify-between text-sm py-2 border-b border-[#e8d9c4]">
                     <span className="text-[#7a5c3e]">Lunes – Viernes</span>
-                    <span className="text-[#2C1A0E] font-medium">8:00 am – 6:00 pm</span>
+                    <span className="text-[#2C1A0E] font-medium">8:00 am – 5:00 pm</span>
                   </div>
                   <div className="flex justify-between text-sm py-2">
                     <span className="text-[#7a5c3e]">Sábados</span>
@@ -264,7 +263,7 @@ export default function Contacto() {
                       Facebook
                     </a>
                     <a
-                      href="https://www.instagram.com/coffeprice.2026?igsh=YXg4dGNxODV1aGtx"
+                      href="#"
                       aria-label="Instagram"
                       className="flex items-center gap-2 px-4 py-2 bg-[#faf5ec] border border-[#d4b896] rounded-xl text-sm text-[#4a2f18] font-medium hover:bg-[#f0d9bc] transition"
                     >
@@ -289,6 +288,8 @@ export default function Contacto() {
           </div>
         </section>
       </main>
-    </div>
+
+      <Footer />
+    </>
   );
 }
