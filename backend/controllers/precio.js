@@ -1,5 +1,6 @@
 import PrecioModel from "../models/precio.js";
 import CompradorModel from "../models/comprador.js";
+import HistorialPrecio from "../models/historialPrecio.js";
 
 export const getprecios = async (req, res) => {
     try {
@@ -75,6 +76,12 @@ export const createprecio = async (req, res) => {
         });
 
         await nuevoPrecio.save();
+        await HistorialPrecio.create({
+            comprador,
+            preciocarga: precioNumerico,
+            preciokg: nuevoPrecio.preciokg,
+            tipocafe,
+        });
         res.status(201).json(nuevoPrecio);
     } catch (error) {
         res.status(400).json({ message: "Error al crear precio", error: error.message });
@@ -129,6 +136,13 @@ export const updateprecio = async (req, res) => {
         }
 
         await precio.save();
+
+        await HistorialPrecio.create({
+            comprador: precio.comprador,
+            preciocarga: precio.preciocarga,
+            preciokg: precio.preciokg,
+            tipocafe: precio.tipocafe,
+        });
 
         res.json(precio);
     } catch (error) {

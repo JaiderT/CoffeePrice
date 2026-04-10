@@ -148,7 +148,8 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
 }
 
 export default function Noticias() {
-  const { usuario } = useAuth();
+  const { usuario, cargando: cargandoAuth } = useAuth();
+  console.log('cargandoAuth:', cargandoAuth, 'usuario:', !!usuario);
   const [categoriaActiva, setCategoriaActiva] = useState('todas');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [noticias, setNoticias] = useState([]);
@@ -310,21 +311,24 @@ export default function Noticias() {
 
   return (
     <>
-      {usuario ? (
+      {!cargandoAuth && usuario ? (
         <div className="flex min-h-screen">
           <Sidebar />
           <div className="ml-16 flex-1">
             {contenido}
           </div>
         </div>
-      ) : (
+      ) : !cargandoAuth && !usuario ? (
         <div className="bg-[#2C1A0E]">
           <Navbar />
           {contenido}
           <Footer />
         </div>
+      ) : (
+        <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
+          <p className="text-[#8B7355]">Cargando...</p>
+        </div>
       )}
-
       {modalAbierto && (
         <ModalAlertas
           onClose={() => setModalAbierto(false)}

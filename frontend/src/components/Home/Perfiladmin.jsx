@@ -690,9 +690,9 @@ export default function PerfilAdmin() {
                 {noticias.map((n, i) => (
                   <div key={i} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
                     {n.imagen ? (
-                      <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+                      <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover shrink-0" />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center flex-shrink-0 text-2xl">
+                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center shrink-0 text-2xl">
                         📰
                       </div>
                     )}
@@ -708,7 +708,7 @@ export default function PerfilAdmin() {
                       <p className="text-[#2C1A0E] font-semibold text-sm leading-snug truncate">{n.titulo}</p>
                       <p className="text-gray-400 text-xs mt-1 line-clamp-2">{n.resumen}</p>
                     </div>
-                    <div className="flex flex-col gap-2 flex-shrink-0">
+                    <div className="flex flex-col gap-2 shrink-0">
                       <button onClick={() => abrirEditar(n)}
                         className="bg-[#F5ECD7] text-[#2C1A0E] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
                         <i className="fa-solid fa-pen"></i>
