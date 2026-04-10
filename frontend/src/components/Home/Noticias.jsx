@@ -9,12 +9,12 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: '📈 Precios del café' },
-  { value: 'internacional', label: '🌎 Mercado internacional' },
-  { value: 'clima', label: '🌧️ Clima y cosechas' },
-  { value: 'fnc', label: '🏛️ Federación Cafeteros' },
-  { value: 'produccion', label: '🌱 Producción' },
-  { value: 'consejos', label: '💡 Consejos para caficultores' },
+  { value: 'mercado', label: ' Precios del café' },
+  { value: 'internacional', label: ' Mercado internacional' },
+  { value: 'clima', label: ' Clima y cosechas' },
+  { value: 'fnc', label: ' Federación Cafeteros' },
+  { value: 'produccion', label: ' Producción' },
+  { value: 'consejos', label: ' Consejos para caficultores' },
 ];
 
 const categoriaBadgeColors = {
@@ -289,7 +289,7 @@ export default function Noticias() {
             <span className="text-3xl">{alertasActivas.activas ? '🔔' : '🔕'}</span>
             <div>
               <p className="text-white font-bold text-sm">
-                {alertasActivas.activas ? '¡Alertas activas!' : 'Recibe las noticias en tu celular'}
+                {alertasActivas.activas ? '¡Alertas activas!' : 'Recibe las notificaciones en tu dispositivo'}
               </p>
               <p className="text-gray-400 text-xs mt-0.5">
                 {alertasActivas.activas
