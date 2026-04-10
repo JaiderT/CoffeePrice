@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const compradorSchema = new mongoose.Schema(
     {
         usuario: {
@@ -27,8 +26,17 @@ const compradorSchema = new mongoose.Schema(
             trim: true,
             default: null,
         },
+        horarioApertura: {
+            type: String,
+            trim: true,
+            default: "07:00",
+        },
+        horarioCierre: {
+            type: String,
+            trim: true,
+            default: "17:00",
+        },
     },
     { timestamps: true }
 );
-
 export default mongoose.model("comprador", compradorSchema);

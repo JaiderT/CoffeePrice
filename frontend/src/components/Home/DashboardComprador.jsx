@@ -11,12 +11,11 @@ function DashboardComprador() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [mostrarEliminar, setMostrarEliminar] = useState(false);
+  const [mostrarHorario, setMostrarHorario] = useState(false);
   const [precioEditar, setPrecioEditar] = useState(null);
   const [precioEliminar, setPrecioEliminar] = useState(null);
-  const [nuevoPrecio, setNuevoPrecio] = useState({
-    preciocarga: '',
-    tipocafe: 'pergamino_seco'
-  });
+  const [nuevoPrecio, setNuevoPrecio] = useState({ preciocarga: '', tipocafe: 'pergamino_seco' });
+  const [horarioForm, setHorarioForm] = useState({ horarioApertura: '08:00', horarioCierre: '17:00' });
   const [mensaje, setMensaje] = useState(null);
 
   const obtenerPrecios = async (compradorId) => {
@@ -41,6 +40,10 @@ function DashboardComprador() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setComprador(data);
+        setHorarioForm({
+          horarioApertura: data.horarioApertura || '08:00',
+          horarioCierre: data.horarioCierre || '17:00',
+        });
         await obtenerPrecios(data._id);
       } catch (error) {
         console.error('Error al obtener comprador:', error);
@@ -102,6 +105,23 @@ function DashboardComprador() {
     setTimeout(() => setMensaje(null), 3000);
   };
 
+  const handleGuardarHorario = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/comprador/${comprador._id}`,
+        horarioForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setComprador({ ...comprador, ...horarioForm });
+      setMensaje({ tipo: 'exito', texto: 'Horario actualizado correctamente' });
+      setMostrarHorario(false);
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al actualizar el horario' });
+    }
+    setTimeout(() => setMensaje(null), 3000);
+  };
+
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
 
@@ -114,18 +134,23 @@ function DashboardComprador() {
             {comprador && <span className="text-gray-400"> · {comprador.nombreempresa}</span>}
           </p>
         </div>
-        <button
-          onClick={() => setMostrarFormulario(true)}
-          className="bg-[#C8A96E] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
-          <i className="fa-solid fa-plus"></i>
-          Publicar precio
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => setMostrarHorario(true)}
+            className="border border-[#C8A96E] text-[#C8A96E] px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#C8A96E] hover:text-white transition-colors flex items-center gap-2">
+            <i className="fa-solid fa-clock"></i>
+            {comprador ? `${comprador.horarioApertura || '08:00'} – ${comprador.horarioCierre || '17:00'}` : 'Horario'}
+          </button>
+          <button onClick={() => setMostrarFormulario(true)}
+            className="bg-[#C8A96E] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
+            <i className="fa-solid fa-plus"></i>
+            Publicar precio
+          </button>
+        </div>
       </div>
 
       {/* Mensaje */}
       {mensaje && (
-        <div className={`mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}>
+        <div className={`mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
@@ -153,7 +178,6 @@ function DashboardComprador() {
       {/* Tabla */}
       <div className="px-8 pb-8">
         <h2 className="text-[#2C1A0E] font-bold text-lg mb-4">Historial de precios</h2>
-
         <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-[#2C1A0E] rounded-xl text-xs text-gray-400 font-semibold uppercase mb-3">
           <div>Tipo de café</div>
           <div>Precio/carga</div>
@@ -161,7 +185,6 @@ function DashboardComprador() {
           <div>Fecha</div>
           <div>Acciones</div>
         </div>
-
         {cargando ? (
           <div className="text-center py-12 text-gray-400">Cargando...</div>
         ) : precios.length === 0 ? (
@@ -191,13 +214,11 @@ function DashboardComprador() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => { setPrecioEditar(item); setMostrarEditar(true); }}
+                <button onClick={() => { setPrecioEditar(item); setMostrarEditar(true); }}
                   className="bg-[#F5ECD7] text-[#2C1A0E] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
                   <i className="fa-solid fa-pen"></i>
                 </button>
-                <button
-                  onClick={() => { setPrecioEliminar(item); setMostrarEliminar(true); }}
+                <button onClick={() => { setPrecioEliminar(item); setMostrarEliminar(true); }}
                   className="bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-200 transition-colors">
                   <i className="fa-solid fa-trash"></i>
                 </button>
@@ -220,19 +241,13 @@ function DashboardComprador() {
             <form onSubmit={handlePublicar}>
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Precio por carga (COP)</label>
-                <input
-                  type="number"
-                  placeholder="Ej: 1950000"
-                  required
-                  value={nuevoPrecio.preciocarga}
+                <input type="number" placeholder="Ej: 1950000" required value={nuevoPrecio.preciocarga}
                   onChange={(e) => setNuevoPrecio({ ...nuevoPrecio, preciocarga: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div className="mb-6">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de café</label>
-                <select
-                  value={nuevoPrecio.tipocafe}
+                <select value={nuevoPrecio.tipocafe}
                   onChange={(e) => setNuevoPrecio({ ...nuevoPrecio, tipocafe: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="pergamino_seco">Pergamino seco</option>
@@ -269,18 +284,13 @@ function DashboardComprador() {
             <form onSubmit={handleEditar}>
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Precio por carga (COP)</label>
-                <input
-                  type="number"
-                  required
-                  value={precioEditar.preciocarga}
+                <input type="number" required value={precioEditar.preciocarga}
                   onChange={(e) => setPrecioEditar({ ...precioEditar, preciocarga: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div className="mb-6">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de café</label>
-                <select
-                  value={precioEditar.tipocafe}
+                <select value={precioEditar.tipocafe}
                   onChange={(e) => setPrecioEditar({ ...precioEditar, tipocafe: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="pergamino_seco">Pergamino seco</option>
@@ -313,22 +323,59 @@ function DashboardComprador() {
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar precio?</h3>
             <p className="text-gray-400 text-sm mb-1">Vas a eliminar el precio de</p>
-            <p className="text-[#2C1A0E] font-bold text-base mb-1">
-              {precioEliminar.preciocarga?.toLocaleString()} COP/carga
-            </p>
+            <p className="text-[#2C1A0E] font-bold text-base mb-1">{precioEliminar.preciocarga?.toLocaleString()} COP/carga</p>
             <p className="text-gray-400 text-xs mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => { setMostrarEliminar(false); setPrecioEliminar(null); }}
+              <button onClick={() => { setMostrarEliminar(false); setPrecioEliminar(null); }}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
               </button>
-              <button
-                onClick={handleEliminar}
+              <button onClick={handleEliminar}
                 className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
                 Eliminar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal horario */}
+      {mostrarHorario && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[#2C1A0E] font-bold text-lg">Configurar horario</h3>
+              <button onClick={() => setMostrarHorario(false)} className="text-gray-400 hover:text-gray-600">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <form onSubmit={handleGuardarHorario}>
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora de apertura</label>
+                <input type="time" value={horarioForm.horarioApertura}
+                  onChange={e => setHorarioForm({ ...horarioForm, horarioApertura: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              </div>
+              <div className="mb-6">
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora de cierre</label>
+                <input type="time" value={horarioForm.horarioCierre}
+                  onChange={e => setHorarioForm({ ...horarioForm, horarioCierre: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              </div>
+              <p className="text-xs text-gray-400 mb-4 text-center">
+                Horario actual: {horarioForm.horarioApertura} – {horarioForm.horarioCierre}
+              </p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setMostrarHorario(false)}
+                  className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit"
+                  className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+                  Guardar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
