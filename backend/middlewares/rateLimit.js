@@ -19,3 +19,11 @@ export const recoveryLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const publicLimiter = rateLimit ({
+  windowMs: 1 * 60 * 1000,
+  max: 120,
+  message: { message: 'Demasiadas solicitudes. Espera un momento.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

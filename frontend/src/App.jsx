@@ -56,7 +56,13 @@ function App() {
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/verificar-email" element={<VerificarEmail />} />
         <Route path="/contacto" element={<Contacto />} />
-        <Route path="/noticias" element={<Noticias />} />
+
+
+        <Route path="/noticias" element={
+          <LayoutPublico>
+            <Noticias />
+          </LayoutPublico>
+        } />
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={

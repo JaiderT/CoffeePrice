@@ -4,6 +4,7 @@ import express from 'express'
 import { login, register, googleCallback, verificarEmail } from "../controllers/AuthController.js"
 import passport from '../config/passport.js'
 import { authLimiter } from '../middlewares/rateLimit.js'
+import jwt from 'jsonwebtoken'
 
 const router = express.Router()
 
@@ -32,5 +33,17 @@ router.get('/google/callback',
   },
   googleCallback
 )
+
+router.get('/me', (req, res) => {
+    const token = req.cookies?.auth_token;
+    if (!token) return res.status(401).json({ message: 'No autenticado' });
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        res.json({ token, rol: decoded.rol, id: decoded.id,
+                  nombre: decoded.name, apellido: decoded.apellido });
+    } catch {
+        res.status(401).json({ message: 'Token invalido' });
+    }
+});
 
 export default router
