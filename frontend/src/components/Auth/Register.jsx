@@ -17,9 +17,6 @@ export default function Register() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // "form" | "revisar-correo"
-  const [paso, setPaso] = useState("form");
-
   function getStrength(val) {
     let score = 0;
     if (val.length >= 8) score++;
@@ -52,6 +49,8 @@ export default function Register() {
     setLoading(true);
 
     try {
+      // Llamamos al endpoint que registra el usuario con estado "pendiente"
+      // y envía el código de verificación al correo
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,8 +64,8 @@ export default function Register() {
         return;
       }
 
-      // Mostrar pantalla de "revisa tu correo"
-      setPaso("revisar-correo");
+      // Redirigimos a la página de verificación pasando el email por state
+      navigate("/verify-email", { state: { email, tipo } });
 
     } catch {
       setError("Error al conectar con el servidor");
@@ -75,49 +74,6 @@ export default function Register() {
     }
   }
 
-  // Pantalla de "revisa tu correo"
-  if (paso === "revisar-correo") {
-    return (
-      <div className="flex min-h-screen bg-[#3D1F0F] items-center justify-center px-4">
-        <div className="bg-[#FAF7F2] rounded-2xl p-10 max-w-md w-full text-center">
-
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl">☕</div>
-            <span className="text-2xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
-          </div>
-
-          <div className="text-5xl mb-5">📬</div>
-
-          <h2 className="text-2xl font-black text-[#3B1F0A] mb-3" style={{ fontFamily: "Georgia, serif" }}>
-            Revisa tu correo
-          </h2>
-
-          <p className="text-sm text-gray-500 leading-relaxed mb-2">
-            Te enviamos un link de activación a:
-          </p>
-          <p className="text-sm font-semibold text-[#C8814A] mb-6">{email}</p>
-
-          <p className="text-xs text-gray-400 leading-relaxed mb-8">
-            Haz clic en el botón <strong>"Activar mi cuenta"</strong> del correo para completar tu registro. El link expira en <strong>24 horas</strong>.
-          </p>
-
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg hover:scale-[1.02] transition-transform"
-            style={{ background: "linear-gradient(135deg, #3D1F0F, #7A4020)" }}
-          >
-            Ir al inicio de sesión
-          </button>
-
-          <p className="text-xs text-gray-400 mt-4">
-            ¿No te llegó el correo? Revisa tu carpeta de spam.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Formulario de registro
   return (
     <div className="flex min-h-screen bg-[#3D1F0F]">
 
@@ -168,7 +124,6 @@ export default function Register() {
       {/* PANEL DERECHO */}
       <div className="w-full lg:w-[780px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0 overflow-y-auto">
 
-        {/* Logo visible solo en móvil */}
         <div className="flex items-center gap-3 mb-8 lg:hidden">
           <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
           <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
@@ -181,7 +136,6 @@ export default function Register() {
           Gratis para caficultores. En menos de 2 minutos.
         </p>
 
-        {/* Tipo de usuario */}
         <div className="grid grid-cols-2 gap-2.5 mb-5">
           {[
             { val: "productor", ico: "👨‍🌾", nombre: "Productor", desc: "Vendo mi café" },
@@ -200,7 +154,6 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
 
-          {/* Nombre + Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="mb-4">
               <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nombre</label>
@@ -216,7 +169,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Email */}
           <div className="mb-4">
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Correo electrónico</label>
             <input type="email" placeholder="tucorreo@ejemplo.com" required value={email}
@@ -224,7 +176,6 @@ export default function Register() {
               className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50 transition-all"/>
           </div>
 
-          {/* Celular */}
           <div className="mb-4">
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
               Celular <span className="text-gray-400 font-normal">(opcional)</span>
@@ -234,7 +185,6 @@ export default function Register() {
               className="w-full px-4 py-3 rounded-xl border border-[#C8814A]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/50 transition-all"/>
           </div>
 
-          {/* Contraseña */}
           <div className="mb-4">
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contraseña</label>
             <div className="relative">
@@ -269,7 +219,6 @@ export default function Register() {
             )}
           </div>
 
-          {/* Confirmar Contraseña */}
           <div className="mb-4">
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Confirmar contraseña</label>
             <div className="relative">
@@ -309,7 +258,6 @@ export default function Register() {
             )}
           </div>
 
-          {/* Términos */}
           <label className="flex items-start gap-2.5 mb-3 cursor-pointer">
             <input type="checkbox" checked={terminos} onChange={e => setTerminos(e.target.checked)}
               className="accent-[#C8814A] w-3.5 h-3.5 mt-0.5 shrink-0"/>
@@ -327,7 +275,7 @@ export default function Register() {
           <button type="submit" disabled={loading || passwordsMismatch}
             className="w-full py-3.5 rounded-xl text-white text-sm font-bold mb-4 shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{ background: "linear-gradient(135deg, #3D1F0F, #7A4020)" }}>
-            {loading ? "Creando cuenta..." : "Crear cuenta"}
+            {loading ? "Enviando código..." : "Crear cuenta"}
           </button>
 
           <div className="flex items-center gap-3 my-4 text-xs text-gray-400">

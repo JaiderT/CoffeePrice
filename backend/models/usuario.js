@@ -47,7 +47,8 @@ const usuarioSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  
+
+  // Recuperación de contraseña
   codigoRecuperacion: {
     type: String,
     default: null,
@@ -56,7 +57,17 @@ const usuarioSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-}, 
+
+  // Verificación de email con código de 6 dígitos ← NUEVO
+  codigoVerificacion: {
+    type: String,
+    default: null,
+  },
+  codigoVerificacionExpira: {
+    type: Date,
+    default: null,
+  },
+},
 { timestamps: true }
 );
 
