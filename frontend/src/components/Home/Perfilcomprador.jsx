@@ -11,7 +11,10 @@ export default function PerfilComprador() {
   const [modo, setModo] = useState('ver');
   const [comprador, setComprador] = useState(null);
   const [datos, setDatos] = useState({ nombre: '', apellido: '', celular: '' });
-  const [empresa, setEmpresa] = useState({ nombreempresa: '', direccion: '', telefono: '', horario: '' });
+  const [empresa, setEmpresa] = useState({
+    nombreempresa: '', direccion: '', telefono: '',
+    horarioApertura: '08:00', horarioCierre: '17:00'
+  });
   const [passwords, setPasswords] = useState({ actual: '', nueva: '', confirmar: '' });
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,27 +23,24 @@ export default function PerfilComprador() {
     if (usuario) {
       setDatos({ nombre: usuario.nombre || '', apellido: usuario.apellido || '', celular: usuario.celular || '' });
     }
-
     const obtenerComprador = async () => {
       try {
         if (!usuarioId) return;
-
         const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         setComprador(data);
         setEmpresa({
           nombreempresa: data.nombreempresa || '',
           direccion: data.direccion || '',
           telefono: data.telefono || '',
-          horario: data.horario || '',
+          horarioApertura: data.horarioApertura || '08:00',
+          horarioCierre: data.horarioCierre || '17:00',
         });
       } catch (error) {
         console.error('Error al obtener comprador:', error);
       }
     };
-
     obtenerComprador();
   }, [API_URL, token, usuarioId, usuario]);
 
@@ -75,17 +75,16 @@ export default function PerfilComprador() {
       });
       mostrarMensaje('exito', 'Datos de empresa actualizados');
       setModo('ver');
-
       const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       setComprador(data);
       setEmpresa({
         nombreempresa: data.nombreempresa || '',
         direccion: data.direccion || '',
         telefono: data.telefono || '',
-        horario: data.horario || '',
+        horarioApertura: data.horarioApertura || '08:00',
+        horarioCierre: data.horarioCierre || '17:00',
       });
     } catch {
       mostrarMensaje('error', 'Error al actualizar la empresa');
@@ -120,12 +119,6 @@ export default function PerfilComprador() {
     ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
 
-  const estadoColor = {
-    activo: 'bg-green-100 text-green-700',
-    pendiente: 'bg-yellow-100 text-yellow-700',
-    rechazado: 'bg-red-100 text-red-700',
-  };
-
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
       <div className="max-w-2xl mx-auto">
@@ -143,13 +136,15 @@ export default function PerfilComprador() {
 
         {/* Card personal */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div className="h-24 bg-gradient-to-r from-[#3D1F0F] to-[#C8A96E] relative">
+          <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#C8A96E] relative">
             <div className="absolute -bottom-8 left-8">
               <div className="w-16 h-16 rounded-2xl bg-[#2C1A0E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
                 {iniciales}
               </div>
             </div>
           </div>
+
+          
 
           <div className="pt-12 px-8 pb-8">
             <div className="flex items-start justify-between mb-6">
@@ -159,11 +154,13 @@ export default function PerfilComprador() {
                   <span className="bg-[#F5ECD7] text-[#7A4020] text-xs px-3 py-1 rounded-full font-semibold">
                     🏪 Comprador
                   </span>
-                  <span className={`text-xs px-3 py-1 rounded-full font-semibold ${estadoColor[usuario?.estado] || estadoColor.pendiente}`}>
-                    ● {usuario?.estado === 'activo' ? 'Activo' : usuario?.estado === 'pendiente' ? 'Pendiente' : 'Rechazado'}
+                  <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold">
+                    ● Activo
                   </span>
                 </div>
+                
               </div>
+              
               {modo === 'ver' && (
                 <button onClick={() => setModo('editar')}
                   className="bg-[#F5ECD7] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#E0D0B0] transition-colors">
@@ -178,7 +175,6 @@ export default function PerfilComprador() {
                 <Campo label="Apellido" valor={usuario?.apellido} />
                 <Campo label="Correo electrónico" valor={usuario?.email} />
                 <Campo label="Celular" valor={usuario?.celular || 'No registrado'} />
-                <Campo label="Estado de cuenta" valor={usuario?.estado} />
                 <button onClick={() => setModo('password')}
                   className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">
                   <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
@@ -227,14 +223,28 @@ export default function PerfilComprador() {
                 <Campo label="Nombre de la empresa" valor={comprador?.nombreempresa || '—'} />
                 <Campo label="Dirección" valor={comprador?.direccion || '—'} />
                 <Campo label="Teléfono" valor={comprador?.telefono || 'No registrado'} />
-                <Campo label="Horario de atención" valor={comprador?.horario || 'No registrado'} />
+                <Campo label="Hora de apertura" valor={comprador?.horarioApertura || '08:00'} />
+                <Campo label="Hora de cierre" valor={comprador?.horarioCierre || '17:00'} />
               </div>
             ) : (
               <form onSubmit={handleGuardarEmpresa} className="space-y-4">
                 <InputField label="Nombre de la empresa" value={empresa.nombreempresa} onChange={v => setEmpresa({ ...empresa, nombreempresa: v })} />
                 <InputField label="Dirección" value={empresa.direccion} onChange={v => setEmpresa({ ...empresa, direccion: v })} />
                 <InputField label="Teléfono" value={empresa.telefono} onChange={v => setEmpresa({ ...empresa, telefono: v })} placeholder="+57 300 000 0000" />
-                <InputField label="Horario de atención" value={empresa.horario} onChange={v => setEmpresa({ ...empresa, horario: v })} placeholder="Lunes a viernes 7am - 5pm" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Hora de apertura</label>
+                    <input type="time" value={empresa.horarioApertura}
+                      onChange={e => setEmpresa({ ...empresa, horarioApertura: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Hora de cierre</label>
+                    <input type="time" value={empresa.horarioCierre}
+                      onChange={e => setEmpresa({ ...empresa, horarioCierre: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50" />
+                  </div>
+                </div>
                 <BotonesForm onCancel={() => setModo('ver')} loading={loading} />
               </form>
             )}
