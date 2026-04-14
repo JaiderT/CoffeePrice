@@ -11,6 +11,12 @@ export const getcompradores = async (req, res) => {
 
 export const createcomprador = async (req, res) => {
     try {
+        if (req.user?.rol !== "comprador") {
+            return res.status(403).json({
+                message: "Solo los usuarios con rol comprador pueden crear este perfil"
+            });
+            }
+
         const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre } = req.body;
 
         if (!nombreempresa || !direccion || !telefono) {

@@ -26,7 +26,7 @@ const authOpcional = (req, res, next) => {
 };
 
 router.get("/", authMiddleware, roleMiddleware("admin"), getcompradores);
-router.post("/", authMiddleware, createcomprador);
+router.post("/", authMiddleware, roleMiddleware("comprador"), createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
 
 router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agregado

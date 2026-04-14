@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContex.jsx';
 
@@ -134,6 +135,20 @@ export default function PerfilProductor() {
                 <Campo label="Correo electrónico" valor={usuario?.email} />
                 <Campo label="Celular" valor={usuario?.celular || 'No registrado'} />
                 <Campo label="Rol" valor="Productor" />
+                <div className="rounded-2xl bg-[#F8F3E8] border border-[#E6D6BB] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8A735B]">
+                    Predicciones
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-[#2C1A0E]">
+                    Consulta el comportamiento esperado del precio antes de vender.
+                  </p>
+                  <Link
+                    to="/predicciones"
+                    className="mt-3 inline-flex items-center rounded-full bg-[#2C1A0E] px-4 py-2 text-xs font-bold text-white hover:bg-[#3D1F0F] transition-colors"
+                  >
+                    Abrir predicciones
+                  </Link>
+                </div>
                 <button
                   onClick={() => setModo('password')}
                   className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">

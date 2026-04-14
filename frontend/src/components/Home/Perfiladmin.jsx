@@ -35,6 +35,14 @@ export default function PerfilAdmin() {
   const [modalEliminarReseña, setModalEliminarReseña] = useState(null);
   const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
   const [modalEliminarNoticia, setModalEliminarNoticia] = useState(null);
+  const formatearFechaNoticia = (noticia) => {
+    const fecha = noticia.publishedAt || noticia.createdAt;
+    return new Date(fecha).toLocaleDateString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
   const [mostrarFormNoticia, setMostrarFormNoticia] = useState(false);
   const [noticiaEditar, setNoticiaEditar] = useState(null);
   const [formNoticia, setFormNoticia] = useState({
@@ -687,8 +695,8 @@ export default function PerfilAdmin() {
               </div>
             ) : (
               <div className="space-y-3">
-                {noticias.map((n, i) => (
-                  <div key={i} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                {noticias.map((n) => (
+                  <div key={n._id} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
                     {n.imagen ? (
                       <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover shrink-0" />
                     ) : (
@@ -702,11 +710,31 @@ export default function PerfilAdmin() {
                           {n.categoria}
                         </span>
                         <span className="text-gray-400 text-xs">
-                          {new Date(n.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          {formatearFechaNoticia(n)}
                         </span>
                       </div>
                       <p className="text-[#2C1A0E] font-semibold text-sm leading-snug truncate">{n.titulo}</p>
                       <p className="text-gray-400 text-xs mt-1 line-clamp-2">{n.resumen}</p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-[11px] text-[#8B6B45] font-semibold">
+                          {n.fuente || 'CoffePrice'}
+                        </span>
+                        {n.tipoImagen && (
+                          <span className="text-[10px] uppercase tracking-wide text-gray-400">
+                            {n.tipoImagen === 'source' ? 'Imagen de fuente' : 'Imagen de apoyo'}
+                          </span>
+                        )}
+                      </div>
+                      {n.sourceUrl && (
+                        <a
+                          href={n.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex mt-2 text-[11px] font-semibold text-[#6B3A2A] hover:text-[#2C1A0E]"
+                        >
+                          Abrir fuente original
+                        </a>
+                      )}
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
                       <button onClick={() => abrirEditar(n)}

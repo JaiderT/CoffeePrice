@@ -85,6 +85,7 @@ function Precios() {
 
   const obtenerRecomendacionClima = () => {
     if (!clima?.actual) return 'Consulta el clima antes de mover o secar café.';
+    if (clima.actual.resumen) return clima.actual.resumen;
 
     const { lluvia, humedad, descripcion, viento } = clima.actual;
 
@@ -97,6 +98,9 @@ function Precios() {
 
     return 'El clima se ve estable para la jornada.';
   };
+
+  const formatearDiaCorto = (fecha) =>
+    new Date(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
@@ -212,6 +216,12 @@ function Precios() {
                 <p className="mt-1 text-sm text-[#6A543F]">
                   Seguridad del pronóstico: {prediccion.confianza}%
                 </p>
+                <Link
+                  to="/predicciones"
+                  className="mt-4 inline-flex items-center rounded-full bg-[#2F241C] px-4 py-2 text-xs font-bold text-[#F7F1E8] transition hover:bg-[#443126]"
+                >
+                  Ver predicciones completas
+                </Link>
               </>
             ) : (
               <p className="mt-3 text-sm text-[#6A543F]">
@@ -408,10 +418,45 @@ function Precios() {
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
               Cómo está el clima hoy
             </p>
-            <p className="mt-3 text-base font-bold text-[#2F241C]">
-              {cargandoClima ? 'Cargando clima...' : clima?.actual?.descripcion || 'Sin datos'}
-            </p>
-            <p className="mt-2 text-sm text-[#6D5E53]">{obtenerRecomendacionClima()}</p>
+
+            {cargandoClima ? (
+              <p className="mt-3 text-sm text-[#6D5E53]">Cargando clima...</p>
+            ) : clima?.actual ? (
+              <>
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/70 text-3xl shadow-inner">
+                    {clima.actual.icono || '🌤️'}
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-[#2F241C]">
+                      {clima.actual.descripcion}
+                    </p>
+                    <p className="mt-1 text-sm text-[#6D5E53]">
+                      {Math.round(clima.actual.temperatura)}°C en este momento
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-sm text-[#6D5E53]">{obtenerRecomendacionClima()}</p>
+
+                {clima.pronostico?.length > 0 && (
+                  <div className="mt-4 flex items-center gap-2">
+                      {clima.pronostico.slice(0, 4).map((dia) => (
+                        <div
+                          key={dia.fecha}
+                          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F9F2E8] text-lg ring-1 ring-[#E3D0B8]"
+                          title={`${formatearDiaCorto(dia.fecha)} - ${dia.descripcion}`}
+                        >
+                          {dia.icono || '🌤️'}
+                        </div>
+                      ))}
+                    <span className="ml-1 text-[11px] text-[#8A735B]">Próximos días</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-[#6D5E53]">Sin datos de clima por ahora.</p>
+            )}
           </article>
 
           <article className="rounded-[28px] bg-[linear-gradient(135deg,#D9E0C8_0%,#EEF1E3_100%)] p-5 shadow-[0_10px_24px_rgba(80,95,52,0.10)] ring-1 ring-[#CBD3B8]">

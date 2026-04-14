@@ -2,6 +2,13 @@ import Alerta from "../models/alerta.js";
 
 export const getAlertasByUsuario = async (req, res) => {
   try {
+    const esAdmin = req.user?.rol === "admin";
+  const esPropietario = req.user.id === req.params.usuarioId;
+
+  if (!esAdmin && !esPropietario) {
+    return res.status(403).json({ message: "No tienes permisos para ver estas alertas" });
+  }
+
     const alertas = await Alerta.find({ usuario: req.params.usuarioId })
       .populate("comprador", "nombreempresa tipo");
     res.json(alertas);
@@ -15,6 +22,12 @@ export const getAlertaById = async (req, res) => {
     const alerta = await Alerta.findById(req.params.id)
       .populate("usuario", "nombre apellido")
       .populate("comprador", "nombreempresa");
+      const esAdmin = req.user?.rol === "admin";
+      const esPropietario = alerta.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+          return res.status(403).json({ message: "No tienes permisos para ver esta alerta" });
+        }
 
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
     res.json(alerta);

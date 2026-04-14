@@ -16,6 +16,7 @@ import Contacto from './components/Home/Contacto.jsx';
 
 // Páginas privadas — Productor
 import Precios from "./components/Home/Precios.jsx";
+import Predicciones from "./components/Home/Predicciones.jsx";
 import PerfilProductor from "./components/Home/Perfilproductor.jsx";
 import Alertas from "./components/Home/Alertas.jsx";
 import Historial from "./components/Home/Historial.jsx";
@@ -67,6 +68,11 @@ function App() {
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
           <LayoutPrivado><Precios /></LayoutPrivado>
+        } />
+        <Route path="/predicciones" element={
+          <PrivateRoute roles={['productor', 'admin']}>
+            <LayoutPrivado><Predicciones /></LayoutPrivado>
+          </PrivateRoute>
         } />
         <Route path="/perfil" element={
           <PrivateRoute roles={['productor']}>

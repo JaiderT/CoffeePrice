@@ -171,8 +171,12 @@ export default function Noticias() {
   const obtenerNoticias = async () => {
     setCargando(true);
     try {
-      const params = categoriaActiva !== 'todas' ? `?categoria=${categoriaActiva}` : '';
-      const { data } = await axios.get(`${API_URL}/api/noticias${params}`);
+      const params = new URLSearchParams();
+      if (categoriaActiva !== 'todas') {
+        params.set('categoria', categoriaActiva);
+      }
+      params.set('_ts', Date.now().toString());
+      const { data } = await axios.get(`${API_URL}/api/noticias?${params.toString()}`);
       setNoticias(data);
     } catch (error) {
       console.error('Error al obtener noticias:', error);
@@ -183,6 +187,17 @@ export default function Noticias() {
 
   const destacada = noticias[0];
   const secundarias = noticias.slice(1);
+  const formatearFechaNoticia = (noticia, corta = false) => {
+    const fecha = noticia.publishedAt || noticia.createdAt;
+    return new Date(fecha).toLocaleDateString(
+      'es-CO',
+      corta
+        ? { day: '2-digit', month: 'short' }
+        : { day: '2-digit', month: 'short', year: 'numeric' }
+    );
+  };
+  const etiquetaImagen = (noticia) =>
+    noticia.tipoImagen === 'source' ? 'Imagen de la fuente' : 'Imagen de apoyo';
 
   const contenido = (
     <div className="w-full bg-[#F5ECD7] py-12 md:py-16 min-h-screen">
@@ -248,9 +263,20 @@ export default function Noticias() {
                       <span className="text-gray-400 text-xs">{destacada.fuente || 'CoffePrice'}</span>
                     </div>
                     <span className="text-gray-500 text-xs">
-                      {new Date(destacada.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {formatearFechaNoticia(destacada)}
                     </span>
                   </div>
+                  <span className="text-[11px] text-gray-500 mt-3">{etiquetaImagen(destacada)}</span>
+                  {destacada.sourceUrl && (
+                    <a
+                      href={destacada.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex mt-4 text-[#C8A96E] text-xs font-semibold hover:text-white transition-colors"
+                    >
+                      Ver fuente original
+                    </a>
+                  )}
                 </div>
               </div>
             )}
@@ -275,9 +301,20 @@ export default function Noticias() {
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-gray-400 text-xs">{noticia.fuente || 'CoffePrice'}</span>
                     <span className="text-gray-400 text-xs">
-                      {new Date(noticia.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                      {formatearFechaNoticia(noticia, true)}
                     </span>
                   </div>
+                  <span className="block text-[11px] text-gray-400 mt-2">{etiquetaImagen(noticia)}</span>
+                  {noticia.sourceUrl && (
+                    <a
+                      href={noticia.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex mt-3 text-[#8B6B45] text-[11px] font-semibold hover:text-[#3D1F0F] transition-colors"
+                    >
+                      Leer fuente
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
