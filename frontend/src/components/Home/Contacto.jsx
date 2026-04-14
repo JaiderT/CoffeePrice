@@ -175,7 +175,7 @@ export default function Contacto() {
                     className="flex items-center gap-2 px-4 py-2 bg-[#faf5ec] border border-[#d4b896] rounded-xl text-sm text-[#4a2f18] font-medium hover:bg-[#f0d9bc] transition">
                     <i className="fa-brands fa-facebook text-blue-600"></i> Facebook
                   </a>
-                  <a href="#" className="flex items-center gap-2 px-4 py-2 bg-[#faf5ec] border border-[#d4b896] rounded-xl text-sm text-[#4a2f18] font-medium hover:bg-[#f0d9bc] transition">
+                  <a href="https://www.instagram.com/coffeprice.2026?igsh=YXg4dGNxODV1aGtx" className="flex items-center gap-2 px-4 py-2 bg-[#faf5ec] border border-[#d4b896] rounded-xl text-sm text-[#4a2f18] font-medium hover:bg-[#f0d9bc] transition">
                     <i className="fab fa-instagram text-pink-600"></i> Instagram
                   </a>
                   <a href="https://wa.me/573152798859" target="_blank" rel="noopener noreferrer"

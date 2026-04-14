@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 // ─── Helper: envía código de verificación ────────────────────────────────────
 async function enviarCodigoVerificacion(email, nombre, codigo) {
   await transporter.sendMail({
-    from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
+    from: `"support.coffeprice@gmail.com" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verifica tu cuenta de CoffePrice ☕",
     html: `

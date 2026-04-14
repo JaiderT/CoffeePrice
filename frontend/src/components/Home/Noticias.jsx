@@ -9,13 +9,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: '📈 Precios del café' },
-  { value: 'internacional', label: '🌎 Mercado internacional' },
-  { value: 'clima', label: '🌧️ Clima y cosechas' },
-  { value: 'fnc', label: '🏛️ Federación Cafeteros' },
-  { value: 'produccion', label: '🌱 Producción' },
-  { value: 'consejos', label: '💡 Consejos para caficultores' },
-  { value: 'el_pital', label: '⛰️ Noticias de El Pital' },
+  { value: 'mercado', label: ' Precios del café' },
+  { value: 'internacional', label: ' Mercado internacional' },
+  { value: 'clima', label: 'Clima y cosechas' },
+  { value: 'fnc', label: 'Federación Cafeteros' },
+  { value: 'produccion', label: 'Producción' },
+  { value: 'consejos', label: 'Consejos para caficultores' },
+  { value: 'el_pital', label: 'Noticias de El Pital' },
 ];
 
 const categoriaBadgeColors = {
@@ -35,6 +35,7 @@ const categoriaEmoji = {
   fnc: '🏛️',
   produccion: '🌱',
   consejos: '💡',
+  el_pital: '⛰️'
 };
 
 function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
@@ -358,7 +359,6 @@ export default function Noticias() {
         <div className="bg-[#2C1A0E]">
           <Navbar />
           {contenido}
-          <Footer />
         </div>
       )}
       {modalAbierto && (

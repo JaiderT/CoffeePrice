@@ -602,7 +602,6 @@ function Inicio() {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }
