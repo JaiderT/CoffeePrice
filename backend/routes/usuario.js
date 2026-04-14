@@ -15,7 +15,7 @@ import rolMiddleware from "../middlewares/rolMiddleware.js";
 const router = express.Router();
 
 router.get("/", authMiddleware, rolMiddleware("admin"), getusuario);
-router.put("/:id/estado", authMiddleware, cambiarestado);
+router.put("/:id/estado", authMiddleware, rolMiddleware("admin"), cambiarestado);
 
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {

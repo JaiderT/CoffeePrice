@@ -7,6 +7,7 @@ import path from 'node:path';
 const menuProductor = [
   { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
+  { icon: 'fa-solid fa-chart-simple', label: 'Predicciones', path: '/predicciones' },
   { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },
   { icon: 'fa-solid fa-bell', label: 'Alertas', path: '/alertas' },
   { icon: 'fa-solid fa-chart-line', label: 'Historial', path: '/historial' },
@@ -17,6 +18,7 @@ const menuProductor = [
 const menuAdmin = [
   { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
+  { icon: 'fa-solid fa-chart-simple', label: 'Predicciones', path: '/predicciones' },
   { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },
   { icon: 'fa-solid fa-user-shield', label: 'Panel Admin', path: '/admin/perfil' },
   { icon: 'fa-solid fa-gear', label: 'Configuración', path: '/configuracion' },

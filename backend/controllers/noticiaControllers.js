@@ -1,11 +1,19 @@
 import Noticia from "../models/noticia.js";
+import { asegurarNoticiasRecientes } from "../services/noticiaAutoService.js";
 
 export const getNoticias = async (req, res) => {
     try {
         const { categoria } = req.query;
         const filtro = categoria ? { categoria } : {};
 
-        const noticias = await Noticia.find(filtro).sort({ createdAt: -1 });
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        res.set('Surrogate-Control', 'no-store');
+
+        await asegurarNoticiasRecientes();
+
+        const noticias = await Noticia.find(filtro).sort({ publishedAt: -1, createdAt: -1 });
         res.json(noticias);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener noticias", error: error.message });
