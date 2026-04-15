@@ -25,6 +25,7 @@ import Historial from "./components/Home/Historial.jsx";
 // Páginas privadas — Comprador
 import DashboardComprador from "./components/Home/DashboardComprador.jsx";
 import PerfilComprador from "./components/Home/Perfilcomprador.jsx";
+import MapaCompradores from './components/Home/MapaCompradores.jsx';
 
 // Páginas privadas — Admin
 import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
@@ -38,6 +39,7 @@ import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
 import LayoutPublico from "./components/Layout/LayoutPublico.jsx";
 import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
+import NotFound from './components/NotFound.jsx';
 
 function App() {
   useAlertas();
@@ -98,6 +100,9 @@ function App() {
             <LayoutComprador><PerfilComprador /></LayoutComprador>
           </PrivateRoute>
         } />
+        <Route path="/mapa" element={
+            <LayoutComprador><MapaCompradores /></LayoutComprador>
+        } />
 
         {/* ── PERFIL PÚBLICO ── debe ir después de /comprador/dashboard y /comprador/perfil ── */}
         <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
@@ -113,6 +118,8 @@ function App() {
             <LayoutPrivado><Configuracion /></LayoutPrivado>
           </PrivateRoute>
         } />
+
+        <Route path="*" element={<NotFound />} />
 
       </Routes>
     </BrowserRouter>

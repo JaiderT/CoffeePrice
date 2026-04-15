@@ -261,9 +261,17 @@ async function existeFuenteGuardada(sourceHash, sourceUrl) {
 }
 
 export async function generarNoticiasDelDia() {
+    if (!process.env.OPENAI_API_KEY) { 
+        console.warn("[NoticiaAuto] ❌ OPENAI_API_KEY no configurada.");
+        return 0;
+    }
+    if (!process.env.NEWSAPI_KEY) {
+        console.warn("[NoticiaAuto] ❌ NEWSAPI_KEY no configurada.");
+        return 0;
+    }
     console.log('[NoticiaAuto] Iniciando ciclo de generacion con fuentes reales...');
 
-    const maxNoticias = parseInt(process.env.NOTICIAS_POR_CICLO || '2');
+    const maxNoticias = parseInt(process.env.NOTICIAS_POR_CICLO || '5');
     const horasRevisionDuplicados = parseInt(process.env.NOTICIAS_HORAS_REVISAR_DUPLICADOS || '48');
     const ctx = await obtenerContexto();
     const noticiasRecientes = await obtenerNoticiasRecientes(horasRevisionDuplicados);

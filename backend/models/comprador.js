@@ -36,6 +36,18 @@ const compradorSchema = new mongoose.Schema(
             trim: true,
             default: "17:00",
         },
+        latitud: {
+            type: Number,
+            default: null,
+        },
+        longitud: {
+            type: Number,
+            default: null,
+        },
+        UbicacionVerificada: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

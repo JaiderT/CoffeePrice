@@ -131,6 +131,24 @@ async function buscarEnNewsAPI(query, fromDate) {
     const data = await res.json();
     return Array.isArray(data.articles) ? data.articles : [];
 }
+async function buscarEnGNews(query, fromDate) {
+    if (!process.env.GNEWS_API_KEY) return [];
+    const params = new URLSearchParams({
+        q: query, from: fromDate, sortby: "publishedAt",
+        max: "10", lang: "es", apikey: process.env.GNEWS_API_KEY
+    });
+    try {
+        const res = await fetch(`https://gnews.io/api/v4/search?${params}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.articles || []).map(art => ({
+            title: art.title, description: art.description,
+            content: art.content, url: art.url,
+            urlToImage: art.image, publishedAt: art.publishedAt,
+            source: { name: art.source?.name || "GNews" },
+        }));
+    } catch { return []; }
+}
 
 function crearHashFuente(articulo = {}) {
     const base = [
@@ -223,7 +241,11 @@ export async function obtenerArticulosReales() {
         const resultados = await Promise.allSettled(
             consultas.flatMap(({ categoria, consultas: consultasCategoria }) =>
                 consultasCategoria.map(async (query) => {
-                    const articulos = await buscarEnNewsAPI(query, fromDate);
+                    let articulos = await buscarEnNewsAPI(query, fromDate);
+                    if (articulos.length < 3) {
+                        const deGNews = await buscarEnGNews(query, fromDate);
+                        articulos = [...articulos, ...deGNews];
+                    }
                     return articulos.map((raw) => normalizarArticulo(raw, categoria));
                 })
             )
@@ -252,6 +274,7 @@ export async function obtenerArticulosReales() {
 
 export {
     buscarEnNewsAPI,
+    buscarEnGNews,
     construirConsultasNoticias,
     crearHashFuente,
     filtrarArticulosValidos,

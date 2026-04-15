@@ -17,7 +17,7 @@ export const createcomprador = async (req, res) => {
             });
             }
 
-        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre } = req.body;
+        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre, latitud, longitud } = req.body;
 
         if (!nombreempresa || !direccion || !telefono) {
             return res.status(400).json({
@@ -42,6 +42,8 @@ export const createcomprador = async (req, res) => {
             horario: horario?.trim() || null,
             horarioApertura: horarioApertura || "08:00",
             horarioCierre: horarioCierre || "17:00",
+            latitud: latitud ? parseFloat(latitud) : null,
+            longitud: longitud ? parseFloat(longitud) : null,
         });
 
         await nuevoComprador.save();

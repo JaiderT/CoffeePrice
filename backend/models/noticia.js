@@ -10,7 +10,7 @@ const noticiaSchema = new mongoose.Schema(
 
         imagen: {
             type: String,
-            required: true
+            required: false,
         },
 
         resumen: {

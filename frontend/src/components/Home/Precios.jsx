@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContex.jsx';
+import MapaCompradores from "./MapaCompradores.jsx";
 
 function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;

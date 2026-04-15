@@ -28,6 +28,19 @@ const authOpcional = (req, res, next) => {
 router.get("/", authMiddleware, roleMiddleware("admin"), getcompradores);
 router.post("/", authMiddleware, roleMiddleware("comprador"), createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
+router.get("/mapa", async (req, res) => {
+    try {
+        const compradores = await CompradorModel.find({
+            latitud: { $ne: null },
+            longitud: { $ne: null },
+        })
+        .select("nombreempresa direccion telefono horarioApertura horarioCierre latitud longitud")
+        .lean();
+        res.json(compradores);
+    } catch (error) {
+        res.status(500).json({ message: "Error obteniendo mapa", error: error.message });
+    }
+});
 
 router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agregado
   try {

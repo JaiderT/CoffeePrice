@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContex.jsx';
 import axios from 'axios';
 import Navbar from '../Layout/Navbar';
-import Footer from '../Layout/Footer';
+
 
 function Inicio() {
   const API_URL = import.meta.env.VITE_API_URL;
