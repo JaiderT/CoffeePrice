@@ -12,7 +12,7 @@ export const authLimiter = rateLimit({
 
 export const recoveryLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3,
+  max: 100,
   message: {
     message: 'Demasiadas solicitudes de recuperación. Intenta más tarde.',
   },
@@ -22,7 +22,7 @@ export const recoveryLimiter = rateLimit({
 
 export const publicLimiter = rateLimit ({
   windowMs: 1 * 60 * 1000,
-  max: 120,
+  max: 320,
   message: { message: 'Demasiadas solicitudes. Espera un momento.' },
   standardHeaders: true,
   legacyHeaders: false,

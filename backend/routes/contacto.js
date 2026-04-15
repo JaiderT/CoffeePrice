@@ -20,10 +20,10 @@ router.post("/contacto", async (req, res) => {
   });
 
   const mailOptions = {
-    from: `"CoffePrice Contacto" <${process.env.EMAIL_USER}>`,
+    from: `"support.coffeprice@gmail.com" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_USER,
     replyTo: correo,
-    subject: asunto ? `[CoffePrice] ${asunto}` : `[CoffePrice] Nuevo mensaje de ${nombre}`,
+    subject: asunto ? `[support.coffeprice@gmail.com] ${asunto}` : `[CoffePrice] Nuevo mensaje de ${nombre}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #d4b896; border-radius: 12px; overflow: hidden;">
         <div style="background: #3d1f0d; padding: 24px 32px;">
