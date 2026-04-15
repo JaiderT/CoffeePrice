@@ -66,7 +66,7 @@ export function AlertasProvider({ children }) {
       {children}
 
       {mostrarBanner && alertasDisparadas.length > 0 && (
-        <div className="fixed top-4 right-4 z-[100] max-w-sm w-full space-y-2">
+        <div className="fixed top-4 right-4 z-100 max-w-sm w-full space-y-2">
           {alertasDisparadas.map((alerta, i) => {
             const urlDestino = alerta.comprador?._id
               ? `/comprador/${alerta.comprador._id}`
