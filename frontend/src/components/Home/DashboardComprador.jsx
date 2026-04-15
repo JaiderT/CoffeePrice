@@ -8,6 +8,7 @@ function DashboardComprador() {
   const [precios, setPrecios] = useState([]);
   const [comprador, setComprador] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [sinPerfil, setSinPerfil] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [mostrarEliminar, setMostrarEliminar] = useState(false);
@@ -16,6 +17,13 @@ function DashboardComprador() {
   const [precioEliminar, setPrecioEliminar] = useState(null);
   const [nuevoPrecio, setNuevoPrecio] = useState({ preciocarga: '', tipocafe: 'pergamino_seco' });
   const [horarioForm, setHorarioForm] = useState({ horarioApertura: '08:00', horarioCierre: '17:00' });
+  const [formPerfil, setFormPerfil] = useState({
+    nombreempresa: '',
+    direccion: '',
+    telefono: '',
+    horarioApertura: '08:00',
+    horarioCierre: '17:00',
+  });
   const [mensaje, setMensaje] = useState(null);
 
   const obtenerPrecios = async (compradorId) => {
@@ -46,12 +54,37 @@ function DashboardComprador() {
         });
         await obtenerPrecios(data._id);
       } catch (error) {
-        console.error('Error al obtener comprador:', error);
+        if (error.response?.status === 404) {
+          setSinPerfil(true);
+        }
         setCargando(false);
       }
     };
     obtenerComprador();
   }, [API_URL, usuario?.id]);
+
+  const handleCrearPerfil = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(`${API_URL}/api/comprador`,
+        formPerfil,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setComprador(data.comprador);
+      setSinPerfil(false);
+      setHorarioForm({
+        horarioApertura: data.comprador.horarioApertura || '08:00',
+        horarioCierre: data.comprador.horarioCierre || '17:00',
+      });
+      obtenerPrecios(data.comprador._id);
+      setMensaje({ tipo: 'exito', texto: '¡Perfil creado correctamente!' });
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al crear el perfil';
+      setMensaje({ tipo: 'error', texto: msg });
+    }
+    setTimeout(() => setMensaje(null), 3000);
+  };
 
   const handlePublicar = async (e) => {
     e.preventDefault();
@@ -125,6 +158,68 @@ function DashboardComprador() {
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
 
+      {/* Pantalla sin perfil */}
+      {sinPerfil && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-store text-[#C8A96E] text-2xl"></i>
+              </div>
+              <h3 className="text-[#2C1A0E] font-bold text-xl">Completa tu perfil de empresa</h3>
+              <p className="text-gray-400 text-sm mt-2">Necesitas configurar tu empresa para publicar precios</p>
+            </div>
+            {mensaje && (
+              <div className={`px-4 py-3 rounded-xl mb-4 text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
+              </div>
+            )}
+            <form onSubmit={handleCrearPerfil} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Nombre de la empresa</label>
+                <input type="text" required value={formPerfil.nombreempresa}
+                  onChange={e => setFormPerfil({ ...formPerfil, nombreempresa: e.target.value })}
+                  placeholder="Ej: Cooperativa El Huila"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Dirección</label>
+                <input type="text" required value={formPerfil.direccion}
+                  onChange={e => setFormPerfil({ ...formPerfil, direccion: e.target.value })}
+                  placeholder="Ej: Calle 5 #3-20, El Pital, Huila"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Teléfono</label>
+                <input type="text" required value={formPerfil.telefono}
+                  onChange={e => setFormPerfil({ ...formPerfil, telefono: e.target.value })}
+                  placeholder="Ej: 3142233974"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora apertura</label>
+                  <input type="time" value={formPerfil.horarioApertura}
+                    onChange={e => setFormPerfil({ ...formPerfil, horarioApertura: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora cierre</label>
+                  <input type="time" value={formPerfil.horarioCierre}
+                    onChange={e => setFormPerfil({ ...formPerfil, horarioCierre: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                </div>
+              </div>
+              <button type="submit"
+                className="w-full bg-[#2C1A0E] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors mt-2">
+                Crear perfil de empresa
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-[#F5ECD7] px-8 py-6 flex items-center justify-between border-b border-[#E0D0B0]">
         <div>
@@ -149,7 +244,7 @@ function DashboardComprador() {
       </div>
 
       {/* Mensaje */}
-      {mensaje && (
+      {mensaje && !sinPerfil && (
         <div className={`mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
@@ -193,10 +288,11 @@ function DashboardComprador() {
           precios.map((item, i) => (
             <div key={i} className="grid grid-cols-5 gap-4 px-4 py-4 bg-white rounded-xl mb-3 items-center hover:shadow-md transition-shadow">
               <div>
-                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${item.tipocafe === 'especial' ? 'bg-purple-100 text-purple-700' :
-                    item.tipocafe === 'organico' ? 'bg-green-100 text-green-700' :
-                      item.tipocafe === 'verde' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-amber-100 text-amber-700'}`}>
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                  item.tipocafe === 'especial' ? 'bg-purple-100 text-purple-700' :
+                  item.tipocafe === 'organico' ? 'bg-green-100 text-green-700' :
+                  item.tipocafe === 'verde' ? 'bg-emerald-100 text-emerald-700' :
+                  'bg-amber-100 text-amber-700'}`}>
                   {item.tipocafe?.replace('_', ' ')}
                 </span>
               </div>

@@ -30,10 +30,11 @@ function Estrellas({ valor, onChange }) {
           onClick={() => onChange && onChange(n)}
           onMouseEnter={() => onChange && setHover(n)}
           onMouseLeave={() => onChange && setHover(0)}
-          className={`w-10 h-10 rounded-xl border text-lg transition-all duration-150 ${(hover || valor) >= n
+          className={`w-10 h-10 rounded-xl border text-lg transition-all duration-150 ${
+            (hover || valor) >= n
               ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#C8A96E]'
               : 'bg-white border-gray-200 text-gray-300'
-            } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}>
+          } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}>
           ★
         </button>
       ))}
@@ -73,6 +74,9 @@ export default function PerfilPublicoComprador() {
   const [numKg, setNumKg] = useState(50);
   const [modoCalculo, setModoCalculo] = useState('cargas');
   const [precioAlerta, setPrecioAlerta] = useState('');
+  const [alertaGuardada, setAlertaGuardada] = useState(false);
+  const [enviandoAlerta, setEnviandoAlerta] = useState(false);
+  const [mensajeAlerta, setMensajeAlerta] = useState(null);
   const [modalContacto, setModalContacto] = useState(false);
 
   useEffect(() => {
@@ -135,12 +139,31 @@ export default function PerfilPublicoComprador() {
       setTagsSeleccionados([]);
       obtenerDatos();
     } catch (error) {
-      console.log('Error detallado:', error.response?.data);
       const msg = error.response?.data?.message || 'Error al publicar la reseña';
       setMensaje({ tipo: 'error', texto: msg });
-    }  finally {
+    } finally {
       setEnviando(false);
       setTimeout(() => setMensaje(null), 3000);
+    }
+  };
+
+  const handleActivarAlerta = async () => {
+    if (!precioAlerta) return;
+    setEnviandoAlerta(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/alertas`, {
+        comprador: id,
+        precioMinimo: Number(precioAlerta),
+        canales: { push: true, email: false, whatsapp: false },
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setAlertaGuardada(true);
+      setMensajeAlerta({ tipo: 'exito', texto: '¡Alerta activada! Aparece en tu sección de alertas.' });
+    } catch {
+      setMensajeAlerta({ tipo: 'error', texto: 'Error al activar la alerta' });
+    } finally {
+      setEnviandoAlerta(false);
+      setTimeout(() => setMensajeAlerta(null), 3000);
     }
   };
 
@@ -204,7 +227,7 @@ export default function PerfilPublicoComprador() {
 
         {/* Header con banner */}
         <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
-          <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
+          <div className="h-36 bg-gradient-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
             <div className="absolute bottom-0 left-6 translate-y-1/2">
               <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {iniciales(comprador.nombreempresa)}
@@ -247,9 +270,7 @@ export default function PerfilPublicoComprador() {
                 <p className="text-[#8B7355] text-xs">{reseñas.length} reseñas</p>
               </div>
               <div className="text-center">
-                <p className="text-[#2C1A0E] text-lg font-bold">
-                  {precioActual?.preciokg?.toLocaleString() || '---'}
-                </p>
+                <p className="text-[#2C1A0E] text-sm font-bold">{precioActual?.preciokg?.toLocaleString() || '---'}</p>
                 <p className="text-[#8B7355] text-xs">COP/kg</p>
               </div>
               <div className="text-center">
@@ -286,8 +307,9 @@ export default function PerfilPublicoComprador() {
                 </p>
                 <p className="text-[#D8C7A8] text-sm mt-1">COP por carga de 125 kg</p>
                 {variacion !== null && (
-                  <div className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-xs font-semibold ${variacion >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                    }`}>
+                  <div className={`inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                    variacion >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
                     {variacion >= 0 ? '▲' : '▼'} {variacionPct}% vs ayer · {variacion >= 0 ? '+' : ''}{variacion?.toLocaleString()}
                   </div>
                 )}
@@ -314,8 +336,9 @@ export default function PerfilPublicoComprador() {
                   <div className="flex gap-1">
                     {['7D', '30D'].map(p => (
                       <button key={p} onClick={() => setPeriodoHistorial(p)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${periodoHistorial === p ? 'bg-[#C8A96E] text-white' : 'bg-[#F7F1E3] text-[#8B7355] hover:bg-[#E7D9BF]'
-                          }`}>
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          periodoHistorial === p ? 'bg-[#C8A96E] text-white' : 'bg-[#F7F1E3] text-[#8B7355] hover:bg-[#E7D9BF]'
+                        }`}>
                         {p}
                       </button>
                     ))}
@@ -457,10 +480,11 @@ export default function PerfilPublicoComprador() {
                   <div className="flex flex-wrap gap-2 mb-4">
                     {TAGS.map(tag => (
                       <button key={tag.value} type="button" onClick={() => toggleTag(tag.value)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${tagsSeleccionados.includes(tag.value)
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                          tagsSeleccionados.includes(tag.value)
                             ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#7A4020]'
                             : 'bg-white border-gray-200 text-[#8B7355] hover:border-[#C8A96E]'
-                          }`}>
+                        }`}>
                         {tag.label}
                       </button>
                     ))}
@@ -590,13 +614,38 @@ export default function PerfilPublicoComprador() {
               <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm">
                 <h3 className="text-green-800 font-bold text-sm mb-1">🔔 Alerta de precio</h3>
                 <p className="text-green-700 text-xs mb-3">Avísame cuando este comprador suba su precio</p>
-                <label className="text-xs font-semibold text-green-700 uppercase mb-2 block">Precio mínimo de alerta</label>
-                <input type="number" placeholder="Ej: 2100000" value={precioAlerta}
-                  onChange={e => setPrecioAlerta(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 bg-white text-[#2C1A0E] mb-3" />
-                <button className="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors">
-                  🔔 Activar alerta
-                </button>
+
+                {mensajeAlerta && (
+                  <div className={`px-3 py-2 rounded-xl mb-3 text-xs font-semibold ${mensajeAlerta.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {mensajeAlerta.tipo === 'exito' ? '✅' : '❌'} {mensajeAlerta.texto}
+                  </div>
+                )}
+
+                {alertaGuardada ? (
+                  <div className="text-center py-2">
+                    <p className="text-green-700 text-sm font-semibold">✅ Alerta activa</p>
+                    <p className="text-green-600 text-xs mt-1">
+                      Te avisamos cuando supere ${Number(precioAlerta).toLocaleString()}
+                    </p>
+                    <button onClick={() => { setAlertaGuardada(false); setPrecioAlerta(''); }}
+                      className="mt-3 text-xs text-green-600 hover:underline">
+                      Cambiar precio
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label className="text-xs font-semibold text-green-700 uppercase mb-2 block">
+                      Precio mínimo de alerta
+                    </label>
+                    <input type="number" placeholder="Ej: 2100000" value={precioAlerta}
+                      onChange={e => setPrecioAlerta(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 bg-white text-[#2C1A0E] mb-3" />
+                    <button onClick={handleActivarAlerta} disabled={!precioAlerta || enviandoAlerta}
+                      className="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60">
+                      {enviandoAlerta ? 'Activando...' : '🔔 Activar alerta'}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 

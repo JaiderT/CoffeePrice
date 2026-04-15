@@ -1,16 +1,38 @@
 import PrecioModel from "../models/precio.js";
 import CompradorModel from "../models/comprador.js";
 import HistorialPrecio from "../models/historialPrecio.js";
+import Alerta from "../models/alerta.js";
+
+const verificarAlertas = async (compradorId, preciocarga) => {
+  try {
+    const alertas = await Alerta.find({
+      $or: [
+        { comprador: compradorId },
+        { comprador: null }
+      ],
+      activa: true,
+      precioMinimo: { $lte: preciocarga }
+    }).populate('usuario', 'nombre email');
+
+    for (const alerta of alertas) {
+      await Alerta.findByIdAndUpdate(alerta._id, {
+        ultimaNotificacion: new Date()
+      });
+    }
+    return alertas;
+  } catch (error) {
+    console.error('Error verificando alertas:', error);
+    return [];
+  }
+};
 
 export const getprecios = async (req, res) => {
     try {
         const { tipocafe } = req.query;
         const filtro = tipocafe ? { tipocafe } : {};
-
         const precios = await PrecioModel.find(filtro)
             .populate("comprador", "nombreempresa direccion")
             .sort({ preciocarga: -1 });
-
         res.json(precios);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener precios", error: error.message });
@@ -22,7 +44,6 @@ export const getpreciosBycomprador = async (req, res) => {
         const precios = await PrecioModel.find({ comprador: req.params.compradorId })
             .populate("comprador", "nombreempresa")
             .sort({ createdAt: -1 });
-
         res.json(precios);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener precios del comprador", error: error.message });
@@ -49,13 +70,10 @@ export const createprecio = async (req, res) => {
         }
 
         if (!tiposPermitidos.includes(tipocafe)) {
-            return res.status(400).json({
-                message: "Tipo de café no válido"
-            });
+            return res.status(400).json({ message: "Tipo de café no válido" });
         }
 
         const compradorExistente = await CompradorModel.findById(comprador);
-
         if (!compradorExistente) {
             return res.status(404).json({ message: "Comprador no encontrado" });
         }
@@ -82,6 +100,7 @@ export const createprecio = async (req, res) => {
             preciokg: nuevoPrecio.preciokg,
             tipocafe,
         });
+        await verificarAlertas(comprador, precioNumerico);
         res.status(201).json(nuevoPrecio);
     } catch (error) {
         res.status(400).json({ message: "Error al crear precio", error: error.message });
@@ -113,37 +132,30 @@ export const updateprecio = async (req, res) => {
 
         if (preciocarga !== undefined) {
             const precioNumerico = Number(preciocarga);
-
             if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
                 return res.status(400).json({
                     message: "El precio por carga debe ser un número mayor a 0"
                 });
             }
-
             precio.preciocarga = precioNumerico;
         }
 
         if (tipocafe !== undefined) {
             const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
-
             if (!tiposPermitidos.includes(tipocafe)) {
-                return res.status(400).json({
-                    message: "Tipo de café no válido"
-                });
+                return res.status(400).json({ message: "Tipo de café no válido" });
             }
-
             precio.tipocafe = tipocafe;
         }
 
         await precio.save();
-
         await HistorialPrecio.create({
             comprador: precio.comprador,
             preciocarga: precio.preciocarga,
             preciokg: precio.preciokg,
             tipocafe: precio.tipocafe,
         });
-
+        await verificarAlertas(precio.comprador, precio.preciocarga);
         res.json(precio);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar precio", error: error.message });
@@ -153,13 +165,11 @@ export const updateprecio = async (req, res) => {
 export const deleteprecio = async (req, res) => {
     try {
         const precio = await PrecioModel.findById(req.params.id);
-
         if (!precio) {
             return res.status(404).json({ message: "Precio no encontrado" });
         }
 
         const compradorExistente = await CompradorModel.findById(precio.comprador);
-
         if (!compradorExistente) {
             return res.status(404).json({ message: "Comprador asociado no encontrado" });
         }
@@ -174,7 +184,6 @@ export const deleteprecio = async (req, res) => {
         }
 
         await precio.deleteOne();
-
         res.json({ message: "Precio eliminado correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar precio", error: error.message });

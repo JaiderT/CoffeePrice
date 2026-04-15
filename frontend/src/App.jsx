@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useAlertas } from './hooks/useAlertas.js';
 
 // Auth
 import Login from "./components/Auth/Login.jsx";
@@ -39,6 +40,8 @@ import LayoutPublico from "./components/Layout/LayoutPublico.jsx";
 import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
 
 function App() {
+  useAlertas();
+
   return (
     <BrowserRouter>
       <Routes>
@@ -57,13 +60,7 @@ function App() {
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/contacto" element={<Contacto />} />
-
-
-        <Route path="/noticias" element={
-          <LayoutPublico>
-            <Noticias />
-          </LayoutPublico>
-        } />
+        <Route path="/noticias" element={<Noticias />} />
 
         {/* ── PRODUCTOR ── */}
         <Route path="/precios" element={
