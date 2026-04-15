@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Navbar from '../Layout/Navbar';
-import Footer from '../Layout/Footer';
-import Sidebar from '../Layout/Sidebar';
 import { useAuth } from '../../context/AuthContex.jsx';
+import Navbar from '../Layout/Navbar.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -35,7 +33,7 @@ const categoriaEmoji = {
   fnc: '🏛️',
   produccion: '🌱',
   consejos: '💡',
-  el_pital: '⛰️'
+  el_pital: '⛰️',
 };
 
 function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
@@ -151,7 +149,6 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
 }
 
 export default function Noticias() {
-  const { usuario } = useAuth();
   const [categoriaActiva, setCategoriaActiva] = useState('todas');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [noticias, setNoticias] = useState([]);
@@ -350,17 +347,8 @@ export default function Noticias() {
 
   return (
     <>
-      {usuario ? (
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="ml-16 flex-1">{contenido}</div>
-        </div>
-      ) : (
-        <div className="bg-[#2C1A0E]">
-          <Navbar />
-          {contenido}
-        </div>
-      )}
+    <Navbar />
+    {contenido}
       {modalAbierto && (
         <ModalAlertas
           onClose={() => setModalAbierto(false)}

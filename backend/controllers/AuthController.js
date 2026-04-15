@@ -308,25 +308,25 @@ export const login = async (req, res) => {
 // ─── GOOGLE CALLBACK ──────────────────────────────────────────────────────────
 export const googleCallback = (req, res) => {
   try {
+    if (req.user.estado === "rechazado") {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=cuenta_rechazada`);
+    }
     const token = jwt.sign(
-      {
-        id: req.user._id,
-        rol: req.user.rol,
-        name: req.user.nombre,
-        apellido: req.user.apellido,
-      },
+      { id: req.user._id, rol: req.user.rol },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
-
+    // Opcion A: Enviar via cookie HttpOnly (MAS SEGURO)
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
     if (req.user.estado === "pendiente") {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/completar-perfil?token=${token}`
-      );
+      return res.redirect(`${process.env.FRONTEND_URL}/completar-perfil`);
     }
-
-    res.redirect(`${process.env.FRONTEND_URL}/auth/google?token=${token}`);
-
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google`);
   } catch (error) {
     res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
   }

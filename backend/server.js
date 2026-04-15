@@ -55,11 +55,6 @@ process.on('unhandledRejection', (reason) => {
     console.error('[UnhandledRejection]', reason);
 });
 
-if (process.env.NODE_ENV !== 'test') {
-  iniciarCronNoticias();
-  console.log('Noticias automaticas: activas');
-}
-
 app.use('/api/precios', publicLimiter);
 app.use('/api/predicciones', publicLimiter);
 app.use('/api/noticias', publicLimiter);
@@ -90,4 +85,10 @@ app.use((err, req, res, next) => {
     res.status(statusCode).json({ message });
 });
 
-app.listen(8081, () => console.log('Servidor corriendo en http://localhost:8081'));
+app.listen(8081, async () => {
+  console.log("Servidor corriendo en http://localhost:8081");
+  if (process.env.NODE_ENV !== "test") {
+    await iniciarCronNoticias();
+    console.log("Noticias automaticas: activas");
+  }
+});

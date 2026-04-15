@@ -8,23 +8,27 @@ export default function GoogleAuth() {
   const { login } = useAuth()
 
   useEffect(() => {
-    const error = params.get('error');
-    if (error) {navigate('/login?error=' + error, {replace: true}); return; }
-    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, { credentials: 'include' 
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (!data.token) throw new Error('no token');
-      login(data.token, data.rol, data.nombre, data.apellido, data.id, '', '');
-      if (data.rol === 'admin') navigate('/admin/perfil', {replace: true });
-      else if (data.rol === 'comprador') navigate('/comprador/dashboard', {
-        replace: true });
-        else navigate('/precios', {replace: true });
-    })
-    .catch(() => navigate('/login?error=google_failed', { replace: true }));
+    const error = params.get("error");
+    if (error) { navigate("/login?error=" + error, {replace: true}); return; }
+
+    const token = params.get("token");
+    if (!token) { navigate("/login?error=google_failed", {replace:true}); return; }
+
+    try {
+      // Decodificar el JWT para obtener datos del usuario
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      login(token, payload.rol, payload.name || payload.nombre,
+            payload.apellido, payload.id, "", "");
+      if (payload.rol === "admin") navigate("/admin/perfil", {replace:true});
+      else if (payload.rol === "comprador")
+        navigate("/comprador/dashboard", {replace:true});
+      else navigate("/precios", {replace:true});
+    } catch {
+      navigate("/login?error=google_failed", {replace:true});
+    }
   }, [params, navigate, login]);
 
-  return (
+return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2]">
       <div className="text-center">
         <div className="text-5xl mb-4">☕</div>

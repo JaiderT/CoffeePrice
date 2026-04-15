@@ -1,7 +1,13 @@
 import cron from 'node-cron';
 import { generarNoticiasDelDia, limpiarNoticiasViejas } from '../services/noticiaAutoService.js';
 
-export function iniciarCronNoticias() {
+export async function iniciarCronNoticias() {
+    console.log("[Cron] Ejecutando generacion inicial...");
+    try {
+        await generarNoticiasDelDia();
+    } catch (e) {
+        console.error("[Cron] Error en generacion inicial:", e.message); 
+    }
     cron.schedule('0 6,12,18,0 * * *', async () => {
         const hora = new Date().toLocaleTimeString('es-CO', {
             timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit'
