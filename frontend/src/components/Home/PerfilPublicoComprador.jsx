@@ -251,9 +251,9 @@ useEffect(() => {
                   className="flex items-center gap-2 bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
                   <i className="fa-solid fa-phone text-xs"></i> Contactar
                 </button>
-                <button className="flex items-center gap-2 border border-[#E7D9BF] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F7F1E3] transition-colors">
+                <Link to={'/mapa'}> <button className="flex items-center gap-2 border border-[#E7D9BF] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F7F1E3] transition-colors">
                   <i className="fa-solid fa-map text-xs"></i> Cómo llegar
-                </button>
+                </button></Link>
               </div>
             </div>
 
