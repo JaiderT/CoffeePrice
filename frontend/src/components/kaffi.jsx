@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { useKaffiContext } from "../hooks/useKaffiContext"; // 👈 NUEVO
 
 export default function Kaffi() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -7,46 +8,81 @@ export default function Kaffi() {
   const [mensajes, setMensajes] = useState([
     {
       role: "assistant",
-      content:
-        "¡Buenas, hermano! Soy Kaffi ☕\nPreguntame lo que quieras sobre el precio del café, los compradores de Pital o cualquier cosita de la plataforma. ¡Aquí estoy, pues!",
+      content: "¡Buenas, hermano! Soy Kaffi ☕\nPreguntame lo que quieras sobre el precio del café, los compradores de Pital o cualquier cosita de la plataforma. ¡Aquí estoy, pues!",
     },
   ]);
   const [entrada, setEntrada] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [sugerencias, setSugerencias] = useState([]); // 👈 NUEVO
   const finRef = useRef(null);
+
+  // 👈 NUEVO: Activar contexto proactivo
+  useKaffiContext(setMensajes, setAbierto);
 
   useEffect(() => {
     if (abierto) finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes, abierto]);
 
+  // 👈 NUEVO: Escuchar eventos del tour
+  useEffect(() => {
+    const handleKaffiMessage = (event) => {
+      setMensajes(prev => [...prev, { 
+        role: "assistant", 
+        content: event.detail.mensaje 
+      }]);
+      setAbierto(true);
+    };
+    
+    window.addEventListener('kaffi-message', handleKaffiMessage);
+    return () => window.removeEventListener('kaffi-message', handleKaffiMessage);
+  }, []);
+
   const enviar = async () => {
     if (!entrada.trim() || cargando) return;
+    
     const nuevosMensajes = [...mensajes, { role: "user", content: entrada }];
     setMensajes(nuevosMensajes);
     setEntrada("");
     setCargando(true);
+    
     try {
+      // 👈 MODIFICADO: Enviar también el contexto de la página
       const { data } = await axios.post(`${API_URL}/api/chatbot`, {
-        mensajes: nuevosMensajes.filter(
-          (m) => m.role !== "assistant" || nuevosMensajes.indexOf(m) > 0,
-        ),
+        mensajes: nuevosMensajes.map(({ role, content }) => ({ role, content })),
+        contexto: { // 👈 NUEVO
+          pagina: window.location.pathname,
+          timestamp: new Date().toISOString()
+        }
       });
+      
       setMensajes([
         ...nuevosMensajes,
         { role: "assistant", content: data.respuesta },
       ]);
-    } catch {
+      
+      // 👈 NUEVO: Guardar sugerencias
+      if (data.sugerencias) {
+        setSugerencias(data.sugerencias);
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
       setMensajes([
         ...nuevosMensajes,
         {
           role: "assistant",
-          content:
-            "Ay, hermano, se me fue la señal. Intentá de nuevo en un ratico.",
+          content: "Ay, hermano, se me fue la señal. Intentá de nuevo en un ratico.",
         },
       ]);
     } finally {
       setCargando(false);
     }
+  };
+
+  // 👈 NUEVO: Función para enviar sugerencias rápidas
+  const enviarSugerencia = (sugerencia) => {
+    setEntrada(sugerencia);
+    setTimeout(() => enviar(), 100);
   };
 
   return (
@@ -58,9 +94,9 @@ export default function Kaffi() {
           style={{ height: "480px" }}
         >
           {/* Header */}
-          <div className="bg-linear-to-r from-[#3D1F0F] to-[#7A4020] px-4 py-3 flex items-center gap-3">
+          <div className="bg-gradient-to-r from-[#3D1F0F] to-[#7A4020] px-4 py-3 flex items-center gap-3">
             <img
-              src="/frontend/public/kaffi.png"
+              src="/kaffi.png"
               alt="Kaffi"
               className="w-10 h-10 rounded-full border-2 border-[#C8A96E] object-cover"
             />
@@ -72,11 +108,12 @@ export default function Kaffi() {
             </div>
             <button
               onClick={() => setAbierto(false)}
-              className="ml-auto text-white/70 hover:text-white text-lg"
+              className="ml-auto text-white/70 hover:text-white text-lg transition-colors"
             >
               ✕
             </button>
           </div>
+          
           {/* Mensajes */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF7F2]">
             {mensajes.map((m, i) => (
@@ -102,10 +139,11 @@ export default function Kaffi() {
                 </div>
               </div>
             ))}
+            
             {cargando && (
               <div className="flex justify-start gap-2">
                 <img
-                  src="/frontend/public/kaffi.png"
+                  src="/kaffi.png"
                   alt="K"
                   className="w-7 h-7 rounded-full border border-[#C8A96E] object-cover shrink-0"
                 />
@@ -116,8 +154,25 @@ export default function Kaffi() {
                 </div>
               </div>
             )}
+            
+            {/* 👈 NUEVO: Botones de sugerencias */}
+            {sugerencias.length > 0 && !cargando && mensajes[mensajes.length - 1]?.role === "assistant" && (
+              <div className="flex flex-wrap gap-2 mt-2 justify-start">
+                {sugerencias.map((sug, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => enviarSugerencia(sug)}
+                    className="text-xs bg-[#F5ECD7] text-[#3D1F0F] px-3 py-1.5 rounded-full border border-[#C8A96E] hover:bg-[#C8A96E] hover:text-white transition-all duration-200 hover:scale-105"
+                  >
+                    💡 {sug}
+                  </button>
+                ))}
+              </div>
+            )}
+            
             <div ref={finRef} />
           </div>
+          
           {/* Input */}
           <div className="p-3 border-t border-[#E0D0B0] flex gap-2 bg-white">
             <input
@@ -137,10 +192,11 @@ export default function Kaffi() {
           </div>
         </div>
       )}
+      
       {/* Botón flotante */}
       <button
         onClick={() => setAbierto(!abierto)}
-        className="relative w-16 h-16 rounded-full shadow-2xl border-2 border-[#C8A96E] overflow-hidden hover:scale-105 transition-transform"
+        className="relative w-16 h-16 rounded-full shadow-2xl border-2 border-[#C8A96E] overflow-hidden hover:scale-105 transition-all animate-pulse"
       >
         <img
           src="/kaffi.png"
@@ -148,7 +204,7 @@ export default function Kaffi() {
           className="w-full h-full object-cover"
         />
         {!abierto && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#C8A96E] rounded-full flex items-center justify-center">
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#C8A96E] rounded-full flex items-center justify-center animate-bounce">
             <span className="text-[8px] text-white font-bold">☕</span>
           </div>
         )}
