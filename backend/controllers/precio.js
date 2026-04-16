@@ -2,6 +2,7 @@ import PrecioModel from "../models/precio.js";
 import CompradorModel from "../models/comprador.js";
 import HistorialPrecio from "../models/historialPrecio.js";
 import Alerta from "../models/alerta.js";
+import { enviarAlertaPrecio } from "../services/emailService.js";
 
 const verificarAlertas = async (compradorId, preciocarga) => {
   try {
@@ -12,12 +13,23 @@ const verificarAlertas = async (compradorId, preciocarga) => {
       ],
       activa: true,
       precioMinimo: { $lte: preciocarga }
-    }).populate('usuario', 'nombre email');
+    }).populate('usuario', 'nombre apellido email')
+      .populate('comprador', 'nombreempresa');
 
     for (const alerta of alertas) {
       await Alerta.findByIdAndUpdate(alerta._id, {
         ultimaNotificacion: new Date()
       });
+
+      if (alerta.canales?.email && alerta.usuario?.email) {
+        await enviarAlertaPrecio({
+          destinatario: alerta.usuario.email,
+          nombreUsuario: `${alerta.usuario.nombre} ${alerta.usuario.apellido}`,
+          nombreComprador: alerta.comprador?.nombreempresa || 'Un comprador',
+          precioMinimo: alerta.precioMinimo,
+          precioActual: preciocarga,
+        });
+      }
     }
     return alertas;
   } catch (error) {
