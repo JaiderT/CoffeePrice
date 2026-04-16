@@ -1,4 +1,5 @@
 import Footer from './Footer';
+import Kaffi from '../kaffi';
 
 function LayoutPublico({ children }) {
   return (
@@ -9,7 +10,7 @@ function LayoutPublico({ children }) {
       </main>
 
       <Footer />
-
+      <Kaffi />
     </div>
   );
 }

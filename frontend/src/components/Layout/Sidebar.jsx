@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import { useAlertasContext } from '../../context/AlertasContext.jsx';
 import { useState } from 'react';
 

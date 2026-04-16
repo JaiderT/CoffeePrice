@@ -2,7 +2,7 @@ import { useState } from "react";
 import Navbar from "../Layout/Navbar.jsx";
 import Footer from "../Layout/Footer.jsx";
 import Sidebar from "../Layout/Sidebar.jsx";
-import { useAuth } from "../../context/AuthContex.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 export default function Contacto() {
   const { usuario } = useAuth();

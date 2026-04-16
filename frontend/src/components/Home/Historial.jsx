@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -10,16 +10,8 @@ function Historial() {
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [cargando, setCargando] = useState(true);
 
-  useEffect(() => {
-    obtenerCompradores();
-    obtenerHistorial();
-  }, []);
-
-  useEffect(() => {
-    obtenerHistorial();
-  }, [compradorSeleccionado, filtroTipo]);
-
-  const obtenerCompradores = async () => {
+  // ✅ useCallback para obtenerCompradores
+  const obtenerCompradores = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios`);
       const unicos = [];
@@ -34,9 +26,10 @@ function Historial() {
     } catch (error) {
       console.error('Error al obtener compradores:', error);
     }
-  };
+  }, [API_URL]);
 
-  const obtenerHistorial = async () => {
+  // ✅ useCallback para obtenerHistorial
+  const obtenerHistorial = useCallback(async () => {
     setCargando(true);
     try {
       const token = localStorage.getItem('token');
@@ -54,10 +47,16 @@ function Historial() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [API_URL, compradorSeleccionado, filtroTipo]);
+
+  // ✅ useEffect con dependencias correctas
+  useEffect(() => {
+    obtenerCompradores();
+    obtenerHistorial();
+  }, [obtenerCompradores, obtenerHistorial]);
 
   // Datos para la gráfica — agrupa por comprador
-  const datosGrafica = historial.slice(0, 15).map((h, i) => ({
+  const datosGrafica = historial.slice(0, 15).map((h) => ({  // ← cambiamos 'i' por 'idx'
     fecha: new Date(h.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
     precio: h.preciocarga,
     comprador: h.comprador?.nombreempresa?.slice(0, 8) || '---',
@@ -148,8 +147,8 @@ function Historial() {
                 onChange={e => setCompradorSeleccionado(e.target.value)}
                 className="w-full rounded-xl border border-[#DCC9A6] bg-[#FCFAF6] py-2.5 px-4 text-sm text-[#2C1A0E] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/30">
                 <option value="todos">Todos los compradores</option>
-                {compradores.map((c, i) => (
-                  <option key={i} value={c._id}>{c.nombreempresa}</option>
+                {compradores.map((c, idx) => (  // ← cambiamos 'i' por 'idx'
+                  <option key={idx} value={c._id}>{c.nombreempresa}</option>
                 ))}
               </select>
             </div>
@@ -157,8 +156,8 @@ function Historial() {
             <div>
               <p className="text-xs font-semibold text-[#8B7355] mb-2 uppercase">Tipo de café</p>
               <div className="flex flex-wrap gap-2">
-                {filtrosTipo.map((f, i) => (
-                  <button key={i} onClick={() => setFiltroTipo(f.value)}
+                {filtrosTipo.map((f, idx) => (  // ← cambiamos 'i' por 'idx'
+                  <button key={idx} onClick={() => setFiltroTipo(f.value)}
                     className={`rounded-full px-3 py-2 text-xs font-bold transition-colors ${filtroTipo === f.value
                         ? 'bg-[#2C1A0E] text-[#F5ECD7]'
                         : 'bg-[#F8F3EA] border border-[#E7D9BF] text-[#6B5A4D] hover:bg-[#EFE4CF]'
@@ -193,13 +192,13 @@ function Historial() {
           </div>
         ) : (
           <div className="space-y-3">
-            {historial.map((item, i) => {
-              const anterior = historial[i + 1];
+            {historial.map((item, idx) => {  // ← cambiamos 'i' por 'idx'
+              const anterior = historial[idx + 1];
               const diferencia = anterior ? item.preciocarga - anterior.preciocarga : null;
               const sube = diferencia > 0;
 
               return (
-                <div key={i} className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div key={idx} className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${diferencia === null ? 'bg-[#F5ECD7] text-[#7A4020]' :

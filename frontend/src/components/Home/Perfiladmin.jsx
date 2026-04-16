@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 
 const TAGS = [
   { value: 'precio_justo', label: 'Precio justo' },
@@ -35,14 +35,6 @@ export default function PerfilAdmin() {
   const [modalEliminarReseña, setModalEliminarReseña] = useState(null);
   const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
   const [modalEliminarNoticia, setModalEliminarNoticia] = useState(null);
-  const formatearFechaNoticia = (noticia) => {
-    const fecha = noticia.publishedAt || noticia.createdAt;
-    return new Date(fecha).toLocaleDateString('es-CO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
   const [mostrarFormNoticia, setMostrarFormNoticia] = useState(false);
   const [noticiaEditar, setNoticiaEditar] = useState(null);
   const [formNoticia, setFormNoticia] = useState({
@@ -55,26 +47,12 @@ export default function PerfilAdmin() {
     }
   }, [usuario]);
 
-  useEffect(() => {
-    if (pestana === 'gestion') {
-      obtenerUsuarios();
-      obtenerCompradores();
-    }
-    if (pestana === 'resenas') {
-      obtenerTodasReseñas();
-      obtenerReseñasPlataforma();
-    }
-    if (pestana === 'noticias') {
-      obtenerNoticias();
-    }
-  }, [pestana, API_URL, token]);
-
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
     setTimeout(() => setMensaje(null), 3500);
   };
 
-  const obtenerUsuarios = async () => {
+  const obtenerUsuarios = useCallback(async () => {
     setCargando(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/usuario`, {
@@ -86,9 +64,9 @@ export default function PerfilAdmin() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [API_URL, token]);
 
-  const obtenerCompradores = async () => {
+  const obtenerCompradores = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/comprador`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -97,9 +75,9 @@ export default function PerfilAdmin() {
     } catch {
       mostrarMensaje('error', 'Error al obtener compradores');
     }
-  };
+  }, [API_URL, token]);
 
-  const obtenerTodasReseñas = async () => {
+  const obtenerTodasReseñas = useCallback(async () => {
     setCargandoReseñas(true);
     try {
       const compradoresRes = await axios.get(`${API_URL}/api/comprador`, {
@@ -118,9 +96,9 @@ export default function PerfilAdmin() {
     } finally {
       setCargandoReseñas(false);
     }
-  };
+  }, [API_URL, token]);
 
-  const obtenerReseñasPlataforma = async () => {
+  const obtenerReseñasPlataforma = useCallback(async () => {
     setCargandoPlataforma(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/resenas-plataforma/todas`, {
@@ -132,9 +110,9 @@ export default function PerfilAdmin() {
     } finally {
       setCargandoPlataforma(false);
     }
-  };
+  }, [API_URL, token]);
 
-  const obtenerNoticias = async () => {
+  const obtenerNoticias = useCallback(async () => {
     setCargandoNoticias(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/noticias`);
@@ -144,7 +122,21 @@ export default function PerfilAdmin() {
     } finally {
       setCargandoNoticias(false);
     }
-  };
+  }, [API_URL]);
+
+  useEffect(() => {
+    if (pestana === 'gestion') {
+      obtenerUsuarios();
+      obtenerCompradores();
+    }
+    if (pestana === 'resenas') {
+      obtenerTodasReseñas();
+      obtenerReseñasPlataforma();
+    }
+    if (pestana === 'noticias') {
+      obtenerNoticias();
+    }
+  }, [pestana, obtenerUsuarios, obtenerCompradores, obtenerTodasReseñas, obtenerReseñasPlataforma, obtenerNoticias]);
 
   const handleEliminarReseña = async () => {
     try {
@@ -313,6 +305,15 @@ export default function PerfilAdmin() {
     }
   };
 
+  const formatearFechaNoticia = (noticia) => {
+    const fecha = noticia.publishedAt || noticia.createdAt;
+    return new Date(fecha).toLocaleDateString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   const estaActivo = (ultimaConexion) => {
     if (!ultimaConexion) return false;
     const diff = new Date() - new Date(ultimaConexion);
@@ -408,61 +409,111 @@ export default function PerfilAdmin() {
 
         {/* PESTAÑA PERFIL */}
         {pestana === 'perfil' && (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-[#2C1A0E] font-bold">Información personal</h3>
-                {modo === 'ver' && (
-                  <button onClick={() => setModo('editar')}
-                    className="bg-[#F5ECD7] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#E0D0B0] transition-colors">
-                    <i className="fa-solid fa-pen mr-2"></i>Editar
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[#2C1A0E] font-bold">Información personal</h3>
+              {modo === 'ver' && (
+                <button onClick={() => setModo('editar')}
+                  className="bg-[#F5ECD7] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#E0D0B0] transition-colors">
+                  <i className="fa-solid fa-pen mr-2"></i>Editar
+                </button>
+              )}
+            </div>
+            <div className="px-8 py-6">
+              {modo === 'ver' && (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">Nombre</span>
+                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.nombre}</span>
+                    <div className="h-px bg-gray-100" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">Apellido</span>
+                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.apellido}</span>
+                    <div className="h-px bg-gray-100" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">Correo electrónico</span>
+                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.email}</span>
+                    <div className="h-px bg-gray-100" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">Celular</span>
+                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.celular || 'No registrado'}</span>
+                    <div className="h-px bg-gray-100" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-gray-400 uppercase">Rol</span>
+                    <span className="text-[#2C1A0E] text-sm font-medium">Administrador</span>
+                    <div className="h-px bg-gray-100" />
+                  </div>
+                  <button onClick={() => setModo('password')}
+                    className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">
+                    <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
                   </button>
-                )}
-              </div>
-              <div className="px-8 py-6">
-                {modo === 'ver' && (
-                  <div className="space-y-4">
-                    <Campo label="Nombre" valor={usuario?.nombre} />
-                    <Campo label="Apellido" valor={usuario?.apellido} />
-                    <Campo label="Correo electrónico" valor={usuario?.email} />
-                    <Campo label="Celular" valor={usuario?.celular || 'No registrado'} />
-                    <Campo label="Rol" valor="Administrador" />
-                    <button onClick={() => setModo('password')}
-                      className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">
-                      <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
+                </div>
+              )}
+              {modo === 'editar' && (
+                <form onSubmit={handleGuardarDatos} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nombre</label>
+                    <input type="text" value={datos.nombre} onChange={e => setDatos({ ...datos, nombre: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Apellido</label>
+                    <input type="text" value={datos.apellido} onChange={e => setDatos({ ...datos, apellido: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Celular</label>
+                    <input type="text" value={datos.celular} onChange={e => setDatos({ ...datos, celular: e.target.value })}
+                      placeholder="+57 300 000 0000"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setModo('ver')}
+                      className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={loading}
+                      className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
+                      {loading ? 'Guardando...' : 'Guardar cambios'}
                     </button>
                   </div>
-                )}
-                {modo === 'editar' && (
-                  <form onSubmit={handleGuardarDatos} className="space-y-4">
-                    <InputField label="Nombre" value={datos.nombre} onChange={v => setDatos({ ...datos, nombre: v })} />
-                    <InputField label="Apellido" value={datos.apellido} onChange={v => setDatos({ ...datos, apellido: v })} />
-                    <InputField label="Celular" value={datos.celular} onChange={v => setDatos({ ...datos, celular: v })} placeholder="+57 300 000 0000" />
-                    <BotonesForm onCancel={() => setModo('ver')} loading={loading} />
-                  </form>
-                )}
-                {modo === 'password' && (
-                  <form onSubmit={handleCambiarPassword} className="space-y-4">
-                    <InputField label="Contraseña actual" value={passwords.actual} onChange={v => setPasswords({ ...passwords, actual: v })} type="password" />
-                    <InputField label="Nueva contraseña" value={passwords.nueva} onChange={v => setPasswords({ ...passwords, nueva: v })} type="password" />
-                    <InputField label="Confirmar nueva contraseña" value={passwords.confirmar} onChange={v => setPasswords({ ...passwords, confirmar: v })} type="password" />
-                    <BotonesForm onCancel={() => setModo('ver')} loading={loading} />
-                  </form>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6 bg-[#2C1A0E]/5 border border-[#C8A96E]/20 rounded-2xl p-5">
-              <p className="text-xs font-bold text-[#7A4020] uppercase mb-3">Permisos de administrador</p>
-              <div className="grid grid-cols-2 gap-2">
-                {['Gestionar usuarios', 'Aprobar compradores', 'Publicar noticias', 'Gestionar reseñas'].map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-[#2C1A0E]">
-                    <span className="text-green-500">✓</span> {p}
+                </form>
+              )}
+              {modo === 'password' && (
+                <form onSubmit={handleCambiarPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contraseña actual</label>
+                    <input type="password" value={passwords.actual} onChange={e => setPasswords({ ...passwords, actual: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nueva contraseña</label>
+                    <input type="password" value={passwords.nueva} onChange={e => setPasswords({ ...passwords, nueva: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Confirmar nueva contraseña</label>
+                    <input type="password" value={passwords.confirmar} onChange={e => setPasswords({ ...passwords, confirmar: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setModo('ver')}
+                      className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={loading}
+                      className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
+                      {loading ? 'Guardando...' : 'Cambiar contraseña'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
-          </>
+          </div>
         )}
 
         {/* PESTAÑA GESTIÓN USUARIOS */}
@@ -726,12 +777,8 @@ export default function PerfilAdmin() {
                         )}
                       </div>
                       {n.sourceUrl && (
-                        <a
-                          href={n.sourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex mt-2 text-[11px] font-semibold text-[#6B3A2A] hover:text-[#2C1A0E]"
-                        >
+                        <a href={n.sourceUrl} target="_blank" rel="noreferrer"
+                          className="inline-flex mt-2 text-[11px] font-semibold text-[#6B3A2A] hover:text-[#2C1A0E]">
                           Abrir fuente original
                         </a>
                       )}
@@ -752,7 +799,6 @@ export default function PerfilAdmin() {
             )}
           </div>
         )}
-
       </div>
 
       {/* Modal crear/editar noticia */}
@@ -903,67 +949,6 @@ export default function PerfilAdmin() {
           </div>
         </div>
       )}
-
-    </div>
-  );
-}
-
-function Campo({ label, valor }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-semibold text-gray-400 uppercase">{label}</span>
-      <span className="text-[#2C1A0E] text-sm font-medium">{valor}</span>
-      <div className="h-px bg-gray-100" />
-    </div>
-  );
-}
-
-function InputField({ label, value, onChange, type = 'text', placeholder = '' }) {
-  const [verPassword, setVerPassword] = useState(false);
-  const esPassword = type === 'password';
-
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">{label}</label>
-      <div className="relative">
-        <input
-          type={esPassword ? (verPassword ? 'text' : 'password') : type}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50 pr-10"
-        />
-        {esPassword && (
-          <button type="button" onClick={() => setVerPassword(!verPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors">
-            {verPassword ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            )}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BotonesForm({ onCancel, loading }) {
-  return (
-    <div className="flex gap-3 pt-2">
-      <button type="button" onClick={onCancel}
-        className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-        Cancelar
-      </button>
-      <button type="submit" disabled={loading}
-        className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
-        {loading ? 'Guardando...' : 'Guardar cambios'}
-      </button>
     </div>
   );
 }

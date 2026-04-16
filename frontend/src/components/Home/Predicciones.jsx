@@ -117,7 +117,7 @@ export default function Predicciones() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
       <div className="mx-auto max-w-7xl px-5 py-8 md:px-8">
-        <section className="overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
+        <section className="overflow-hidden rounded-4xl bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8D8C1]">
@@ -219,19 +219,19 @@ export default function Predicciones() {
         {consultaRealizada && (
           <>
             <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <article className="rounded-[24px] bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
+              <article className="rounded-3xl bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">Promedio</p>
                 <p className="mt-2 text-2xl font-black text-[#2F241C]">${promedio.toLocaleString()}</p>
               </article>
-              <article className="rounded-[24px] bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
+              <article className="rounded-3xl bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">Pico esperado</p>
                 <p className="mt-2 text-2xl font-black text-[#2F241C]">${maximo.toLocaleString()}</p>
               </article>
-              <article className="rounded-[24px] bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
+              <article className="rounded-3xl bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">Piso esperado</p>
                 <p className="mt-2 text-2xl font-black text-[#2F241C]">${minimo.toLocaleString()}</p>
               </article>
-              <article className="rounded-[24px] bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
+              <article className="rounded-3xl bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">Confianza media</p>
                 <p className="mt-2 text-2xl font-black text-[#2F241C]">{confianzaPromedio}%</p>
               </article>
@@ -251,11 +251,11 @@ export default function Predicciones() {
                 </div>
 
                 {cargandoConsulta ? (
-                  <div className="mt-6 h-[280px] rounded-[24px] bg-[#F5EBDD] animate-pulse" />
+                  <div className="mt-6 h-70 rounded-3xl bg-[#F5EBDD] animate-pulse" />
                 ) : predicciones.length === 0 ? (
                   <p className="mt-6 text-sm text-[#6D5E53]">No encontramos predicciones para ese rango.</p>
                 ) : (
-                  <div className="mt-6 h-[280px]">
+                  <div className="mt-6 h-70">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={datosGrafica}>
                         <defs>

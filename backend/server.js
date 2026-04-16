@@ -24,6 +24,7 @@ import { publicLimiter } from "./middlewares/rateLimit.js";
 import { iniciarCronNoticias } from './jobs/noticiaCron.js';
 import Contacto from "./routes/contacto.js";
 import historialPrecioRoutes from "./routes/historialPrecio.js";
+import chatbotRoutes from './routes/chatbot.js';
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/clima', Clima);
 app.use("/api/resenas-plataforma", resenaPlataformaRoutes);
 app.use("/api", Contacto);
 app.use("/api/historial-precios", historialPrecioRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import MapaCompradores from "./MapaCompradores.jsx";
 
 function Precios() {
@@ -106,7 +106,7 @@ function Precios() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
       <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
-        <section className="overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
+        <section className="overflow-hidden rounded-4xl bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8D8C1]">
@@ -338,7 +338,7 @@ function Precios() {
                     </div>
 
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 xl:gap-6">
-                      <div className="min-w-[150px] rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                      <div className="min-w-37.5 rounded-2xl bg-[#F3E5D3] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
                           Paga por carga
                         </p>
@@ -347,7 +347,7 @@ function Precios() {
                         </p>
                       </div>
 
-                      <div className="min-w-[150px] rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                      <div className="min-w-37.5  rounded-2xl bg-[#EFE4D4] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
                           Paga por kilo
                         </p>

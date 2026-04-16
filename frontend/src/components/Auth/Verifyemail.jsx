@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContex.jsx";
+import { useAuth } from "../../context/useAuth.js";
 
 export default function VerifyEmail() {
   const navigate = useNavigate();
@@ -9,7 +9,8 @@ export default function VerifyEmail() {
   const { login } = useAuth();
 
   const email = location.state?.email || "";
-  const tipo = location.state?.tipo || "productor";
+  // Eliminado 'tipo' porque no se está usando
+  // const tipo = location.state?.tipo || "productor";
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState(null);
@@ -190,8 +191,8 @@ export default function VerifyEmail() {
         </div>
       </div>
 
-      {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[780px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0">
+      {/* PANEL DERECHO - Corregido el width */}
+      <div className="w-full lg:max-w-195 bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0">
 
         {/* ── COMPRADOR PENDIENTE ── */}
         {pendiente ? (

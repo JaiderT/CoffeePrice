@@ -2,9 +2,14 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Obtener el token del header
-    const token = req.headers.authorization?.split(" ")[1];
-
+    // 📌 PRIORIDAD: Primero buscar token en cookie
+    let token = req.cookies?.auth_token;
+    
+    // Si no hay cookie, buscar en header Authorization
+    if (!token) {
+      token = req.headers.authorization?.split(" ")[1];
+    }
+    
     if (!token) {
       return res.status(401).json({ message: "Acceso denegado, token no proporcionado" });
     }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 
 export default function Login() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -23,6 +23,7 @@ export default function Login() {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Para recibir cookie si el backend la envía
         body: JSON.stringify({ email, password }),
       });
 
@@ -33,7 +34,7 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email,);
+      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
 
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
@@ -96,7 +97,7 @@ export default function Login() {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[880px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0 ">
+      <div className="w-full lg:w-220 bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px- shrink-0">
 
         <div className="flex items-center gap-3 mb-8 lg:hidden">
           <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
@@ -173,13 +174,14 @@ export default function Login() {
             {loading ? "Iniciando sesión..." : "☕️ Iniciar sesión"}
           </button>
 
-          {/* 🔽 NUEVO: SEPARADOR */}
+          {/* SEPARADOR */}
           <div className="flex items-center gap-3 my-4 text-xs text-gray-400">
             <div className="flex-1 h-px bg-[#E0D8CE]" />
             o continúa con
             <div className="flex-1 h-px bg-[#E0D8CE]" />
           </div>
-          {/* 🔽 NUEVO: BOTÓN GOOGLE */}
+          
+          {/* BOTÓN GOOGLE */}
           <button
             type="button"
             onClick={() => {
@@ -196,7 +198,7 @@ export default function Login() {
             Google
           </button>
 
-          {/* NUEVO BLOQUE REGISTRO */}
+          {/* BLOQUE REGISTRO */}
           <div className="text-center mt-2">
             <p className="text-sm text-gray-500">
               ¿No tienes cuenta?{" "}

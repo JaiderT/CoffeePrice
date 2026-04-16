@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import axios from 'axios';
 import Navbar from '../Layout/Navbar';
 
@@ -10,7 +10,7 @@ function Inicio() {
   const [cargando, setCargando] = useState(true);
   const guiaRef = useRef(null);
   const beneficiosRef = useRef(null);
-  const { usuario } = useRef;
+  const { usuario } = useAuth();
 
   const [reseñas, setReseñas] = useState([]);
   const [reseñasVisibles, setReseñasVisibles] = useState([]);

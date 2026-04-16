@@ -1,6 +1,5 @@
-import { createContext, useContext, useState } from 'react';
-
-const AuthContext = createContext();
+import { useState } from 'react';
+import { AuthContext } from './AuthContext.js';
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => {
@@ -32,7 +31,16 @@ export function AuthProvider({ children }) {
     setUsuario({ token, rol, nombre, apellido, id, celular, email });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+    
     localStorage.removeItem('token');
     localStorage.removeItem('rol');
     localStorage.removeItem('name');
@@ -57,8 +65,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

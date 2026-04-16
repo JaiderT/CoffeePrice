@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 
 function Alertas() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -20,28 +20,23 @@ function Alertas() {
     canales: { push: true, email: false, whatsapp: false },
   });
 
-  useEffect(() => {
-    obtenerAlertas();
-    obtenerCompradores();
-  }, []);
-
-  const obtenerAlertas = async () => {
+  // ✅ useCallback para obtenerAlertas
+  const obtenerAlertas = useCallback(async () => {
     setCargando(true);
     try {
-      console.log('usuarioId:', usuarioId);
       const { data } = await axios.get(`${API_URL}/api/alertas/usuario/${usuarioId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('alertas:', data);
       setAlertas(data);
     } catch (error) {
       console.error('Error al obtener alertas:', error.response?.data);
     } finally {
       setCargando(false);
     }
-  };
+  }, [API_URL, usuarioId, token]);
 
-  const obtenerCompradores = async () => {
+  // ✅ useCallback para obtenerCompradores
+  const obtenerCompradores = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios`);
       const unicos = [];
@@ -56,7 +51,13 @@ function Alertas() {
     } catch (error) {
       console.error('Error al obtener compradores:', error);
     }
-  };
+  }, [API_URL]);
+
+  // ✅ useEffect con las dependencias correctas
+  useEffect(() => {
+    obtenerAlertas();
+    obtenerCompradores();
+  }, [obtenerAlertas, obtenerCompradores]);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });

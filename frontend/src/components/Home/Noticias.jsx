@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import Navbar from '../Layout/Navbar.jsx';
 import Sidebar from '../Layout/Sidebar.jsx';
 import Footer from '../Layout/Footer.jsx';
@@ -25,7 +25,7 @@ const categoriaBadgeColors = {
   fnc: 'bg-purple-50 text-purple-700',
   produccion: 'bg-green-50 text-green-700',
   consejos: 'bg-[#FFF3E0] text-[#C8A96E]',
-  el_pital:      'bg-emerald-50 text-emerald-700',
+  el_pital: 'bg-emerald-50 text-emerald-700',
 };
 
 const categoriaEmoji = {
@@ -165,11 +165,7 @@ export default function Noticias() {
     }
   });
 
-  useEffect(() => {
-    obtenerNoticias();
-  }, [categoriaActiva]);
-
-  const obtenerNoticias = async () => {
+  const obtenerNoticias = useCallback(async () => {
     setCargando(true);
     try {
       const params = new URLSearchParams();
@@ -184,10 +180,15 @@ export default function Noticias() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [categoriaActiva]);
+
+  useEffect(() => {
+    obtenerNoticias();
+  }, [obtenerNoticias]);
 
   const destacada = noticias[0];
   const secundarias = noticias.slice(1);
+  
   const formatearFechaNoticia = (noticia, corta = false) => {
     const fecha = noticia.publishedAt || noticia.createdAt;
     return new Date(fecha).toLocaleDateString(
@@ -197,6 +198,7 @@ export default function Noticias() {
         : { day: '2-digit', month: 'short', year: 'numeric' }
     );
   };
+  
   const etiquetaImagen = (noticia) =>
     noticia.tipoImagen === 'source' ? 'Imagen de la fuente' : 'Imagen de apoyo';
 
@@ -348,33 +350,33 @@ export default function Noticias() {
     </div>
   );
 
- return (
-  <>
-    {!cargandoAuth && usuario ? (
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="ml-16 flex-1">
-          {contenido}
+  return (
+    <>
+      {!cargandoAuth && usuario ? (
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="ml-16 flex-1">
+            {contenido}
+          </div>
         </div>
-      </div>
-    ) : !cargandoAuth && !usuario ? (
-      <div className="bg-[#2C1A0E]">
-        <Navbar />
-        {contenido}
-        <Footer />
-      </div>
-    ) : (
-      <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
-        <p className="text-[#8B7355]">Cargando...</p>
-      </div>
-    )}
-    {modalAbierto && (
-      <ModalAlertas
-        onClose={() => setModalAbierto(false)}
-        alertasActivas={alertasActivas}
-        setAlertasActivas={setAlertasActivas}
-      />
-    )}
-  </>
-);
+      ) : !cargandoAuth && !usuario ? (
+        <div className="bg-[#2C1A0E]">
+          <Navbar />
+          {contenido}
+          <Footer />
+        </div>
+      ) : (
+        <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
+          <p className="text-[#8B7355]">Cargando...</p>
+        </div>
+      )}
+      {modalAbierto && (
+        <ModalAlertas
+          onClose={() => setModalAbierto(false)}
+          alertasActivas={alertasActivas}
+          setAlertasActivas={setAlertasActivas}
+        />
+      )}
+    </>
+  );
 }

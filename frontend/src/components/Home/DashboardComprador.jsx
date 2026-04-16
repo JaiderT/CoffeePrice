@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Link } from 'react-router-dom';
 
@@ -26,10 +26,9 @@ function DashboardComprador() {
   const [noticias, setNoticias] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [todosPrecios, setTodosPrecios] = useState([]);
-  const [alertasCount, setAlertasCount] = useState(0);
   const [pestana, setPestana] = useState('dashboard');
 
-  const obtenerPrecios = async (compradorId) => {
+  const obtenerPrecios = useCallback(async (compradorId) => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
       setPrecios(data);
@@ -38,7 +37,7 @@ function DashboardComprador() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     const obtenerDatos = async () => {
@@ -58,12 +57,10 @@ function DashboardComprador() {
         });
         await obtenerPrecios(data._id);
 
-        // Reseñas
         const reseñasRes = await axios.get(`${API_URL}/api/resenas/comprador/${data._id}`);
         setReseñas(reseñasRes.data.reseñas || []);
         setPromedio(reseñasRes.data.promedio || 0);
 
-        // Historial de precios
         try {
           const histRes = await axios.get(
             `${API_URL}/api/historial-precios/comprador/${data._id}`,
@@ -72,17 +69,9 @@ function DashboardComprador() {
           setHistorial(histRes.data);
         } catch { /* opcional */ }
 
-        // Todos los precios del mercado para comparativa
         const mercadoRes = await axios.get(`${API_URL}/api/precios`);
         setTodosPrecios(mercadoRes.data);
 
-        // Alertas activas para este comprador
-        try {
-          const alertasRes = await axios.get(`${API_URL}/api/alertas/comprador/${data._id}`);
-          setAlertasCount(alertasRes.data.length || 0);
-        } catch { /* opcional */ }
-
-        // Noticias recientes
         const noticiasRes = await axios.get(`${API_URL}/api/noticias`);
         setNoticias(noticiasRes.data.slice(0, 3));
 
@@ -94,7 +83,7 @@ function DashboardComprador() {
       }
     };
     obtenerDatos();
-  }, [API_URL, usuario?.id]);
+  }, [API_URL, usuario?.id, obtenerPrecios]);
 
   const handleCrearPerfil = async (e) => {
     e.preventDefault();
@@ -109,7 +98,7 @@ function DashboardComprador() {
         horarioApertura: data.comprador.horarioApertura || '07:00',
         horarioCierre: data.comprador.horarioCierre || '17:00',
       });
-      obtenerPrecios(data.comprador._id);
+      await obtenerPrecios(data.comprador._id);
       mostrarMsg('exito', '¡Perfil creado correctamente!');
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al crear el perfil');
@@ -127,7 +116,7 @@ function DashboardComprador() {
       mostrarMsg('exito', '¡Precio publicado exitosamente!');
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
-      obtenerPrecios(comprador._id);
+      await obtenerPrecios(comprador._id);
     } catch {
       mostrarMsg('error', 'Error al publicar el precio');
     }
@@ -144,7 +133,7 @@ function DashboardComprador() {
       mostrarMsg('exito', '¡Precio actualizado exitosamente!');
       setMostrarEditar(false);
       setPrecioEditar(null);
-      obtenerPrecios(comprador._id);
+      await obtenerPrecios(comprador._id);
     } catch {
       mostrarMsg('error', 'Error al actualizar el precio');
     }
@@ -159,7 +148,7 @@ function DashboardComprador() {
       mostrarMsg('exito', 'Precio eliminado correctamente');
       setMostrarEliminar(false);
       setPrecioEliminar(null);
-      obtenerPrecios(comprador._id);
+      await obtenerPrecios(comprador._id);
     } catch {
       mostrarMsg('error', 'Error al eliminar el precio');
     }
@@ -185,7 +174,6 @@ function DashboardComprador() {
     setTimeout(() => setMensaje(null), 3000);
   };
 
-  // Calcular comparativa vs mercado
   const precioActual = precios[0]?.preciocarga || 0;
   const preciosOtros = todosPrecios
     .filter(p => p.comprador?._id !== comprador?._id)
@@ -198,9 +186,8 @@ function DashboardComprador() {
     : 0;
   const porEncima = precioActual > promercado;
 
-  // Datos gráfica historial
-  const datosGrafica = historial.slice(0, 7).reverse().map((h, i) => ({
-    dia: i === historial.slice(0, 7).length - 1 ? 'Hoy' : `${i + 1}d`,
+  const datosGrafica = historial.slice(0, 7).reverse().map((h, idx) => ({
+    dia: idx === historial.slice(0, 7).length - 1 ? 'Hoy' : `${idx + 1}d`,
     precio: h.preciocarga,
   }));
 
@@ -209,7 +196,6 @@ function DashboardComprador() {
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
 
-      {/* Pantalla sin perfil */}
       {sinPerfil && (
         <div className="fixed inset-0 flex items-center justify-center z-50"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -271,7 +257,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* Header */}
       <div className="bg-[#F5ECD7] px-6 md:px-8 py-5 flex items-center justify-between border-b border-[#E0D0B0] flex-wrap gap-3">
         <div>
           <h1 className="text-[#2C1A0E] text-2xl font-bold">Panel del Comprador</h1>
@@ -299,14 +284,12 @@ function DashboardComprador() {
         </div>
       </div>
 
-      {/* Mensaje */}
       {mensaje && !sinPerfil && (
         <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
 
-      {/* Pestañas */}
       <div className="px-6 md:px-8 pt-5 flex gap-2 border-b border-[#E0D0B0]">
         {[
           { key: 'dashboard', label: '📊 Dashboard' },
@@ -323,11 +306,9 @@ function DashboardComprador() {
         ))}
       </div>
 
-      {/* PESTAÑA DASHBOARD */}
       {pestana === 'dashboard' && (
         <div className="px-6 md:px-8 py-6 space-y-6">
 
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[#2C1A0E] rounded-2xl p-4 shadow-sm">
               <p className="text-[#D8C7A8] text-xs uppercase font-semibold">Precio actual</p>
@@ -353,10 +334,7 @@ function DashboardComprador() {
             </div>
           </div>
 
-          {/* Gráfica + Comparativa */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-            {/* Gráfica historial */}
             <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-4">📈 Evolución de mis precios</p>
               {datosGrafica.length > 1 ? (
@@ -378,7 +356,6 @@ function DashboardComprador() {
               )}
             </div>
 
-            {/* Comparativa mercado */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-4">📊 Vs. mercado hoy</p>
               <div className="space-y-3">
@@ -422,10 +399,7 @@ function DashboardComprador() {
             </div>
           </div>
 
-          {/* Reseñas + Noticias */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* Reseñas recientes */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[#2C1A0E] font-bold text-sm">⭐ Reseñas recientes</p>
@@ -455,7 +429,6 @@ function DashboardComprador() {
               )}
             </div>
 
-            {/* Noticias recientes */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[#2C1A0E] font-bold text-sm">📰 Últimas noticias</p>
@@ -486,7 +459,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* PESTAÑA MIS PRECIOS */}
       {pestana === 'precios' && (
         <div className="px-6 md:px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -561,7 +533,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* Modal publicar precio */}
       {mostrarFormulario && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
@@ -604,7 +575,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* Modal editar precio */}
       {mostrarEditar && precioEditar && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
@@ -647,7 +617,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* Modal eliminar precio */}
       {mostrarEliminar && precioEliminar && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
@@ -672,7 +641,6 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* Modal horario */}
       {mostrarHorario && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
@@ -712,7 +680,6 @@ function DashboardComprador() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -54,6 +54,7 @@ export default function Register() {
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ nombre, apellido, email, password, celular, rol: tipo }),
       });
 
@@ -64,7 +65,6 @@ export default function Register() {
         return;
       }
 
-      // Redirigimos a la página de verificación pasando el email por state
       navigate("/verify-email", { state: { email, tipo } });
 
     } catch {
@@ -122,7 +122,7 @@ export default function Register() {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[880px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0 overflow-y-auto">
+      <div className="w-full lg:w-220 bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0 overflow-y-auto">
 
         <div className="flex items-center gap-3 mb-8 lg:hidden">
           <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>

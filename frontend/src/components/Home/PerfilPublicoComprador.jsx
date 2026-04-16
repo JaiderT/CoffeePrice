@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContex.jsx';
+import { useAuth } from '../../context/useAuth.js';
 import Sidebar from '../Layout/Sidebar.jsx';
 import Navbar from '../Layout/Navbar.jsx';
 
@@ -81,35 +81,35 @@ export default function PerfilPublicoComprador() {
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
   const [modalContacto, setModalContacto] = useState(false);
 
-  useEffect(() => {
-    obtenerDatos();
-  }, [id]);
-
-  const obtenerDatos = async () => {
+const obtenerDatos = useCallback(async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
+      axios.get(`${API_URL}/api/comprador/${id}`),
+      axios.get(`${API_URL}/api/resenas/comprador/${id}`),
+      axios.get(`${API_URL}/api/precios/comprador/${id}`),
+    ]);
+    setComprador(compradorRes.data);
+    setReseñas(reseñasRes.data.reseñas || []);
+    setPromedio(reseñasRes.data.promedio || 0);
+    setPrecios(preciosRes.data);
     try {
-      const token = localStorage.getItem('token');
-      const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
-        axios.get(`${API_URL}/api/comprador/${id}`),
-        axios.get(`${API_URL}/api/resenas/comprador/${id}`),
-        axios.get(`${API_URL}/api/precios/comprador/${id}`),
-      ]);
-      setComprador(compradorRes.data);
-      setReseñas(reseñasRes.data.reseñas || []);
-      setPromedio(reseñasRes.data.promedio || 0);
-      setPrecios(preciosRes.data);
-      try {
-        const histRes = await axios.get(
-          `${API_URL}/api/historial-precios/comprador/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setHistorialPrecios(histRes.data);
-      } catch { /* historial opcional */ }
-    } catch (error) {
-      console.error('Error al obtener datos:', error);
-    } finally {
-      setCargando(false);
-    }
-  };
+      const histRes = await axios.get(
+        `${API_URL}/api/historial-precios/comprador/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setHistorialPrecios(histRes.data);
+    } catch { /* historial opcional */ }
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+  } finally {
+    setCargando(false);
+  }
+}, [id, API_URL]); // ← Dependencias correctas
+
+useEffect(() => {
+  obtenerDatos();
+}, [obtenerDatos]); // ← Dependencia correcta
 
   const toggleTag = (tag) => {
     setTagsSeleccionados(prev =>
@@ -227,7 +227,7 @@ export default function PerfilPublicoComprador() {
 
         {/* Header con banner */}
         <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
-          <div className="h-36 bg-gradient-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
+          <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
             <div className="absolute bottom-0 left-6 translate-y-1/2">
               <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {iniciales(comprador.nombreempresa)}
