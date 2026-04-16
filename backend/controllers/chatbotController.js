@@ -1,7 +1,5 @@
-import express from 'express';
 import OpenAI from 'openai';
 
-const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SISTEMA_KAFFI = `Sos Kaffi, el asistente del caficultor huilense de CoffePrice.
@@ -19,9 +17,9 @@ plataforma CoffePrice.
 EXTRA: Sos PROACTIVO. Si ves que el usuario está en la página de registro,
 ofrece ayuda. Si pregunta por precios, sugiere comparar con días anteriores.`;
 
-router.post('/', async (req, res) => {
+export const chatWithKaffi = async (req, res) => {
     try {
-        const { mensajes, contexto } = req.body; // 👈 AGREGAR contexto
+        const { mensajes, contexto } = req.body;
         
         if (!mensajes || !Array.isArray(mensajes)) {
             return res.status(400).json({ message: 'mensajes invalidos' });
@@ -34,45 +32,29 @@ router.post('/', async (req, res) => {
             temperature: 0.7,
         });
         
-        // 👈 NUEVO: Generar sugerencias automáticas según el contexto
+        // Generar sugerencias automáticas
         let sugerencias = [];
         const ultimoMensaje = mensajes[mensajes.length - 1]?.content || '';
-        const pagina = contexto?.pagina || '';
         
-        if (ultimoMensaje.includes('precio') || ultimoMensaje.includes('costo') || ultimoMensaje.includes('cuánto')) {
+        if (ultimoMensaje.includes('precio') || ultimoMensaje.includes('costo')) {
             sugerencias = ["Comparar con ayer", "Ver histórico semanal", "¿Es buen momento para vender?"];
-        } 
-        else if (ultimoMensaje.includes('registro') || ultimoMensaje.includes('cuenta') || ultimoMensaje.includes('crear')) {
+        } else if (ultimoMensaje.includes('registro') || ultimoMensaje.includes('cuenta')) {
             sugerencias = ["¿Qué datos necesito?", "¿Es gratis?", "Ver tutorial de registro"];
-        }
-        else if (ultimoMensaje.includes('comprador') || ultimoMensaje.includes('vender')) {
-            sugerencias = ["Buscar compradores cerca", "Comparar precios por zona", "Consejos para negociar"];
-        }
-        else if (pagina === '/') {
+        } else if (contexto?.pagina === '/') {
             sugerencias = ["Ver precios actuales", "Cómo registrarme", "Buscar compradores"];
-        }
-        else if (pagina === '/precios') {
+        } else if (contexto?.pagina === '/precios') {
             sugerencias = ["Comparar precios", "Ver historial", "Consejos de venta"];
-        }
-        else if (pagina === '/predicciones') {
-            sugerencias = ["¿Subirán los precios?", "Mejor época para vender", "Factores del mercado"];
-        }
-        else if (pagina === '/alertas') {
-            sugerencias = ["Crear alerta de precio", "¿Cómo funcionan?", "Notificaciones personalizadas"];
         }
         
         res.json({ 
             respuesta: respuesta.choices[0].message.content,
-            sugerencias // 👈 ENVIAR sugerencias al frontend
+            sugerencias
         });
-        
     } catch (error) {
         console.error('Error en Kaffi:', error);
         res.status(500).json({ 
-            message: 'Error al consultar a kaffi', 
-            error: error.message
+            message: 'Error al consultar a Kaffi', 
+            error: error.message 
         });
     }
-});
-
-export default router;
+};
