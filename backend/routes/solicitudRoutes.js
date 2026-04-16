@@ -18,7 +18,7 @@ router.get("/comprador/:compradorId", authMiddleware, getSolicitudesByComprador)
 router.get("/:id", authMiddleware, getSolicitudById);
 router.post("/", authMiddleware, roleMiddleware("productor"), createSolicitud);
 router.put("/:id/responder", authMiddleware, roleMiddleware("comprador", "admin"), responderSolicitud);
-router.put("/:id/cerrar", authMiddleware, cerrarSolicitud);
+router.put("/:id/cerrar", authMiddleware, roleMiddleware("comprador", "admin"), cerrarSolicitud);
 router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteSolicitud);
 
 

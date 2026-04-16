@@ -51,13 +51,42 @@ FACTOR_FNC = 0.6550
 
 # ── PASO 7: CONVERTIR A JSON ──────────────────────────
 resultado = []
-for _, fila in solo_futuro.iterrows():
+generated_at = datetime.now().isoformat()
+
+for i, (_, fila) in enumerate(solo_futuro.iterrows()):
+    precio_actual = round(float(fila['yhat']) * FACTOR_FNC, 0)
+    precio_minimo = round(float(fila['yhat_lower']) * FACTOR_FNC, 0)
+    precio_maximo = round(float(fila['yhat_upper']) * FACTOR_FNC, 0)
+    amplitud_pct = ((precio_maximo - precio_minimo) / precio_actual) * 100
+    confianza = max(50, min(95, round(100 - amplitud_pct * 2)))
+
+    if i < len(solo_futuro) - 1:
+        siguiente_fila = solo_futuro.iloc[i + 1]
+        precio_siguiente = round(float(siguiente_fila['yhat']) * FACTOR_FNC, 0)
+
+        variacion_pct = ((precio_siguiente - precio_actual) / precio_actual) * 100
+
+        if variacion_pct > 0.3:
+            tendencia = 'sube'
+        elif variacion_pct < -0.3:
+            tendencia = 'baja'
+        else:
+            tendencia = 'estable'
+    else:
+        tendencia = 'estable'
+
     resultado.append({
-        'fecha':            fila['ds'].strftime('%Y-%m-%d'),
-        'precio_estimado':  round(float(fila['yhat'])      * FACTOR_FNC, 0),
-        'precio_minimo':    round(float(fila['yhat_lower']) * FACTOR_FNC, 0),
-        'precio_maximo':    round(float(fila['yhat_upper']) * FACTOR_FNC, 0),
+        'fecha':          fila['ds'].strftime('%Y-%m-%d'),
+        'precioestimado': precio_actual,
+        'preciominimo':   precio_minimo,
+        'preciomaximo':   precio_maximo,
+        'tendencia':      tendencia,
+        'confianza':      confianza,
+        'modelVersion':   'prophet-v1',
+        'generatedAt':    generated_at
     })
+
+
 
 # ── PASO 8: GUARDAR JSON EN BACKEND ──────────────────
 ruta_backend = '../backend/datos'
@@ -73,8 +102,8 @@ print('PREDICCIONES GENERADAS:')
 print(f'  Total de días      : {len(resultado)}')
 print(f'  Primer día         : {resultado[0]["fecha"]}')
 print(f'  Último día         : {resultado[-1]["fecha"]}')
-print(f'  Precio estimado hoy: ${resultado[0]["precio_estimado"]:,.0f} COP/carga')
-print(f'  Rango hoy          : ${resultado[0]["precio_minimo"]:,.0f} — ${resultado[0]["precio_maximo"]:,.0f}')
+print(f'  Precio estimado hoy: ${resultado[0]["precioestimado"]:,.0f} COP/carga')
+print(f'  Rango hoy          : ${resultado[0]["preciominimo"]:,.0f} — ${resultado[0]["preciomaximo"]:,.0f}')
 print(f'  Factor ajuste FNC  : {FACTOR_FNC}')
 print()
 print(f'✅ Predicciones guardadas en: {ruta_json}')

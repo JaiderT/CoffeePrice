@@ -3,21 +3,46 @@ import Comprador from "../models/comprador.js";
 
 export const getSolicitudesByProductor = async (req, res) => {
     try {
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = req.params.productorId === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para ver estas solicitudes"
+            });
+        }
+
         const solicitudes = await Solicitud.find({ productor: req.params.productorId })
             .populate("comprador", "nombreempresa tipo direccion")
             .sort({ createdAt: -1 });
 
         res.json(solicitudes);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener solicitudes", error: error.message }); // ✅ era ,json
+        res.status(500).json({ message: "Error al obtener solicitudes", error: error.message });
     }
 };
 
+
 export const getSolicitudesByComprador = async (req, res) => {
     try {
+        const compradorExistente = await Comprador.findById(req.params.compradorId);
+
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para ver estas solicitudes"
+            });
+        }
+
         const solicitudes = await Solicitud.find({ comprador: req.params.compradorId })
             .populate("productor", "nombre apellido celular")
-            .sort({ createdAt: -1 }); // ✅ era createAt
+            .sort({ createdAt: -1 });
 
         res.json(solicitudes);
     } catch (error) {
@@ -25,29 +50,71 @@ export const getSolicitudesByComprador = async (req, res) => {
     }
 };
 
-export const getSolicitudById = async (req, res) => { // ✅ era getSolicitudesById
+
+export const getSolicitudById = async (req, res) => {
     try {
         const solicitud = await Solicitud.findById(req.params.id)
             .populate("productor", "nombre apellido celular")
-            .populate("comprador", "nombreempresa tipo direccion");
+            .populate("comprador", "nombreempresa tipo direccion usuario");
 
-        if (!solicitud) return res.status(404).json({ message: "Solicitud no encontrada" });
+        if (!solicitud) {
+            return res.status(404).json({ message: "Solicitud no encontrada" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esProductor = solicitud.productor?._id?.toString() === req.user.id;
+        const esComprador = solicitud.comprador?.usuario?.toString() === req.user.id;
+
+        if (!esAdmin && !esProductor && !esComprador) {
+            return res.status(403).json({
+                message: "No tienes permisos para ver esta solicitud"
+            });
+        }
+
         res.json(solicitud);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener solicitud", error: error.message }); // ✅ era .jso
+        res.status(500).json({ message: "Error al obtener solicitud", error: error.message });
     }
 };
+
 
 export const createSolicitud = async (req, res) => {
     try {
         const { comprador, cantidadcargas, tipocafe, mensaje } = req.body;
 
+        if (!comprador || cantidadcargas === undefined || !tipocafe) {
+            return res.status(400).json({
+                message: "Comprador, cantidad de cargas y tipo de café son obligatorios"
+            });
+        }
+
+        const cantidadNumerica = Number(cantidadcargas);
+        const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+
+        if (Number.isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
+            return res.status(400).json({
+                message: "La cantidad de cargas debe ser un número mayor a 0"
+            });
+        }
+
+        if (!tiposPermitidos.includes(tipocafe)) {
+            return res.status(400).json({
+                message: "Tipo de café no válido"
+            });
+        }
+
+        const compradorExistente = await Comprador.findById(comprador);
+
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
+
         const solicitud = new Solicitud({
             productor: req.user.id,
             comprador,
-            cantidadcargas,
+            cantidadcargas: cantidadNumerica,
             tipocafe,
-            mensaje
+            mensaje: mensaje?.trim() || ""
         });
 
         await solicitud.save();
@@ -68,19 +135,36 @@ export const responderSolicitud = async (req, res) => {
             });
         }
 
-        const solicitud = await Solicitud.findByIdAndUpdate(
-            req.params.id,
-            {   
-                respuestaComprador,
-                fechaRespuesta: new Date(),
-                estado: "respondida",
-            },
-            { new: true }
-        );
+        const respuestaLimpia = respuestaComprador.trim();
+
+
+        const solicitud = await Solicitud.findById(req.params.id);
 
         if (!solicitud) {
-            return res.status(404).json({message: "solicitud no encontrada" });
+            return res.status(404).json({ message: "Solicitud no encontrada" });
         }
+
+        const compradorExistente = await Comprador.findById(solicitud.comprador);
+
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador asociado no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para responder esta solicitud"
+            });
+        }
+
+        solicitud.respuestaComprador = respuestaLimpia;
+        solicitud.fechaRespuesta = new Date();
+        solicitud.estado = "respondida";
+
+        await solicitud.save();
+
         res.json({
             message: "Solicitud respondida correctamente",
             solicitud
@@ -92,16 +176,33 @@ export const responderSolicitud = async (req, res) => {
         });
     }
 };
+
 export const cerrarSolicitud = async (req, res) => {
     try {
-        const solicitud = await solicitud.findByIdAndUpdate(
-            req.params.id,
-            { estado: "cerrada" },
-            { new: true }
-        );
+        const solicitud = await Solicitud.findById(req.params.id);
+
         if (!solicitud) {
             return res.status(404).json({ message: "Solicitud no encontrada" });
         }
+
+        const compradorExistente = await Comprador.findById(solicitud.comprador);
+
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador asociado no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para cerrar esta solicitud"
+            });
+        }
+
+        solicitud.estado = "cerrada";
+        await solicitud.save();
+
         res.json({
             message: "Solicitud cerrada correctamente",
             solicitud
@@ -111,8 +212,8 @@ export const cerrarSolicitud = async (req, res) => {
             message: "Error al cerrar solicitud",
             error: error.message
         });
-    };
-}
+    }
+};
 
 export const deleteSolicitud = async (req, res) => {
     try {

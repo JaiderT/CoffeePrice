@@ -1,11 +1,19 @@
 import Noticia from "../models/noticia.js";
+import { asegurarNoticiasRecientes } from "../services/noticiaAutoService.js";
 
 export const getNoticias = async (req, res) => {
     try {
         const { categoria } = req.query;
         const filtro = categoria ? { categoria } : {};
 
-        const noticias = await Noticia.find(filtro).sort({ createdAt: -1 });
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        res.set('Surrogate-Control', 'no-store');
+
+        await asegurarNoticiasRecientes();
+
+        const noticias = await Noticia.find(filtro).sort({ publishedAt: -1, createdAt: -1 });
         res.json(noticias);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener noticias", error: error.message });
@@ -24,9 +32,9 @@ export const getNoticiaById = async (req, res) => {
 
 export const createNoticia = async (req, res) => {
     try {
-        const { titulo, resumen, contenido, categoria, fuente } = req.body;
+        const { titulo, resumen, contenido, categoria, fuente, imagen } = req.body;
 
-        const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente });
+        const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente, imagen });
         await noticia.save();
 
         res.status(201).json(noticia);
@@ -37,11 +45,11 @@ export const createNoticia = async (req, res) => {
 
 export const updateNoticia = async (req, res) => {
     try {
-        const { titulo, resumen, contenido, categoria, fuente } = req.body;
-
+        const { titulo, resumen, contenido, categoria, fuente, imagen } = req.body;
+        
         const noticia = await Noticia.findByIdAndUpdate(
             req.params.id,
-            { titulo, resumen, contenido, categoria, fuente },
+            { titulo, resumen, contenido, categoria, fuente, imagen },
             { new: true, runValidators: true }
         );
 

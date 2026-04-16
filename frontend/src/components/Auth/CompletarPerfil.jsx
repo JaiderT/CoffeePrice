@@ -35,7 +35,6 @@ export default function CompletarPerfil() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          usuario: payload.id,
           nombreempresa,
           direccion,
           telefono,
@@ -52,10 +51,11 @@ export default function CompletarPerfil() {
 
       // Guardar token y redirigir
       localStorage.setItem("token", token);
-      localStorage.setItem("role", payload.role);
+      localStorage.setItem("rol", payload.rol);
+      localStorage.setItem("usuarioId", payload.id);
       setSuccess(true);
 
-    } catch (err) {
+    } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function CompletarPerfil() {
       </div>
 
       {/* PANEL DERECHO */}
-      <div className="w-full lg:w-[680px] bg-[#FAF7F2] flex flex-col justify-center px-6 py-12 sm:px-10 shrink-0 overflow-y-auto">
+      <div className="w-full lg:w-170 bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0">
 
         {!success ? (
           <>

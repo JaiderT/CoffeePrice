@@ -42,8 +42,32 @@ const usuarioSchema = new mongoose.Schema({
     type: String,
     enum: ["activo", "pendiente", "rechazado"],
     default: "activo"
-  }
-}, 
+  },
+  ultimaConexion: {
+    type: Date,
+    default: null,
+  },
+
+  // Recuperación de contraseña
+  codigoRecuperacion: {
+    type: String,
+    default: null,
+  },
+  codigoExpiracion: {
+    type: Date,
+    default: null,
+  },
+
+  // Verificación de email con código de 6 dígitos ← NUEVO
+  codigoVerificacion: {
+    type: String,
+    default: null,
+  },
+  codigoVerificacionExpira: {
+    type: Date,
+    default: null,
+  },
+},
 { timestamps: true }
 );
 

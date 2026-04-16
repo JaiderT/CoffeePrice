@@ -4,12 +4,12 @@ const alertaSchema = new mongoose.Schema(
   {
     usuario: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Usuario",
+      ref: "usuario",
       required: [true, "El usuario es obligatorio"],
     },
     comprador: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Comprador",
+      ref: "comprador",
       default: null, // null = alerta para cualquier comprador
     },
     precioMinimo: {

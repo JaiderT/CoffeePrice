@@ -2,8 +2,15 @@ import Alerta from "../models/alerta.js";
 
 export const getAlertasByUsuario = async (req, res) => {
   try {
+    const esAdmin = req.user?.rol === "admin";
+  const esPropietario = req.user.id === req.params.usuarioId;
+
+  if (!esAdmin && !esPropietario) {
+    return res.status(403).json({ message: "No tienes permisos para ver estas alertas" });
+  }
+
     const alertas = await Alerta.find({ usuario: req.params.usuarioId })
-      .populate("comprador", "nombreEmpresa tipo");
+      .populate("comprador", "nombreempresa tipo");
     res.json(alertas);
   } catch (error) {
     res.status(500).json({ message: "Error al obtener alertas", error: error.message });
@@ -14,7 +21,13 @@ export const getAlertaById = async (req, res) => {
   try {
     const alerta = await Alerta.findById(req.params.id)
       .populate("usuario", "nombre apellido")
-      .populate("comprador", "nombreEmpresa");
+      .populate("comprador", "nombreempresa");
+      const esAdmin = req.user?.rol === "admin";
+      const esPropietario = alerta.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+          return res.status(403).json({ message: "No tienes permisos para ver esta alerta" });
+        }
 
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
     res.json(alerta);
@@ -25,7 +38,8 @@ export const getAlertaById = async (req, res) => {
 
 export const createAlerta = async (req, res) => {
   try {
-    const { usuario, comprador, precioMinimo, canales } = req.body;
+    const usuario = req.user.id;
+    const { comprador, precioMinimo, canales } = req.body;
 
     const alerta = new Alerta({ usuario, comprador, precioMinimo, canales });
     await alerta.save();
@@ -69,8 +83,14 @@ export const toggleAlerta = async (req, res) => {
 
 export const deleteAlerta = async (req, res) => {
   try {
-    const alerta = await Alerta.findByIdAndDelete(req.params.id);
+    const alerta = await Alerta.findById(req.params.id);
     if (!alerta) return res.status(404).json({ message: "Alerta no encontrada" });
+    const esAdmin = req.user?.rol === "admin";
+    const esPropietario = alerta.usuario.toString() === req.user.id;
+    if (!esAdmin && !esPropietario) {
+      return res.status(403).json({ message: "No tienes permisos para eliminar esta alerta" });
+    }
+    await alerta.deleteOne();
     res.json({ message: "Alerta eliminada correctamente" });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar alerta", error: error.message });

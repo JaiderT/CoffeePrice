@@ -1,35 +1,85 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../context/useAuth.js'
 
 export default function GoogleAuth() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   useEffect(() => {
-    const token = params.get('token')
-    const error = params.get('error')
-
-    if (token) {
-      // Decodificar el payload del JWT para obtener el rol
-      const payload = JSON.parse(atob(token.split('.')[1]))
-
-      localStorage.setItem('token', token)
-      localStorage.setItem('role', payload.role)
-
-      if (payload.role === 'admin') navigate('/admin', { replace: true })
-      else navigate('/', { replace: true })
-
-    } else {
-      navigate('/login?error=' + (error || 'google_failed'), { replace: true })
+    const errorParam = params.get("error");
+    if (errorParam) { 
+      navigate(`/login?error=${errorParam}`, { replace: true }); 
+      return; 
     }
-  }, [])
+
+    const verificarSesion = async () => {
+      try {
+        // 1. Verificar si hay sesión activa con la cookie
+        const meResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!meResponse.ok) {
+          throw new Error('No hay sesión activa');
+        }
+
+        const userData = await meResponse.json();
+        
+        // 2. Generar token JWT para el frontend
+        const tokenResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/generate-token`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+          // No necesitas body porque el middleware ya tiene el userId del token
+        });
+        
+        if (!tokenResponse.ok) {
+          throw new Error('No se pudo generar el token');
+        }
+        
+        const { token } = await tokenResponse.json();
+        
+        // 3. Iniciar sesión en el contexto
+        login(
+          token, 
+          userData.rol, 
+          userData.nombre, 
+          userData.apellido, 
+          userData._id, 
+          userData.celular, 
+          userData.email
+        );
+        
+        // 4. Redirigir según el rol
+        if (userData.rol === "admin") {
+          navigate("/admin/perfil", { replace: true });
+        } else if (userData.rol === "comprador") {
+          navigate("/comprador/dashboard", { replace: true });
+        } else {
+          navigate("/precios", { replace: true });
+        }
+        
+      } catch (err) {
+        console.error("Error verificando sesión:", err);
+        navigate("/login?error=google_auth_failed", { replace: true });
+      }
+    };
+    
+    verificarSesion();
+  }, [params, navigate, login]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2]">
       <div className="text-center">
-        <div className="text-5xl mb-4">☕</div>
-        <p className="text-[#3B1F0A] font-semibold">Autenticando con Google...</p>
+        <div className="text-5xl mb-4 animate-pulse">☕</div>
+        <p className="text-[#3B1F0A] font-semibold">Verificando autenticación con Google...</p>
+        <p className="text-xs text-gray-400 mt-2">Esto puede tomar unos segundos</p>
       </div>
     </div>
-  )
+  );
 }

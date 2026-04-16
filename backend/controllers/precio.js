@@ -1,14 +1,38 @@
 import PrecioModel from "../models/precio.js";
+import CompradorModel from "../models/comprador.js";
+import HistorialPrecio from "../models/historialPrecio.js";
+import Alerta from "../models/alerta.js";
+
+const verificarAlertas = async (compradorId, preciocarga) => {
+  try {
+    const alertas = await Alerta.find({
+      $or: [
+        { comprador: compradorId },
+        { comprador: null }
+      ],
+      activa: true,
+      precioMinimo: { $lte: preciocarga }
+    }).populate('usuario', 'nombre email');
+
+    for (const alerta of alertas) {
+      await Alerta.findByIdAndUpdate(alerta._id, {
+        ultimaNotificacion: new Date()
+      });
+    }
+    return alertas;
+  } catch (error) {
+    console.error('Error verificando alertas:', error);
+    return [];
+  }
+};
 
 export const getprecios = async (req, res) => {
     try {
-        const { tipoCafe } = req.query;
-        const filtro = tipoCafe ? { tipoCafe } : {};
-
+        const { tipocafe } = req.query;
+        const filtro = tipocafe ? { tipocafe } : {};
         const precios = await PrecioModel.find(filtro)
             .populate("comprador", "nombreempresa direccion")
             .sort({ preciocarga: -1 });
-
         res.json(precios);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener precios", error: error.message });
@@ -20,7 +44,6 @@ export const getpreciosBycomprador = async (req, res) => {
         const precios = await PrecioModel.find({ comprador: req.params.compradorId })
             .populate("comprador", "nombreempresa")
             .sort({ createdAt: -1 });
-
         res.json(precios);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener precios del comprador", error: error.message });
@@ -31,17 +54,55 @@ export const createprecio = async (req, res) => {
     try {
         const { comprador, preciocarga, tipocafe } = req.body;
 
-        // ✅ Convertir explícitamente a número
+        if (!comprador || preciocarga === undefined || !tipocafe) {
+            return res.status(400).json({
+                message: "Comprador, precio por carga y tipo de café son obligatorios"
+            });
+        }
+
+        const precioNumerico = Number(preciocarga);
+        const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+
+        if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
+            return res.status(400).json({
+                message: "El precio por carga debe ser un número mayor a 0"
+            });
+        }
+
+        if (!tiposPermitidos.includes(tipocafe)) {
+            return res.status(400).json({ message: "Tipo de café no válido" });
+        }
+
+        const compradorExistente = await CompradorModel.findById(comprador);
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para crear precios para este comprador"
+            });
+        }
+
         const nuevoPrecio = new PrecioModel({
             comprador,
-            preciocarga: Number(preciocarga),  // <-- fix
+            preciocarga: precioNumerico,
             tipocafe
         });
 
         await nuevoPrecio.save();
+        await HistorialPrecio.create({
+            comprador,
+            preciocarga: precioNumerico,
+            preciokg: nuevoPrecio.preciokg,
+            tipocafe,
+        });
+        await verificarAlertas(comprador, precioNumerico);
         res.status(201).json(nuevoPrecio);
     } catch (error) {
-        console.log("Error completo:", error);
         res.status(400).json({ message: "Error al crear precio", error: error.message });
     }
 };
@@ -51,12 +112,50 @@ export const updateprecio = async (req, res) => {
         const { preciocarga, tipocafe } = req.body;
 
         const precio = await PrecioModel.findById(req.params.id);
-        if (!precio) return res.status(404).json({ message: "Precio no encontrado" });
+        if (!precio) {
+            return res.status(404).json({ message: "Precio no encontrado" });
+        }
 
-        precio.preciocarga = preciocarga ? Number(preciocarga) : precio.preciocarga;  // <-- fix
-        precio.tipocafe = tipocafe ?? precio.tipocafe;
-        await precio.save(); // el pre("save") recalcula preciokg automáticamente ✅
+        const compradorExistente = await CompradorModel.findById(precio.comprador);
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador asociado no encontrado" });
+        }
 
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para actualizar este precio"
+            });
+        }
+
+        if (preciocarga !== undefined) {
+            const precioNumerico = Number(preciocarga);
+            if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
+                return res.status(400).json({
+                    message: "El precio por carga debe ser un número mayor a 0"
+                });
+            }
+            precio.preciocarga = precioNumerico;
+        }
+
+        if (tipocafe !== undefined) {
+            const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+            if (!tiposPermitidos.includes(tipocafe)) {
+                return res.status(400).json({ message: "Tipo de café no válido" });
+            }
+            precio.tipocafe = tipocafe;
+        }
+
+        await precio.save();
+        await HistorialPrecio.create({
+            comprador: precio.comprador,
+            preciocarga: precio.preciocarga,
+            preciokg: precio.preciokg,
+            tipocafe: precio.tipocafe,
+        });
+        await verificarAlertas(precio.comprador, precio.preciocarga);
         res.json(precio);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar precio", error: error.message });
@@ -65,8 +164,26 @@ export const updateprecio = async (req, res) => {
 
 export const deleteprecio = async (req, res) => {
     try {
-        const precio = await PrecioModel.findByIdAndDelete(req.params.id);
-        if (!precio) return res.status(404).json({ message: "Precio no encontrado" });
+        const precio = await PrecioModel.findById(req.params.id);
+        if (!precio) {
+            return res.status(404).json({ message: "Precio no encontrado" });
+        }
+
+        const compradorExistente = await CompradorModel.findById(precio.comprador);
+        if (!compradorExistente) {
+            return res.status(404).json({ message: "Comprador asociado no encontrado" });
+        }
+
+        const esAdmin = req.user?.rol === "admin";
+        const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            return res.status(403).json({
+                message: "No tienes permisos para eliminar este precio"
+            });
+        }
+
+        await precio.deleteOne();
         res.json({ message: "Precio eliminado correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar precio", error: error.message });

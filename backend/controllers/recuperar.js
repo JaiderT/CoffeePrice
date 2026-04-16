@@ -36,12 +36,19 @@ export const solicitarCodigo = async (req, res) => {
                 message: "Si el correo está registrado, recibirá un código de verificación"
             });
             }
+            if (!usuarioEncontrado.password) {
+            return res.status(200).json({
+            message: "Si el correo está registrado, recibirá un código de verificación"
+            });
+            }
+
 
         const codigo = generarCodigo();
-
-        usuarioEncontrado.codigoRecuperacion = codigo;
+        const codigoHash = await bcrypt.hash(codigo, 10);
+        usuarioEncontrado.codigoRecuperacion = codigoHash;
         usuarioEncontrado.codigoExpiracion = Date.now() + 900000;
         await usuarioEncontrado.save();
+
 
 
         const mailOptions = {
@@ -51,7 +58,7 @@ export const solicitarCodigo = async (req, res) => {
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-            <h2 style="color: #4F46E5; margin: 0;">TechStore Pro</h2>
+            <h2 style="color: #3D1F0F; margin: 0;">CoffePrice</h2>
             </div>
             
             <h3 style="color: #333;">Recuperacion de Contraseña</h3>
@@ -62,7 +69,7 @@ export const solicitarCodigo = async (req, res) => {
             
             <p>Tu codigo de verificacion es:</p>
             
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <div style="background: linear-gradient(135deg, #3D1F0F 0%, #7A4020) 100%);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
@@ -77,11 +84,7 @@ export const solicitarCodigo = async (req, res) => {
             </div>
             
             <p style="color: #666; font-size: 14px;">
-            ⏲️ Este codigo expira en <strong>15 minutos</strong>.
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-            🔒 Si no solicitaste este cambio, ignora este email y tu contraseña permanecera segura.
+            Este codigo expira en <strong>15 minutos</strong>.
             </p>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
@@ -94,7 +97,10 @@ export const solicitarCodigo = async (req, res) => {
 
         await transporte.sendMail(mailOptions);
 
-        console.log(`Codigo enviado a ${usuarioEncontrado.email}: ${codigo}`);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[DEV] Codigo enviado a: ${usuarioEncontrado.email}`);
+        }
+
 
         res.status(200).json({
             message: "Si el correo esta registrado, recibiras un codigo de verificacion",
@@ -122,22 +128,32 @@ export const cambiarPassword = async (req, res) => {
             });
         }
 
-        if (nuevaPassword.length < 6) {
+        if (nuevaPassword.length < 8) {
             return res.status(400).json({
-                message: "La contraseña debe tener al menos 6 caracteres"
+                message: "La contraseña debe tener al menos 8 caracteres"
             });
         }
         const usuarioEncontrado = await usuario.findOne({ email });
-        if (
-            !usuarioEncontrado ||
-            usuarioEncontrado.codigoRecuperacion !== codigo ||
-            !usuarioEncontrado.codigoExpiracion ||
-            usuarioEncontrado.codigoExpiracion < Date.now()
-            ) {
+            if (!usuarioEncontrado || !usuarioEncontrado.codigoRecuperacion || !usuarioEncontrado.codigoExpiracion) {
             return res.status(400).json({
                 message: "Código inválido o expirado"
             });
-            }
+        }
+
+        if (usuarioEncontrado.codigoExpiracion < Date.now()) {
+            return res.status(400).json({
+                message: "Código inválido o expirado"
+            });
+        }
+
+        const codigoValido = await bcrypt.compare(codigo, usuarioEncontrado.codigoRecuperacion);
+
+        if (!codigoValido) {
+            return res.status(400).json({
+                message: "Código inválido o expirado"
+            });
+        }
+
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
@@ -145,8 +161,8 @@ export const cambiarPassword = async (req, res) => {
         // Actualizar contraseña y limpiar codigo
 
         usuarioEncontrado.password = hashedPassword;
-        usuarioEncontrado.codigoRecuperacion = undefined;
-        usuarioEncontrado.codigoExpiracion = undefined;
+        usuarioEncontrado.codigoRecuperacion = null;
+        usuarioEncontrado.codigoExpiracion = null;
         await usuarioEncontrado.save();
 
 
@@ -157,18 +173,18 @@ export const cambiarPassword = async (req, res) => {
             to: usuarioEncontrado.email,
             subject: 'Contraseña acualizada - CoffePrice',
             html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
             <div style="text-align: center; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <div style="background: linear-gradient(135deg, #3D1F0F 0%, #7A4020 100%);
             width: 60px;
             height: 60px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             margin-bottom: 20px;">
-            <span style="color: white; font-size: 30px;">✔️</span>
+            <span style="color: white; font-size: 30px;">☕️</span>
             </div>
-            <h2 style="color: #4F46E5; margin: 0;">Contraseña Actualizada</h2>
+            <h2 style="color: white; margin: 0;">Contraseña Actualizada</h2>
             </div>
             
             <p>Hola <strong>${usuarioEncontrado.nombre}</strong>,</p>
@@ -179,7 +195,7 @@ export const cambiarPassword = async (req, res) => {
             
             <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.FRONTEND_URL}/login" 
-            style="background: linear-gradient(to right, #4F46E5, #7C3AED);
+            style="background: linear-gradient(to right, #3D1F0F, #7A4020);
             color: white;
             padding: 12px 30px;
             text-decoration: none;

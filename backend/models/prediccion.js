@@ -10,7 +10,7 @@ const prediccionSchema = new mongoose.Schema(
 
     precioestimado: {
         type: Number,
-        required: [true, "Elprecio estimado es obligarotio"],
+        required: [true, "El precio estimado es obligatorio"],
     },
 
     preciominimo: {
@@ -26,13 +26,21 @@ const prediccionSchema = new mongoose.Schema(
     tendencia: {
         type: String,
         enum: ["sube", "baja", "estable"],
-        required: [true, "La tendencia es obligatoria"],
+        default: "estable",
     },
 
     confianza: {
         type: Number,
         min: 0,
         max: 100,
+    },
+    generatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    modelVersion: {
+        type: String,
+        default: "prophet-v1",
     },
 },
     { timestamps: true }
