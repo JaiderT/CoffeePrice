@@ -1,29 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
-const CENTRO_PITAL = [2.266205, -75.805401];
-
-function SelectorUbicacion({ ubicacion, setUbicacion }) {
-  useMapEvents({
-    click(e) {
-      setUbicacion({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
-  });
-  return ubicacion.lat ? (
-    <Marker position={[ubicacion.lat, ubicacion.lng]} />
-  ) : null;
-}
 
 export default function PerfilComprador() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -38,7 +15,6 @@ export default function PerfilComprador() {
     nombreempresa: '', direccion: '', telefono: '',
     horarioApertura: '08:00', horarioCierre: '17:00'
   });
-  const [ubicacion, setUbicacion] = useState({ lat: null, lng: null });
   const [passwords, setPasswords] = useState({ actual: '', nueva: '', confirmar: '' });
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -60,10 +36,6 @@ export default function PerfilComprador() {
           telefono: data.telefono || '',
           horarioApertura: data.horarioApertura || '08:00',
           horarioCierre: data.horarioCierre || '17:00',
-        });
-        setUbicacion({
-          lat: data.latitud || CENTRO_PITAL[0],
-          lng: data.longitud || CENTRO_PITAL[1],
         });
       } catch (error) {
         console.error('Error al obtener comprador:', error);
@@ -98,11 +70,7 @@ export default function PerfilComprador() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, {
-        ...empresa,
-        latitud: ubicacion.lat,
-        longitud: ubicacion.lng,
-      }, {
+      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, empresa, {
         headers: { Authorization: `Bearer ${token}` }
       });
       mostrarMensaje('exito', 'Datos de empresa actualizados');
@@ -117,10 +85,6 @@ export default function PerfilComprador() {
         telefono: data.telefono || '',
         horarioApertura: data.horarioApertura || '08:00',
         horarioCierre: data.horarioCierre || '17:00',
-      });
-      setUbicacion({
-        lat: data.latitud || CENTRO_PITAL[0],
-        lng: data.longitud || CENTRO_PITAL[1],
       });
     } catch {
       mostrarMensaje('error', 'Error al actualizar la empresa');
@@ -180,6 +144,8 @@ export default function PerfilComprador() {
             </div>
           </div>
 
+          
+
           <div className="pt-12 px-8 pb-8">
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -192,7 +158,9 @@ export default function PerfilComprador() {
                     ● Activo
                   </span>
                 </div>
+                
               </div>
+              
               {modo === 'ver' && (
                 <button onClick={() => setModo('editar')}
                   className="bg-[#F5ECD7] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#E0D0B0] transition-colors">
@@ -257,28 +225,6 @@ export default function PerfilComprador() {
                 <Campo label="Teléfono" valor={comprador?.telefono || 'No registrado'} />
                 <Campo label="Hora de apertura" valor={comprador?.horarioApertura || '08:00'} />
                 <Campo label="Hora de cierre" valor={comprador?.horarioCierre || '17:00'} />
-
-                {/* Mapa vista solo lectura */}
-                {comprador?.latitud && comprador?.longitud && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Ubicación en el mapa</span>
-                    <div className="mt-2 rounded-xl overflow-hidden border border-[#C8A96E]/30" style={{ height: '180px' }}>
-                      <MapContainer
-                        center={[comprador.latitud, comprador.longitud]}
-                        zoom={16}
-                        zoomControl={false}
-                        dragging={false}
-                        scrollWheelZoom={false}
-                        style={{ height: '100%', width: '100%' }}>
-                        <TileLayer
-                          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                          attribution='&copy; OpenStreetMap contributors' />
-                        <Marker position={[comprador.latitud, comprador.longitud]} />
-                      </MapContainer>
-                    </div>
-                    <div className="h-px bg-gray-100 mt-4" />
-                  </div>
-                )}
               </div>
             ) : (
               <form onSubmit={handleGuardarEmpresa} className="space-y-4">
@@ -299,32 +245,6 @@ export default function PerfilComprador() {
                       className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50" />
                   </div>
                 </div>
-
-                {/* Mapa selector de ubicación */}
-                <div>
-                  <label className="block text-xs font-semibold text-[#3B1F0A] mb-1">Ubicación en el mapa</label>
-                  <p className="text-xs text-gray-400 mb-2">
-                    <i className="fa-solid fa-hand-pointer mr-1"></i>
-                    Haz clic en el mapa para marcar la ubicación exacta de tu empresa
-                  </p>
-                  <div className="rounded-xl overflow-hidden border border-[#C8A96E]/30" style={{ height: '220px' }}>
-                    <MapContainer
-                      center={[ubicacion.lat || CENTRO_PITAL[0], ubicacion.lng || CENTRO_PITAL[1]]}
-                      zoom={16}
-                      style={{ height: '100%', width: '100%' }}>
-                      <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; OpenStreetMap contributors' />
-                      <SelectorUbicacion ubicacion={ubicacion} setUbicacion={setUbicacion} />
-                    </MapContainer>
-                  </div>
-                  {ubicacion.lat && (
-                    <p className="text-xs text-green-600 mt-1.5 font-semibold">
-                      ✅ Ubicación marcada: {ubicacion.lat.toFixed(5)}, {ubicacion.lng.toFixed(5)}
-                    </p>
-                  )}
-                </div>
-
                 <BotonesForm onCancel={() => setModo('ver')} loading={loading} />
               </form>
             )}

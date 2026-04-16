@@ -1,104 +1,63 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AuthContext } from './AuthContext.js';
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-function guardarUsuarioLocal(usuario) {
-  if (!usuario) return;
-  localStorage.setItem('token', 'session-cookie');
-  localStorage.setItem('rol', usuario.rol || '');
-  localStorage.setItem('name', usuario.nombre || '');
-  localStorage.setItem('apellido', usuario.apellido || '');
-  localStorage.setItem('usuarioId', usuario.id || '');
-  localStorage.setItem('celular', usuario.celular || '');
-  localStorage.setItem('email', usuario.email || '');
-}
-
-function limpiarUsuarioLocal() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('rol');
-  localStorage.removeItem('name');
-  localStorage.removeItem('apellido');
-  localStorage.removeItem('usuarioId');
-  localStorage.removeItem('celular');
-  localStorage.removeItem('email');
-}
-
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [cargando, setCargando] = useState(true);
+  const [usuario, setUsuario] = useState(() => {
+    const token = localStorage.getItem('token');
+    const rol = localStorage.getItem('rol');
+    const nombre = localStorage.getItem('name');
+    const apellido = localStorage.getItem('apellido');
+    const id = localStorage.getItem('usuarioId');
+    const celular = localStorage.getItem('celular');
+    const email = localStorage.getItem('email');
 
-  useEffect(() => {
-    const inicializarSesion = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: 'include',
-        });
+    if (token && nombre) {
+      return { token, rol, nombre, apellido, id, celular, email };
+    }
 
-        if (!response.ok) {
-          limpiarUsuarioLocal();
-          setUsuario(null);
-          return;
-        }
+    return null;
+  });
 
-        const data = await response.json();
-        const usuarioSesion = {
-          id: data._id,
-          rol: data.rol,
-          nombre: data.nombre,
-          apellido: data.apellido,
-          celular: data.celular,
-          email: data.email,
-        };
+  const cargando = false;
 
-        guardarUsuarioLocal(usuarioSesion);
-        setUsuario(usuarioSesion);
-      } catch {
-        limpiarUsuarioLocal();
-        setUsuario(null);
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    inicializarSesion();
-  }, []);
-
-  const login = (userData) => {
-    const usuarioSesion = {
-      id: userData.id || userData._id,
-      rol: userData.rol,
-      nombre: userData.nombre,
-      apellido: userData.apellido,
-      celular: userData.celular,
-      email: userData.email,
-    };
-
-    guardarUsuarioLocal(usuarioSesion);
-    setUsuario(usuarioSesion);
+  const login = (token, rol, nombre, apellido, id, celular, email) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('rol', rol);
+    localStorage.setItem('name', nombre);
+    localStorage.setItem('apellido', apellido);
+    localStorage.setItem('usuarioId', id);
+    localStorage.setItem('celular', celular || '');
+    localStorage.setItem('email', email || '');
+    setUsuario({ token, rol, nombre, apellido, id, celular, email });
   };
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
-
-    limpiarUsuarioLocal();
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('rol');
+    localStorage.removeItem('name');
+    localStorage.removeItem('apellido');
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('celular');
+    localStorage.removeItem('email');
     setUsuario(null);
   };
 
   const actualizarUsuario = (nuevosDatos) => {
-    setUsuario((prev) => {
-      if (!prev) return prev;
-      const usuarioActualizado = { ...prev, ...nuevosDatos };
-      guardarUsuarioLocal(usuarioActualizado);
-      return usuarioActualizado;
-    });
+    const usuarioActualizado = { ...usuario, ...nuevosDatos };
+    localStorage.setItem('name', usuarioActualizado.nombre);
+    localStorage.setItem('apellido', usuarioActualizado.apellido);
+    if (nuevosDatos.celular) localStorage.setItem('celular', nuevosDatos.celular);
+    if (nuevosDatos.email) localStorage.setItem('email', nuevosDatos.email);
+    setUsuario(usuarioActualizado);
   };
 
   return (

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function CompletarPerfil() {
   const API_URL = import.meta.env.VITE_API_URL;
+  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState(null);
-  const [cargandoSesion, setCargandoSesion] = useState(true);
+  const token = params.get("token");
   const [nombreempresa, setNombreempresa] = useState("");
   const [direccion, setDireccion] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -14,39 +14,13 @@ export default function CompletarPerfil() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    const cargarSesion = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          setUsuario(null);
-          return;
-        }
-
-        const data = await response.json();
-        setUsuario(data);
-        localStorage.setItem("rol", data.rol || "");
-        localStorage.setItem("usuarioId", data._id || "");
-        localStorage.setItem("name", data.nombre || "");
-        localStorage.setItem("apellido", data.apellido || "");
-        localStorage.setItem("celular", data.celular || "");
-        localStorage.setItem("email", data.email || "");
-      } catch {
-        setUsuario(null);
-      } finally {
-        setCargandoSesion(false);
-      }
-    };
-
-    cargarSesion();
-  }, [API_URL]);
-
-  if (!cargandoSesion && !usuario) {
-    return <Navigate to="/login" replace />;
+  // Si no hay token redirigir al login
+  if (!token) {
+    return <Navigate to="/login" replace />
   }
+
+  // Decodificar el token para obtener el id del usuario
+  const payload = JSON.parse(atob(token.split(".")[1]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,8 +32,8 @@ export default function CompletarPerfil() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        credentials: "include",
         body: JSON.stringify({
           nombreempresa,
           direccion,
@@ -75,7 +49,12 @@ export default function CompletarPerfil() {
         return;
       }
 
+      // Guardar token y redirigir
+      localStorage.setItem("token", token);
+      localStorage.setItem("rol", payload.rol);
+      localStorage.setItem("usuarioId", payload.id);
       setSuccess(true);
+
     } catch {
       setError("Error al conectar con el servidor");
     } finally {
@@ -85,6 +64,8 @@ export default function CompletarPerfil() {
 
   return (
     <div className="flex min-h-screen bg-[#3D1F0F]">
+
+      {/* PANEL IZQUIERDO - solo desktop */}
       <div className="flex-1 hidden lg:flex flex-col justify-center pl-20 px-16 py-12 relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full"
           style={{ background: "radial-gradient(circle, rgba(200,129,74,0.15) 0%, transparent 70%)" }} />
@@ -113,9 +94,12 @@ export default function CompletarPerfil() {
         </div>
       </div>
 
+      {/* PANEL DERECHO */}
       <div className="w-full lg:w-170 bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 shrink-0">
+
         {!success ? (
           <>
+            {/* Logo móvil */}
             <div className="flex items-center gap-3 mb-8 lg:hidden">
               <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
               <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
@@ -133,6 +117,8 @@ export default function CompletarPerfil() {
             </p>
 
             <form onSubmit={handleSubmit}>
+
+              {/* Nombre empresa */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
                   Nombre de la empresa *
@@ -147,6 +133,7 @@ export default function CompletarPerfil() {
                 />
               </div>
 
+              {/* Dirección */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
                   Dirección del punto físico *
@@ -161,6 +148,7 @@ export default function CompletarPerfil() {
                 />
               </div>
 
+              {/* Teléfono */}
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
                   Teléfono <span className="text-gray-400 font-normal">(opcional)</span>
@@ -174,6 +162,7 @@ export default function CompletarPerfil() {
                 />
               </div>
 
+              {/* Horario */}
               <div className="mb-6">
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
                   Horario de atención <span className="text-gray-400 font-normal">(opcional)</span>
@@ -197,6 +186,7 @@ export default function CompletarPerfil() {
               >
                 {loading ? "Enviando..." : "Enviar para aprobación"}
               </button>
+
             </form>
           </>
         ) : (

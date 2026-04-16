@@ -25,29 +25,13 @@ import { iniciarCronNoticias } from './jobs/noticiaCron.js';
 import Contacto from "./routes/contacto.js";
 import historialPrecioRoutes from "./routes/historialPrecio.js";
 import chatbotRoutes from './routes/chatbot.js';
-import alertaNoticia from './routes/alertaNoticia.js';
-import configuracionRoutes from "./routes/configuracion.js";
 
 const app = express();
-
-app.disable('x-powered-by');
 
 app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
-
-app.use((req, res, next) => {
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:;"
-  );
-  next();
-});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -93,8 +77,6 @@ app.use("/api/resenas-plataforma", resenaPlataformaRoutes);
 app.use("/api", Contacto);
 app.use("/api/historial-precios", historialPrecioRoutes);
 app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/alertas-noticias', alertaNoticia);
-app.use('/api/configuracion', configuracionRoutes); 
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);

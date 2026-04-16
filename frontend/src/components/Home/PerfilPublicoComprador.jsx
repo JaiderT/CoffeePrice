@@ -4,24 +4,6 @@ import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import Sidebar from '../Layout/Sidebar.jsx';
 import Navbar from '../Layout/Navbar.jsx';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
-const iconoCafe = new L.DivIcon({
-  className: '',
-  html: `<div style="width:40px;height:40px;background:#C8A96E;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.25);"><span style="font-size:18px;transform:rotate(45deg);">☕</span></div>`,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -36],
-});
 
 const TAGS = [
   { value: 'precio_justo', label: 'Precio justo' },
@@ -98,71 +80,36 @@ export default function PerfilPublicoComprador() {
   const [enviandoAlerta, setEnviandoAlerta] = useState(false);
   const [mensajeAlerta, setMensajeAlerta] = useState(null);
   const [modalContacto, setModalContacto] = useState(false);
-  const [modalMapa, setModalMapa] = useState(false);
-  const [miUbicacion, setMiUbicacion] = useState(null);
-  const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
 
-  const obtenerDatos = useCallback(async () => {
+const obtenerDatos = useCallback(async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
+      axios.get(`${API_URL}/api/comprador/${id}`),
+      axios.get(`${API_URL}/api/resenas/comprador/${id}`),
+      axios.get(`${API_URL}/api/precios/comprador/${id}`),
+    ]);
+    setComprador(compradorRes.data);
+    setReseñas(reseñasRes.data.reseñas || []);
+    setPromedio(reseñasRes.data.promedio || 0);
+    setPrecios(preciosRes.data);
     try {
-      const token = localStorage.getItem('token');
-      const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
-        axios.get(`${API_URL}/api/comprador/${id}`),
-        axios.get(`${API_URL}/api/resenas/comprador/${id}`),
-        axios.get(`${API_URL}/api/precios/comprador/${id}`),
-      ]);
-      setComprador(compradorRes.data);
-      setReseñas(reseñasRes.data.reseñas || []);
-      setPromedio(reseñasRes.data.promedio || 0);
-      setPrecios(preciosRes.data);
-      try {
-        const histRes = await axios.get(
-          `${API_URL}/api/historial-precios/comprador/${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setHistorialPrecios(histRes.data);
-      } catch { /* historial opcional */ }
-    } catch (error) {
-      console.error('Error al obtener datos:', error);
-    } finally {
-      setCargando(false);
-    }
-  }, [id, API_URL]);
-
-  useEffect(() => {
-    obtenerDatos();
-  }, [obtenerDatos]);
-
-  const handleComoLlegar = () => {
-    if (!comprador?.latitud || !comprador?.longitud) {
-      alert('Este comprador aún no ha configurado su ubicación en el mapa.');
-      return;
-    }
-    setModalMapa(true);
-    setBuscandoUbicacion(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setMiUbicacion([pos.coords.latitude, pos.coords.longitude]);
-          setBuscandoUbicacion(false);
-        },
-        () => {
-          setBuscandoUbicacion(false);
-        }
+      const histRes = await axios.get(
+        `${API_URL}/api/historial-precios/comprador/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-    } else {
-      setBuscandoUbicacion(false);
-    }
-  };
+      setHistorialPrecios(histRes.data);
+    } catch { /* historial opcional */ }
+  } catch (error) {
+    console.error('Error al obtener datos:', error);
+  } finally {
+    setCargando(false);
+  }
+}, [id, API_URL]); // ← Dependencias correctas
 
-  const abrirEnGoogleMaps = () => {
-    const destino = `${comprador.latitud},${comprador.longitud}`;
-    if (miUbicacion) {
-      const origen = `${miUbicacion[0]},${miUbicacion[1]}`;
-      window.open(`https://www.google.com/maps/dir/${origen}/${destino}`, '_blank');
-    } else {
-      window.open(`https://www.google.com/maps/search/?api=1&query=${destino}`, '_blank');
-    }
-  };
+useEffect(() => {
+  obtenerDatos();
+}, [obtenerDatos]); // ← Dependencia correcta
 
   const toggleTag = (tag) => {
     setTagsSeleccionados(prev =>
@@ -296,7 +243,7 @@ export default function PerfilPublicoComprador() {
                 </div>
                 <p className="text-[#8B7355] text-sm mt-1">
                   <i className="fa-solid fa-location-dot mr-1"></i>
-                  {comprador.direccion || 'El Pital, Huila'}
+                  {comprador.direccion || 'Pitalito, Huila'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -304,8 +251,7 @@ export default function PerfilPublicoComprador() {
                   className="flex items-center gap-2 bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
                   <i className="fa-solid fa-phone text-xs"></i> Contactar
                 </button>
-                <button onClick={handleComoLlegar}
-                  className="flex items-center gap-2 border border-[#E7D9BF] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F7F1E3] transition-colors">
+                <button className="flex items-center gap-2 border border-[#E7D9BF] text-[#2C1A0E] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F7F1E3] transition-colors">
                   <i className="fa-solid fa-map text-xs"></i> Cómo llegar
                 </button>
               </div>
@@ -608,31 +554,6 @@ export default function PerfilPublicoComprador() {
                     <p className="text-[#8B7355] text-xs">Estado actual</p>
                   </div>
                 </div>
-                {/* Mini mapa ubicación */}
-                {comprador.latitud && comprador.longitud && (
-                  <div>
-                    <div className="rounded-xl overflow-hidden border border-[#E7D9BF] mt-2" style={{ height: '140px' }}>
-                      <MapContainer
-                        center={[comprador.latitud, comprador.longitud]}
-                        zoom={16}
-                        zoomControl={false}
-                        dragging={false}
-                        scrollWheelZoom={false}
-                        style={{ height: '100%', width: '100%' }}>
-                        <TileLayer
-                          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                          attribution='&copy; OpenStreetMap contributors' />
-                        <Marker position={[comprador.latitud, comprador.longitud]} icon={iconoCafe}>
-                          <Popup>{comprador.nombreempresa}</Popup>
-                        </Marker>
-                      </MapContainer>
-                    </div>
-                    <button onClick={handleComoLlegar}
-                      className="w-full mt-2 bg-[#2C1A0E] text-white py-2 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors flex items-center justify-center gap-2">
-                      <i className="fa-solid fa-route text-xs"></i> Cómo llegar
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -738,56 +659,6 @@ export default function PerfilPublicoComprador() {
               className="w-full bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
               Cerrar
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Modal cómo llegar */}
-      {modalMapa && comprador.latitud && comprador.longitud && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="bg-[#2C1A0E] px-6 py-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-white font-bold">📍 Cómo llegar</h3>
-                <p className="text-[#D8C7A8] text-xs mt-0.5">{comprador.nombreempresa}</p>
-              </div>
-              <button onClick={() => setModalMapa(false)} className="text-gray-400 hover:text-white text-xl">✕</button>
-            </div>
-            <div style={{ height: '320px' }}>
-              <MapContainer
-                center={[comprador.latitud, comprador.longitud]}
-                zoom={16}
-                style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; OpenStreetMap contributors' />
-                <Marker position={[comprador.latitud, comprador.longitud]} icon={iconoCafe}>
-                  <Popup>
-                    <strong>{comprador.nombreempresa}</strong><br />
-                    {comprador.direccion}
-                  </Popup>
-                </Marker>
-                {miUbicacion && (
-                  <Marker position={miUbicacion}>
-                    <Popup>📍 Tu ubicación</Popup>
-                  </Marker>
-                )}
-              </MapContainer>
-            </div>
-            <div className="p-4 space-y-3">
-              {buscandoUbicacion && (
-                <p className="text-xs text-[#8B7355] text-center animate-pulse">📡 Obteniendo tu ubicación...</p>
-              )}
-              {!buscandoUbicacion && !miUbicacion && (
-                <p className="text-xs text-gray-400 text-center">No se pudo obtener tu ubicación. Se abrirá solo el destino.</p>
-              )}
-              <button onClick={abrirEnGoogleMaps}
-                className="w-full bg-[#C8A96E] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center justify-center gap-2">
-                <i className="fa-solid fa-route"></i>
-                {miUbicacion ? 'Abrir ruta en Google Maps' : 'Ver ubicación en Google Maps'}
-              </button>
-            </div>
           </div>
         </div>
       )}
