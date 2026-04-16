@@ -49,6 +49,8 @@ export default function Register() {
     setLoading(true);
 
     try {
+      // Llamamos al endpoint que registra el usuario con estado "pendiente"
+      // y envía el código de verificación al correo
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

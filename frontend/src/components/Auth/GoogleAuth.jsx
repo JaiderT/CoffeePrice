@@ -73,7 +73,7 @@ export default function GoogleAuth() {
     verificarSesion();
   }, [params, navigate, login]);
 
-  return (
+return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2]">
       <div className="text-center">
         <div className="text-5xl mb-4 animate-pulse">☕</div>
