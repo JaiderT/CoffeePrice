@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContex.jsx';
+import Sidebar from '../Layout/Sidebar.jsx';
+import Navbar from '../Layout/Navbar.jsx';
 
 const TAGS = [
   { value: 'precio_justo', label: 'Precio justo' },
@@ -171,7 +173,6 @@ export default function PerfilPublicoComprador() {
     nombre ? nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
 
   const precioActual = precios[0];
-
   const precioHoy = historialPrecios[0]?.preciocarga;
   const precioAyer = historialPrecios[1]?.preciocarga;
   const variacion = precioHoy && precioAyer ? precioHoy - precioAyer : null;
@@ -213,13 +214,12 @@ export default function PerfilPublicoComprador() {
     </div>
   );
 
-  return (
+  const contenido = (
     <div className="min-h-screen bg-[#F7F1E3]">
-
       <div className="px-4 md:px-8 pt-6">
         <button onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[#8B7355] text-sm mb-4 hover:text-[#2C1A0E] transition-colors">
-          <i className="fa-solid fa-arrow-left text-xs"></i> Volver a precios
+          <i className="fa-solid fa-arrow-left text-xs"></i> Volver
         </button>
       </div>
 
@@ -257,7 +257,6 @@ export default function PerfilPublicoComprador() {
               </div>
             </div>
 
-            {/* Stats rápidos */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-5">
               <div className="text-center">
                 <p className="text-[#C8A96E] text-lg font-bold">
@@ -512,13 +511,10 @@ export default function PerfilPublicoComprador() {
                 </Link>
               </div>
             )}
-
           </div>
 
           {/* Columna lateral */}
           <div className="space-y-4">
-
-            {/* Información */}
             <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
               <h3 className="text-[#2C1A0E] font-bold text-sm mb-4">📋 Información</h3>
               <div className="space-y-3">
@@ -561,7 +557,6 @@ export default function PerfilPublicoComprador() {
               </div>
             </div>
 
-            {/* Calculadora */}
             <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
               <h3 className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 ¿Cuánto recibirías?</h3>
               <p className="text-[#8B7355] text-xs mb-3">Calcula tu ganancia vendiendo aquí hoy</p>
@@ -596,31 +591,26 @@ export default function PerfilPublicoComprador() {
                   <p className="text-white text-2xl font-bold">
                     ${modoCalculo === 'cargas'
                       ? (precioActual.preciocarga * numCargas)?.toLocaleString()
-                      : (precioActual.preciokg * numKg)?.toLocaleString()
-                    }
+                      : (precioActual.preciokg * numKg)?.toLocaleString()}
                   </p>
                   <p className="text-[#D8C7A8] text-xs mt-1">
                     {modoCalculo === 'cargas'
                       ? `${numCargas} carga${numCargas > 1 ? 's' : ''} × ${precioActual.preciocarga?.toLocaleString()}`
-                      : `${numKg} kg × ${precioActual.preciokg?.toLocaleString()}/kg`
-                    }
+                      : `${numKg} kg × ${precioActual.preciokg?.toLocaleString()}/kg`}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Alerta de precio */}
             {usuario && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm">
                 <h3 className="text-green-800 font-bold text-sm mb-1">🔔 Alerta de precio</h3>
                 <p className="text-green-700 text-xs mb-3">Avísame cuando este comprador suba su precio</p>
-
                 {mensajeAlerta && (
                   <div className={`px-3 py-2 rounded-xl mb-3 text-xs font-semibold ${mensajeAlerta.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {mensajeAlerta.tipo === 'exito' ? '✅' : '❌'} {mensajeAlerta.texto}
                   </div>
                 )}
-
                 {alertaGuardada ? (
                   <div className="text-center py-2">
                     <p className="text-green-700 text-sm font-semibold">✅ Alerta activa</p>
@@ -634,9 +624,7 @@ export default function PerfilPublicoComprador() {
                   </div>
                 ) : (
                   <>
-                    <label className="text-xs font-semibold text-green-700 uppercase mb-2 block">
-                      Precio mínimo de alerta
-                    </label>
+                    <label className="text-xs font-semibold text-green-700 uppercase mb-2 block">Precio mínimo de alerta</label>
                     <input type="number" placeholder="Ej: 2100000" value={precioAlerta}
                       onChange={e => setPrecioAlerta(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 bg-white text-[#2C1A0E] mb-3" />
@@ -648,7 +636,6 @@ export default function PerfilPublicoComprador() {
                 )}
               </div>
             )}
-
           </div>
         </div>
       </div>
@@ -675,7 +662,24 @@ export default function PerfilPublicoComprador() {
           </div>
         </div>
       )}
-
     </div>
+  );
+
+  return (
+    <>
+      {usuario ? (
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="ml-16 flex-1">
+            {contenido}
+          </div>
+        </div>
+      ) : (
+        <>
+          <Navbar />
+          {contenido}
+        </>
+      )}
+    </>
   );
 }
