@@ -104,7 +104,7 @@ function Precios() {
     new Date(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[rgb(47,36,28)]">
       <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
         <section className="overflow-hidden rounded-4xl bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -139,12 +139,6 @@ function Precios() {
                 </div>
               </div>
             </div>
-
-            {usuario && (
-              <button className="inline-flex items-center justify-center rounded-2xl bg-[#F3E5CE] px-5 py-3 text-sm font-bold text-[#2F241C] shadow-[0_10px_24px_rgba(0,0,0,0.14)] transition hover:bg-[#F7EBD8]">
-                Calcular ganancia
-              </button>
-            )}
           </div>
         </section>
 
