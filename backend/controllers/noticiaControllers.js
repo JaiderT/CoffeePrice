@@ -1,5 +1,7 @@
 import Noticia from "../models/noticia.js";
 import { asegurarNoticiasRecientes } from "../services/noticiaAutoService.js";
+import AlertaNoticia from "../models/alertaNoticia.js";
+import { enviarAlertaNoticia } from "../services/emailService.js";
 
 export const getNoticias = async (req, res) => {
     try {
@@ -37,6 +39,35 @@ export const createNoticia = async (req, res) => {
         const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente, imagen });
         await noticia.save();
 
+        // Verificar alertas de noticias
+        try {
+            const alertas = await AlertaNoticia.find({
+                activa: true,
+                $or: [
+                    { categorias: categoria },
+                    { categorias: 'todas' },
+                    { categorias: { $size: 0 } },
+                ]
+            }).populate('usuario', 'nombre apellido email');
+
+            for (const alerta of alertas) {
+                await AlertaNoticia.findByIdAndUpdate(alerta._id, {
+                    ultimaNotificacion: new Date()
+                });
+                if (alerta.canales?.email && alerta.usuario?.email) {
+                    await enviarAlertaNoticia({
+                        destinatario: alerta.usuario.email,
+                        nombreUsuario: `${alerta.usuario.nombre} ${alerta.usuario.apellido}`,
+                        tituloNoticia: noticia.titulo,
+                        categoria: noticia.categoria,
+                        resumen: noticia.resumen,
+                    });
+                }
+            }
+        } catch (alertaError) {
+            console.error('Error al verificar alertas de noticias:', alertaError.message);
+        }
+
         res.status(201).json(noticia);
     } catch (error) {
         res.status(400).json({ message: "Error al crear noticia", error: error.message });
@@ -46,7 +77,7 @@ export const createNoticia = async (req, res) => {
 export const updateNoticia = async (req, res) => {
     try {
         const { titulo, resumen, contenido, categoria, fuente, imagen } = req.body;
-        
+
         const noticia = await Noticia.findByIdAndUpdate(
             req.params.id,
             { titulo, resumen, contenido, categoria, fuente, imagen },
@@ -54,7 +85,7 @@ export const updateNoticia = async (req, res) => {
         );
 
         if (!noticia) return res.status(404).json({ message: "Noticia no encontrada" });
-        res.json(noticia); // ✅ era res,json
+        res.json(noticia);
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar noticia", error: error.message });
     }
