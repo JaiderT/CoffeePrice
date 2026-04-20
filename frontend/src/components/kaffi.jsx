@@ -8,7 +8,7 @@ export default function Kaffi() {
   const [mensajes, setMensajes] = useState([
     {
       role: "assistant",
-      content: "¡Buenas, hermano! Soy Kaffi ☕\nPreguntame lo que quieras sobre el precio del café, los compradores de Pital o cualquier cosita de la plataforma. ¡Aquí estoy, pues!",
+      content: "¡Buenas, amigo! Soy Kaffi ☕\nPreguntame lo que quieras sobre el precio del café, los compradores de Pital o cualquier cosa de la plataforma. ¡Aquí estoy, pues!",
     },
   ]);
   const [entrada, setEntrada] = useState("");

@@ -16,6 +16,37 @@ export default function Register() {
   const [celular, setCelular] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [celularError, setCelularError] = useState("");
+
+  // Solo letras y espacios (incluye tildes y ñ)
+  const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]*$/;
+
+  // Validación celular según CRC Colombia
+  function validarCelular(numero) {
+    const digits = numero.replace(/\s+/g, "").replace(/^(\+57)/, "");
+    if (digits.length === 0) return ""; // campo opcional, vacío es válido
+    if (!/^\d+$/.test(digits)) return "Solo se permiten números.";
+    if (!digits.startsWith("3")) return "Los celulares colombianos deben comenzar por 3.";
+    if (digits.length !== 10) return "El número debe tener exactamente 10 dígitos.";
+    if (/^(\d)\1{9}$/.test(digits)) return "Este número no es válido (no pueden ser 10 dígitos iguales).";
+    return "";
+  }
+
+  function handleCelular(e) {
+    const val = e.target.value;
+    setCelular(val);
+    setCelularError(validarCelular(val));
+  }
+
+  function handleNombre(e) {
+    const val = e.target.value;
+    if (soloLetras.test(val)) setNombre(val);
+  }
+
+  function handleApellido(e) {
+    const val = e.target.value;
+    if (soloLetras.test(val)) setApellido(val);
+  }
 
   function getStrength(val) {
     let score = 0;
@@ -38,6 +69,19 @@ export default function Register() {
     e.preventDefault();
     if (!terminos) {
       alert("Por favor acepta los términos de uso para continuar.");
+      return;
+    }
+    if (!soloLetras.test(nombre) || nombre.trim().length === 0) {
+      setError("El nombre solo puede contener letras.");
+      return;
+    }
+    if (!soloLetras.test(apellido) || apellido.trim().length === 0) {
+      setError("El apellido solo puede contener letras.");
+      return;
+    }
+    const celularMsg = validarCelular(celular);
+    if (celularMsg) {
+      setError(celularMsg);
       return;
     }
     if (password.length < 8) return;
@@ -73,7 +117,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-br from-[#2C1A0E] via-[#3D1F0F] to-[#5A2E18] flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-[#F0E8D5] flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
       
       {/* Granos de café decorativos */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -89,7 +133,7 @@ export default function Register() {
         href="/" 
         className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 group transition-all duration-300 hover:scale-110"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-5 h-5 sm:w-6 sm:h-6 text-white/40 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-5 h-5 sm:w-6 sm:h-6 text-black">
           <path d="M224 160C241.7 160 256 145.7 256 128C256 110.3 241.7 96 224 96L160 96C107 96 64 139 64 192L64 448C64 501 107 544 160 544L224 544C241.7 544 256 529.7 256 512C256 494.3 241.7 480 224 480L160 480C142.3 480 128 465.7 128 448L128 192C128 174.3 142.3 160 160 160L224 160zM566.6 342.6C579.1 330.1 579.1 309.8 566.6 297.3L438.6 169.3C426.1 156.8 405.8 156.8 393.3 169.3C380.8 181.8 380.8 202.1 393.3 214.6L466.7 288L256 288C238.3 288 224 302.3 224 320C224 337.7 238.3 352 256 352L466.7 352L393.3 425.4C380.8 437.9 380.8 458.2 393.3 470.7C405.8 483.2 426.1 483.2 438.6 470.7L566.6 342.7z" fill="currentColor"/>
         </svg>
       </a>
@@ -128,7 +172,6 @@ export default function Register() {
               <div className="flex gap-4 md:gap-6 flex-wrap">
                 {[
                   { number: "+240", label: "Compradores", icon: "🏪" },
-                  { number: "12", label: "Municipios", icon: "📍" },
                   { number: "Gratis", label: "Caficultores", icon: "🆓" },
                 ].map((stat, idx) => (
                   <div key={idx} className="text-center group">
@@ -191,18 +234,30 @@ export default function Register() {
                   <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Nombre</label>
                   <div className="relative group">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">👤</span>
-                    <input type="text" placeholder="Tu nombre" required value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
+                    <input
+                      type="text"
+                      placeholder="Tu nombre"
+                      required
+                      value={nombre}
+                      onChange={handleNombre}
+                      inputMode="text"
+                      className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Apellido</label>
                   <div className="relative group">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">👤</span>
-                    <input type="text" placeholder="Tu apellido" required value={apellido}
-                      onChange={(e) => setApellido(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
+                    <input
+                      type="text"
+                      placeholder="Tu apellido"
+                      required
+                      value={apellido}
+                      onChange={handleApellido}
+                      inputMode="text"
+                      className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"
+                    />
                   </div>
                 </div>
               </div>
@@ -225,10 +280,17 @@ export default function Register() {
                 </label>
                 <div className="relative group">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">📱</span>
-                  <input type="tel" placeholder="+57 300 000 0000" value={celular}
-                    onChange={(e) => setCelular(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
+                  <input type="tel" placeholder="+57 312 345 6789" value={celular}
+                    onChange={handleCelular}
+                    className={`w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 transition-all ${
+                      celularError
+                        ? "border-red-400 focus:ring-red-300 focus:bg-white"
+                        : "border-[#C8814A]/20 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white"
+                    }`}/>
                 </div>
+                {celularError && (
+                  <p className="text-xs font-semibold mt-1.5 text-red-500">❌ {celularError}</p>
+                )}
               </div>
 
               {/* Contraseña */}
@@ -384,7 +446,7 @@ export default function Register() {
             </form>
 
             {/* Copyright */}
-            <div className="text-center text-[9px] sm:text-[10px] text-gray-300 mt-6">
+            <div className="text-center text-[9px] sm:text-[10px] text-gray-500 mt-6">
               © 2024 CoffePrice - Todos los derechos reservados
             </div>
           </div>
