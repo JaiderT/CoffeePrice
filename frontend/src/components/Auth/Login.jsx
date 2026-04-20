@@ -298,7 +298,7 @@ export default function Login() {
             </form>
 
             {/* Copyright */}
-            <div className="text-center text-[9px] sm:text-[10px] text-gray-300 mt-6">
+            <div className="text-center text-[9px] sm:text-[10px] text-gray-500 mt-6">
               © 2024 CoffePrice - Todos los derechos reservados
             </div>
           </div>

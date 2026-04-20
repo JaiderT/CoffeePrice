@@ -281,7 +281,7 @@ function Inicio() {
                   </div>
                   <div className="rounded-2xl bg-[#EAF2E1] px-3 py-2 sm:text-right">
                     <p className="text-[11px] uppercase tracking-[0.12em] text-[#5D7040]">Señal de hoy</p>
-                    <p className="mt-1 text-sm font-bold text-[#41592A]">Conviene comparar</p>
+                    <p className="mt-1 text-sm font-bold text-[#41592A]">Conviene comprar</p>
                   </div>
                 </div>
 
