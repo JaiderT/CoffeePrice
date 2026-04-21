@@ -26,6 +26,7 @@ import Contacto from "./routes/contacto.js";
 import historialPrecioRoutes from "./routes/historialPrecio.js";
 import chatbotRoutes from './routes/chatbot.js';
 import alertaNoticia from './routes/alertaNoticia.js';
+import configuracionRoutes from "./routes/configuracion.js";
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use("/api", Contacto);
 app.use("/api/historial-precios", historialPrecioRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/alertas-noticias', alertaNoticia);
+app.use('/api/configuracion', configuracionRoutes); 
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);

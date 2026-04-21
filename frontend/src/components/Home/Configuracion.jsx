@@ -2,6 +2,130 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 
+function NuevoCafe({ tiposCafe, setTiposCafe, guardarConfig, mostrarMsg }) {
+  const [form, setForm] = useState({ label: '', value: '', emoji: '' });
+
+  const handleAgregar = () => {
+    if (!form.label.trim() || !form.value.trim()) {
+      mostrarMsg('error', 'Nombre y valor son obligatorios');
+      return;
+    }
+    const value = form.value.trim().toLowerCase().replace(/\s+/g, '_');
+    if (tiposCafe.find(t => t.value === value)) {
+      mostrarMsg('error', 'Ya existe un tipo con ese valor');
+      return;
+    }
+    const nuevos = [...tiposCafe, { value, label: form.label.trim(), emoji: form.emoji.trim() || '☕', activo: true }];
+    setTiposCafe(nuevos);
+    guardarConfig({ tiposCafe: nuevos });
+    setForm({ label: '', value: '', emoji: '' });
+  };
+
+  return (
+    <div className="bg-[#F5ECD7] rounded-xl p-4">
+      <p className="text-xs font-semibold text-[#2C1A0E] uppercase mb-3">Agregar nuevo tipo</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Nombre</label>
+          <input type="text" value={form.label}
+            onChange={e => setForm({ ...form, label: e.target.value })}
+            placeholder="Ej: Tostado"
+            className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Emoji</label>
+          <input type="text" value={form.emoji}
+            onChange={e => setForm({ ...form, emoji: e.target.value })}
+            placeholder="Ej: 🔥"
+            className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+        </div>
+      </div>
+      <button onClick={handleAgregar}
+        className="mt-3 bg-[#C8A96E] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
+        + Agregar tipo
+      </button>
+    </div>
+  );
+}
+
+function FilaCafe({ tipo, tiposCafe, setTiposCafe, guardarConfig }) {
+  const [editando, setEditando] = useState(false);
+  const [form, setForm] = useState({ label: tipo.label, emoji: tipo.emoji });
+
+  const handleGuardar = () => {
+    const nuevos = tiposCafe.map(t =>
+      t.value === tipo.value ? { ...t, label: form.label, emoji: form.emoji } : t
+    );
+    setTiposCafe(nuevos);
+    guardarConfig({ tiposCafe: nuevos });
+    setEditando(false);
+  };
+
+  const handleToggle = () => {
+    const nuevos = tiposCafe.map(t =>
+      t.value === tipo.value ? { ...t, activo: !t.activo } : t
+    );
+    setTiposCafe(nuevos);
+    guardarConfig({ tiposCafe: nuevos });
+  };
+
+  const handleEliminar = () => {
+    const nuevos = tiposCafe.filter(t => t.value !== tipo.value);
+    setTiposCafe(nuevos);
+    guardarConfig({ tiposCafe: nuevos });
+  };
+
+  return (
+    <div className="border border-[#E7D9BF] rounded-xl p-3">
+      {editando ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          <input type="text" value={form.emoji}
+            onChange={e => setForm({ ...form, emoji: e.target.value })}
+            className="w-12 px-2 py-1.5 rounded-lg border border-[#E7D9BF] text-sm text-center focus:outline-none focus:border-[#C8A96E]" />
+          <input type="text" value={form.label}
+            onChange={e => setForm({ ...form, label: e.target.value })}
+            className="flex-1 px-3 py-1.5 rounded-lg border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+          <div className="flex gap-2">
+            <button onClick={handleGuardar}
+              className="bg-[#2C1A0E] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#3D1F0F] transition-colors">
+              Guardar
+            </button>
+            <button onClick={() => { setEditando(false); setForm({ label: tipo.label, emoji: tipo.emoji }); }}
+              className="border border-gray-300 text-gray-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#FFF8E7] rounded-xl flex items-center justify-center text-xl">
+              {tipo.emoji}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#2C1A0E]">{tipo.label}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleToggle}
+              className={`relative w-10 h-5 rounded-full transition-colors ${tipo.activo ? 'bg-[#C8A96E]' : 'bg-gray-200'}`}>
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${tipo.activo ? 'left-5' : 'left-0.5'}`}></span>
+            </button>
+            <button onClick={() => setEditando(true)}
+              className="bg-[#F5ECD7] text-[#2C1A0E] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
+              <i className="fa-solid fa-pen"></i>
+            </button>
+            <button onClick={handleEliminar}
+              className="bg-red-100 text-red-500 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+              <i className="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Configuracion() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
@@ -9,10 +133,9 @@ function Configuracion() {
 
   const [stats, setStats] = useState({ usuarios: 0, compradores: 0, productores: 0, alertas: 0, precios: 0, noticias: 0 });
   const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
   const [pestana, setPestana] = useState('general');
-
-  // Parámetros del sistema (solo frontend por ahora)
   const [params, setParams] = useState({
     precioMinimo: 500000,
     precioMaximo: 5000000,
@@ -20,29 +143,22 @@ function Configuracion() {
     alertasActivas: true,
     registroAbierto: true,
   });
-
-  const [municipios, setMunicipios] = useState(['El Pital', 'Pitalito', 'Acevedo', 'La Argentina', 'Tarqui']);
+  const [municipios, setMunicipios] = useState([]);
   const [nuevoMunicipio, setNuevoMunicipio] = useState('');
-
-  const tiposCafe = [
-    { value: 'pergamino_seco', label: 'Pergamino seco', emoji: '☕' },
-    { value: 'especial', label: 'Especial / Fino', emoji: '✨' },
-    { value: 'organico', label: 'Orgánico', emoji: '🌿' },
-    { value: 'verde', label: 'Café verde', emoji: '🍃' },
-  ];
+  const [tiposCafe, setTiposCafe] = useState([]);
 
   useEffect(() => {
-    obtenerStats();
+    obtenerDatos();
   }, []);
 
-  const obtenerStats = async () => {
+  const obtenerDatos = async () => {
     setCargando(true);
     try {
-      const [usuariosRes, preciosRes, noticiasRes, alertasRes] = await Promise.all([
+      const [usuariosRes, preciosRes, noticiasRes, configRes] = await Promise.all([
         axios.get(`${API_URL}/api/usuario`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_URL}/api/precios`),
         axios.get(`${API_URL}/api/noticias`),
-        axios.get(`${API_URL}/api/alertas/usuario/${localStorage.getItem('usuarioId')}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/configuracion`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       const usuarios = usuariosRes.data || [];
       setStats({
@@ -51,12 +167,37 @@ function Configuracion() {
         productores: usuarios.filter(u => u.rol === 'productor').length,
         precios: preciosRes.data?.length || 0,
         noticias: noticiasRes.data?.length || 0,
-        alertas: alertasRes.data?.length || 0,
+        alertas: 0,
       });
+      const config = configRes.data;
+      setParams({
+        precioMinimo: config.precioMinimo,
+        precioMaximo: config.precioMaximo,
+        diasHistorial: config.diasHistorial,
+        alertasActivas: config.alertasActivas,
+        registroAbierto: config.registroAbierto,
+      });
+      setMunicipios(config.municipios || []);
+      setTiposCafe(config.tiposCafe || []);
     } catch (error) {
-      console.error('Error al obtener stats:', error);
+      console.error('Error al obtener datos:', error);
+      mostrarMsg('error', 'Error al cargar la configuración');
     } finally {
       setCargando(false);
+    }
+  };
+
+  const guardarConfig = async (datos) => {
+    setGuardando(true);
+    try {
+      await axios.put(`${API_URL}/api/configuracion`, datos, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      mostrarMsg('exito', 'Configuración guardada correctamente');
+    } catch {
+      mostrarMsg('error', 'Error al guardar la configuración');
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -65,28 +206,26 @@ function Configuracion() {
     setTimeout(() => setMensaje(null), 3000);
   };
 
+  const handleGuardarGeneral = () => {
+    guardarConfig({ ...params, municipios, tiposCafe });
+  };
+
   const handleAgregarMunicipio = () => {
     if (!nuevoMunicipio.trim()) return;
     if (municipios.includes(nuevoMunicipio.trim())) {
       mostrarMsg('error', 'Este municipio ya existe');
       return;
     }
-    setMunicipios([...municipios, nuevoMunicipio.trim()]);
+    const nuevos = [...municipios, nuevoMunicipio.trim()];
+    setMunicipios(nuevos);
     setNuevoMunicipio('');
-    mostrarMsg('exito', 'Municipio agregado');
+    guardarConfig({ municipios: nuevos });
   };
 
   const handleEliminarMunicipio = (m) => {
-    setMunicipios(municipios.filter(x => x !== m));
-    mostrarMsg('exito', 'Municipio eliminado');
-  };
-
-  const handleLimpiarHistorial = async () => {
-    try {
-      mostrarMsg('exito', 'Historial limpiado correctamente');
-    } catch {
-      mostrarMsg('error', 'Error al limpiar historial');
-    }
+    const nuevos = municipios.filter(x => x !== m);
+    setMunicipios(nuevos);
+    guardarConfig({ municipios: nuevos });
   };
 
   const handleExportarDatos = async () => {
@@ -161,14 +300,14 @@ function Configuracion() {
               <h3 className="text-[#2C1A0E] font-bold text-base mb-5">⚙️ Parámetros de precios</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio mínimo permitido (COP)</label>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio mínimo (COP)</label>
                   <input type="number" value={params.precioMinimo}
                     onChange={e => setParams({ ...params, precioMinimo: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
                   <p className="text-xs text-gray-400 mt-1">Precio mínimo que puede publicar un comprador</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio máximo permitido (COP)</label>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio máximo (COP)</label>
                   <input type="number" value={params.precioMaximo}
                     onChange={e => setParams({ ...params, precioMaximo: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
@@ -179,7 +318,7 @@ function Configuracion() {
                   <input type="number" value={params.diasHistorial} min={7} max={365}
                     onChange={e => setParams({ ...params, diasHistorial: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  <p className="text-xs text-gray-400 mt-1">Cuántos días atrás puede ver el historial de precios</p>
+                  <p className="text-xs text-gray-400 mt-1">Cuántos días atrás puede ver el historial</p>
                 </div>
               </div>
             </div>
@@ -190,7 +329,7 @@ function Configuracion() {
                 <div className="flex items-center justify-between py-3 border-b border-[#F7F1E3]">
                   <div>
                     <p className="text-sm font-semibold text-[#2C1A0E]">Registro de nuevos usuarios</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Permitir que nuevos usuarios se registren en la plataforma</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Permitir que nuevos usuarios se registren</p>
                   </div>
                   <button onClick={() => setParams({ ...params, registroAbierto: !params.registroAbierto })}
                     className={`relative w-12 h-6 rounded-full transition-colors ${params.registroAbierto ? 'bg-[#C8A96E]' : 'bg-gray-200'}`}>
@@ -200,7 +339,7 @@ function Configuracion() {
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-sm font-semibold text-[#2C1A0E]">Sistema de alertas</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Activar o desactivar el sistema de alertas de precios</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Activar o desactivar el sistema de alertas</p>
                   </div>
                   <button onClick={() => setParams({ ...params, alertasActivas: !params.alertasActivas })}
                     className={`relative w-12 h-6 rounded-full transition-colors ${params.alertasActivas ? 'bg-[#C8A96E]' : 'bg-gray-200'}`}>
@@ -211,9 +350,9 @@ function Configuracion() {
             </div>
 
             <div className="flex justify-end">
-              <button onClick={() => mostrarMsg('exito', 'Configuración guardada correctamente')}
-                className="bg-[#2C1A0E] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-                Guardar cambios
+              <button onClick={handleGuardarGeneral} disabled={guardando}
+                className="bg-[#2C1A0E] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
+                {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
           </div>
@@ -236,17 +375,21 @@ function Configuracion() {
                   + Agregar
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {municipios.map((m, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-[#F5ECD7] text-[#7A4020] px-3 py-2 rounded-full text-sm font-semibold">
-                    <span>⛰️ {m}</span>
-                    <button onClick={() => handleEliminarMunicipio(m)}
-                      className="text-[#C8A96E] hover:text-red-500 transition-colors text-xs ml-1">
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {cargando ? (
+                <div className="text-center py-4 text-gray-400 text-sm">Cargando...</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {municipios.map((m, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-[#F5ECD7] text-[#7A4020] px-3 py-2 rounded-full text-sm font-semibold">
+                      <span>⛰️ {m}</span>
+                      <button onClick={() => handleEliminarMunicipio(m)}
+                        className="text-[#C8A96E] hover:text-red-500 transition-colors text-xs ml-1">
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -256,28 +399,17 @@ function Configuracion() {
           <div className="space-y-5">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
               <h3 className="text-[#2C1A0E] font-bold text-base mb-2">☕ Tipos de café</h3>
-              <p className="text-gray-400 text-xs mb-5">Tipos de café habilitados para publicar precios en la plataforma</p>
-              <div className="space-y-3">
-                {tiposCafe.map((tipo, i) => (
-                  <div key={i} className="flex items-center justify-between py-3 border-b border-[#F7F1E3] last:border-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#FFF8E7] rounded-xl flex items-center justify-center text-xl">
-                        {tipo.emoji}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#2C1A0E]">{tipo.label}</p>
-                        <p className="text-xs text-gray-400">{tipo.value}</p>
-                      </div>
-                    </div>
-                    <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold">
-                      ● Activo
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-400 mt-4">
-                Para agregar o quitar tipos de café contacta al equipo de desarrollo.
-              </p>
+              <p className="text-gray-400 text-xs mb-5">Gestiona los tipos de café disponibles en la plataforma</p>
+              <NuevoCafe tiposCafe={tiposCafe} setTiposCafe={setTiposCafe} guardarConfig={guardarConfig} mostrarMsg={mostrarMsg} />
+              {cargando ? (
+                <div className="text-center py-4 text-gray-400 text-sm">Cargando...</div>
+              ) : (
+                <div className="space-y-2 mt-5">
+                  {tiposCafe.map((tipo, i) => (
+                    <FilaCafe key={i} tipo={tipo} tiposCafe={tiposCafe} setTiposCafe={setTiposCafe} guardarConfig={guardarConfig} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -287,21 +419,21 @@ function Configuracion() {
           <div className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
-                { label: 'Total usuarios', valor: stats.usuarios, icon: '👥', color: 'bg-[#2C1A0E] text-[#F8F2E8]' },
-                { label: 'Compradores', valor: stats.compradores, icon: '🏪', color: 'bg-white border border-[#E7D9BF]' },
-                { label: 'Productores', valor: stats.productores, icon: '🌾', color: 'bg-white border border-[#E7D9BF]' },
-                { label: 'Precios activos', valor: stats.precios, icon: '💰', color: 'bg-white border border-[#E7D9BF]' },
-                { label: 'Noticias', valor: stats.noticias, icon: '📰', color: 'bg-white border border-[#E7D9BF]' },
-                { label: 'Alertas', valor: stats.alertas, icon: '🔔', color: 'bg-white border border-[#E7D9BF]' },
+                { label: 'Total usuarios', valor: stats.usuarios, icon: '👥', dark: true },
+                { label: 'Compradores', valor: stats.compradores, icon: '🏪' },
+                { label: 'Productores', valor: stats.productores, icon: '🌾' },
+                { label: 'Precios activos', valor: stats.precios, icon: '💰' },
+                { label: 'Noticias', valor: stats.noticias, icon: '📰' },
+                { label: 'Alertas', valor: stats.alertas, icon: '🔔' },
               ].map((s, i) => (
-                <div key={i} className={`rounded-2xl p-5 shadow-sm ${s.color}`}>
-                  <p className={`text-xs uppercase font-semibold mb-2 ${s.color.includes('2C1A0E') ? 'text-[#D8C7A8]' : 'text-gray-400'}`}>
+                <div key={i} className={`rounded-2xl p-5 shadow-sm ${s.dark ? 'bg-[#2C1A0E]' : 'bg-white border border-[#E7D9BF]'}`}>
+                  <p className={`text-xs uppercase font-semibold mb-2 ${s.dark ? 'text-[#D8C7A8]' : 'text-gray-400'}`}>
                     {s.icon} {s.label}
                   </p>
                   {cargando ? (
                     <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
                   ) : (
-                    <p className={`text-3xl font-bold ${s.color.includes('2C1A0E') ? 'text-[#F8F2E8]' : 'text-[#2C1A0E]'}`}>
+                    <p className={`text-3xl font-bold ${s.dark ? 'text-[#F8F2E8]' : 'text-[#2C1A0E]'}`}>
                       {s.valor}
                     </p>
                   )}
@@ -333,7 +465,7 @@ function Configuracion() {
                   </div>
                 </div>
               </div>
-              <button onClick={obtenerStats}
+              <button onClick={obtenerDatos}
                 className="mt-4 text-xs text-[#C8A96E] hover:underline flex items-center gap-1">
                 <i className="fa-solid fa-rotate-right text-xs"></i> Actualizar estadísticas
               </button>
@@ -346,12 +478,12 @@ function Configuracion() {
           <div className="space-y-5">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
               <h3 className="text-[#2C1A0E] font-bold text-base mb-2">🔧 Herramientas de mantenimiento</h3>
-              <p className="text-gray-400 text-xs mb-5">Acciones administrativas del sistema. Úsalas con precaución.</p>
+              <p className="text-gray-400 text-xs mb-5">Acciones administrativas del sistema.</p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-4 border-b border-[#F7F1E3]">
                   <div>
                     <p className="text-sm font-semibold text-[#2C1A0E]">Exportar todos los datos</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Descarga un JSON con usuarios y precios de la plataforma</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Descarga un JSON con usuarios y precios</p>
                   </div>
                   <button onClick={handleExportarDatos}
                     className="bg-[#F5ECD7] text-[#7A4020] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#E0D0B0] transition-colors flex items-center gap-2">
@@ -361,9 +493,9 @@ function Configuracion() {
                 <div className="flex items-center justify-between py-4 border-b border-[#F7F1E3]">
                   <div>
                     <p className="text-sm font-semibold text-[#2C1A0E]">Limpiar historial antiguo</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Elimina registros de historial de precios con más de 90 días</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Elimina registros de historial con más de 90 días</p>
                   </div>
-                  <button onClick={handleLimpiarHistorial}
+                  <button onClick={() => mostrarMsg('exito', 'Historial limpiado correctamente')}
                     className="bg-[#FAEEDA] text-[#854F0B] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#FAC775]/30 transition-colors flex items-center gap-2">
                     <i className="fa-solid fa-broom"></i> Limpiar
                   </button>
@@ -383,12 +515,12 @@ function Configuracion() {
 
             <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
               <h3 className="text-red-700 font-bold text-base mb-2">⚠️ Zona de peligro</h3>
-              <p className="text-red-500 text-xs mb-4">Estas acciones son irreversibles. Procede con mucho cuidado.</p>
+              <p className="text-red-500 text-xs mb-4">Estas acciones son irreversibles.</p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-3 border-b border-red-100">
                   <div>
                     <p className="text-sm font-semibold text-red-700">Eliminar todos los precios</p>
-                    <p className="text-xs text-red-400 mt-0.5">Borra todos los precios publicados en la plataforma</p>
+                    <p className="text-xs text-red-400 mt-0.5">Borra todos los precios publicados</p>
                   </div>
                   <button onClick={() => mostrarMsg('error', 'Acción bloqueada — contacta al equipo de desarrollo')}
                     className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-200 transition-colors">
@@ -409,7 +541,6 @@ function Configuracion() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
