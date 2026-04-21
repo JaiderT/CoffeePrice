@@ -21,6 +21,7 @@ import Predicciones from "./components/Home/Predicciones.jsx";
 import PerfilProductor from "./components/Home/Perfilproductor.jsx";
 import Alertas from "./components/Home/Alertas.jsx";
 import Historial from "./components/Home/Historial.jsx";
+import DashboardProductor from './components/Home/DashboardCaficultor.jsx';
 
 // Páginas privadas — Comprador
 import DashboardComprador from "./components/Home/DashboardComprador.jsx";
@@ -76,6 +77,11 @@ function App() {
         <Route path="/perfil" element={
           <PrivateRoute roles={['productor']}>
             <LayoutPrivado><PerfilProductor /></LayoutPrivado>
+          </PrivateRoute>
+        } />
+        <Route path="/dashboard" element={
+          <PrivateRoute roles={['productor']}>
+            <LayoutPrivado><DashboardProductor /></LayoutPrivado>
           </PrivateRoute>
         } />
         <Route path="/alertas" element={
