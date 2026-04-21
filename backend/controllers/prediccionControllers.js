@@ -1,9 +1,38 @@
 import Prediccion from "../models/prediccion.js";
 
+const TIME_ZONE = "America/Bogota";
+
+function obtenerFechaBogota(offsetDias = 0) {
+    const partes = new Intl.DateTimeFormat("en-CA", {
+        timeZone: TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date());
+
+    const year = Number(partes.find((p) => p.type === "year")?.value);
+    const month = Number(partes.find((p) => p.type === "month")?.value);
+    const day = Number(partes.find((p) => p.type === "day")?.value);
+
+    const fechaUtc = new Date(Date.UTC(year, month - 1, day + offsetDias));
+    return fechaUtc;
+}
+
+function serializarFecha(fecha) {
+    return new Date(fecha).toISOString().slice(0, 10);
+}
+
+function serializarPrediccion(prediccion) {
+    return {
+        ...prediccion,
+        fecha: serializarFecha(prediccion.fecha),
+    };
+}
+
 export const getPredicciones = async (req, res) => {
     try {
-        const predicciones = await Prediccion.find().sort({ fecha: -1 });
-        res.json(predicciones);
+        const predicciones = await Prediccion.find().sort({ fecha: -1 }).lean();
+        res.json(predicciones.map(serializarPrediccion));
     } catch (error) {
         res.status(500).json({ message: "Error al obtener predicciones", error: error.message });
     }
@@ -11,22 +40,24 @@ export const getPredicciones = async (req, res) => {
 
 export const getUltimaPrediccion = async (req, res) => {
     try {
-        const prediccion = await Prediccion.findOne().sort({ fecha: -1 });
+        const prediccion = await Prediccion.findOne().sort({ fecha: -1 }).lean();
         if (!prediccion) return res.status(404).json({ message: "No hay predicciones disponibles" });
-        res.json(prediccion);
+        res.json(serializarPrediccion(prediccion));
     } catch (error) {
         res.status(500).json({ message: "Error al obtener ultima prediccion", error: error.message });
     }
 };
 export const getResumenPredicciones = async (req, res) => {
     try {
-        const manana = new Date();
-        manana.setHours(0, 0, 0, 0);
-        manana.setDate(manana.getDate() + 1);
+        const manana = obtenerFechaBogota(1);
+        const pasadoManana = obtenerFechaBogota(2);
 
         const prediccion = await Prediccion.findOne({
-            fecha: { $gte: manana }
-        }).sort({ fecha: 1 });
+            fecha: {
+                $gte: manana,
+                $lt: pasadoManana
+            }
+        }).sort({ fecha: 1 }).lean();
 
 
         if (!prediccion) {
@@ -52,7 +83,7 @@ export const getResumenPredicciones = async (req, res) => {
         }
 
         res.json({
-            fecha: prediccion.fecha,
+            fecha: serializarFecha(prediccion.fecha),
             precioestimado: prediccion.precioestimado,
             preciominimo: prediccion.preciominimo,
             preciomaximo: prediccion.preciomaximo,
@@ -81,8 +112,7 @@ export const getPrediccionesPorRango = async (req, res) => {
             });
         }
 
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
+        const hoy = obtenerFechaBogota(0);
 
         const predicciones = await Prediccion.find({
             fecha: { $gte: hoy }
@@ -101,7 +131,7 @@ export const getPrediccionesPorRango = async (req, res) => {
             total: predicciones.length,
             generatedAt: predicciones[0].generatedAt,
             modelVersion: predicciones[0].modelVersion,
-            predicciones,
+            predicciones: predicciones.map((item) => serializarPrediccion(item.toObject ? item.toObject() : item)),
         });
     } catch (error) {
         res.status(500).json({
@@ -122,19 +152,17 @@ export const getPrediccionPorDia = async (req, res) => {
             });
         }
 
-        const fechaInicio = new Date();
-        fechaInicio.setHours(0, 0, 0, 0);
-        fechaInicio.setDate(fechaInicio.getDate() + offset);
+        const fechaInicio = obtenerFechaBogota(offset);
 
         const fechaFin = new Date(fechaInicio);
-        fechaFin.setDate(fechaFin.getDate() + 1);
+        fechaFin.setUTCDate(fechaFin.getUTCDate() + 1);
 
         const prediccion = await Prediccion.findOne({
             fecha: {
                 $gte: fechaInicio,
                 $lt: fechaFin
             }
-        });
+        }).lean();
 
 
         if (!prediccion) {
@@ -145,7 +173,7 @@ export const getPrediccionPorDia = async (req, res) => {
 
         res.json({
             offset,
-            fecha: prediccion.fecha,
+            fecha: serializarFecha(prediccion.fecha),
             precioestimado: prediccion.precioestimado,
             preciominimo: prediccion.preciominimo,
             preciomaximo: prediccion.preciomaximo,
@@ -171,24 +199,22 @@ export const getPrediccionPorFecha = async (req, res) => {
             });
         }
 
-        const fechaInicio = new Date(fecha);
+        const fechaInicio = new Date(`${fecha}T00:00:00.000Z`);
         if (isNaN(fechaInicio.getTime())) {
             return res.status(400).json({
                 message: "La fecha enviada no es valida"
             });
         }
 
-        fechaInicio.setHours(0, 0, 0, 0);
-
         const fechaFin = new Date(fechaInicio);
-        fechaFin.setDate(fechaFin.getDate() + 1);
+        fechaFin.setUTCDate(fechaFin.getUTCDate() + 1);
 
         const prediccion = await Prediccion.findOne({
             fecha: {
                 $gte: fechaInicio,
                 $lt: fechaFin
             }
-        });
+        }).lean();
 
         if (!prediccion) {
             return res.status(404).json({
@@ -197,7 +223,7 @@ export const getPrediccionPorFecha = async (req, res) => {
         }
 
         res.json({
-            fecha: prediccion.fecha,
+            fecha: serializarFecha(prediccion.fecha),
             precioestimado: prediccion.precioestimado,
             preciominimo: prediccion.preciominimo,
             preciomaximo: prediccion.preciomaximo,
@@ -217,9 +243,9 @@ export const getPrediccionPorFecha = async (req, res) => {
 
 export const getPrediccionById = async (req, res) => {
     try {
-        const prediccion = await Prediccion.findById(req.params.id);
+        const prediccion = await Prediccion.findById(req.params.id).lean();
         if (!prediccion) return res.status(404).json({ message: "Prediccion no encontrada" });
-        res.json(prediccion);
+        res.json(serializarPrediccion(prediccion));
     } catch (error) {
         res.status(500).json({ message: "Error al obtener prediccion", error: error.message });
     }

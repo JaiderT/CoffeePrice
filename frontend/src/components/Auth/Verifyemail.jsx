@@ -73,6 +73,7 @@ export default function VerifyEmail() {
       const response = await fetch(`${API_URL}/api/auth/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, code: fullCode }),
       });
 
@@ -90,7 +91,7 @@ export default function VerifyEmail() {
         return;
       }
 
-      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
+      login(data.user);
       setUserName(data.name || "");
       setSuccess(true);
       setTimeout(() => navigate("/precios", { replace: true }), 4000);

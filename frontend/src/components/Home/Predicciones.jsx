@@ -80,8 +80,15 @@ export default function Predicciones() {
     }
   };
 
+  const normalizarFecha = (fecha) => {
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return new Date(`${fecha}T12:00:00`);
+    }
+    return new Date(fecha);
+  };
+
   const formatearFecha = (fecha, largo = false) =>
-    new Date(fecha).toLocaleDateString('es-CO', largo
+    normalizarFecha(fecha).toLocaleDateString('es-CO', largo
       ? { weekday: 'long', day: 'numeric', month: 'long' }
       : { day: '2-digit', month: 'short' });
 

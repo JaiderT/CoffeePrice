@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { abrirGuiaKaffi } from "../../utils/kaffiEvents";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -207,6 +208,29 @@ export default function Register() {
               <p className="text-xs sm:text-sm text-gray-400">Gratis para caficultores. En menos de 2 minutos.</p>
             </div>
 
+            <div className="mb-5 rounded-2xl border border-[#E7D9BF] bg-[#FFF8EC] p-3">
+              <p className="text-sm font-semibold text-[#3B1F0A]">Kaffi le acompaña en este registro</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#7B5C3E]">
+                Si quiere, le va diciendo qué poner en cada parte, con palabras claras y sin afán.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => abrirGuiaKaffi(tipo === "comprador" ? "register_comprador" : "register_productor")}
+                  className="rounded-full bg-[#3D1F0F] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#2C1A0E]"
+                >
+                  Explíqueme este registro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => abrirGuiaKaffi(tipo === "comprador" ? "register_productor" : "register_comprador")}
+                  className="rounded-full border border-[#C8A96E] px-3 py-1.5 text-xs font-semibold text-[#3D1F0F] transition hover:bg-[#F5ECD7]"
+                >
+                  Ver el otro tipo de cuenta
+                </button>
+              </div>
+            </div>
+
             {/* Selector de tipo de usuario */}
             <div className="grid grid-cols-2 gap-2.5 mb-5">
               {[
@@ -214,6 +238,7 @@ export default function Register() {
                 { val: "comprador", ico: "🏪", nombre: "Comprador", desc: "Compro café" },
               ].map(({ val, ico, nombre, desc }) => (
                 <button key={val} type="button" onClick={() => setTipo(val)}
+                  data-kaffi={val === "productor" ? "register-role-productor" : "register-role-comprador"}
                   className={`py-3.5 px-3 rounded-xl border-2 text-center transition-all ${
                     tipo === val 
                       ? "border-[#C8814A] bg-[#C8814A]/5 shadow-md" 
@@ -235,6 +260,7 @@ export default function Register() {
                   <div className="relative group">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">👤</span>
                     <input
+                      data-kaffi="register-nombre"
                       type="text"
                       placeholder="Tu nombre"
                       required
@@ -267,7 +293,7 @@ export default function Register() {
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Correo electrónico</label>
                 <div className="relative group">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">📧</span>
-                  <input type="email" placeholder="tucorreo@ejemplo.com" required value={email}
+                  <input data-kaffi="register-email" type="email" placeholder="tucorreo@ejemplo.com" required value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
                 </div>
@@ -298,7 +324,7 @@ export default function Register() {
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Contraseña</label>
                 <div className="relative group">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">🔒</span>
-                  <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres"
+                  <input data-kaffi="register-password" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres"
                     value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
                     className="w-full pl-9 pr-10 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
                   <button type="button" onClick={() => setShowPassword(v => !v)}
@@ -390,7 +416,7 @@ export default function Register() {
               )}
 
               {/* Botón submit */}
-              <button type="submit" disabled={loading || passwordsMismatch}
+              <button data-kaffi="register-submit" type="submit" disabled={loading || passwordsMismatch}
                 className="w-full py-2.5 sm:py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28]">
                 <span className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 <span className="relative flex items-center justify-center gap-2">

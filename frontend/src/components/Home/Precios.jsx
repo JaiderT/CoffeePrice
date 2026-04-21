@@ -100,8 +100,15 @@ function Precios() {
     return 'El clima se ve estable para la jornada.';
   };
 
+  const normalizarFecha = (fecha) => {
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return new Date(`${fecha}T12:00:00`);
+    }
+    return new Date(fecha);
+  };
+
   const formatearDiaCorto = (fecha) =>
-    new Date(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
+    normalizarFecha(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[rgb(47,36,28)]">
@@ -142,7 +149,7 @@ function Precios() {
           </div>
         </section>
 
-        <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
+        <section data-kaffi="precios-resumen" className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
           <article className="group relative overflow-hidden rounded-[28px] bg-[#F8F1E6] p-5 shadow-[0_12px_30px_rgba(96,73,47,0.10)] ring-1 ring-[#E8D8BF]/80 transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(96,73,47,0.14)]">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
               Así está el precio hoy
@@ -194,7 +201,7 @@ function Precios() {
 
                 <p className="mt-1 text-sm text-[#6A543F]">
                   Para el{' '}
-                  {new Date(prediccion.fecha).toLocaleDateString('es-CO', {
+                  {normalizarFecha(prediccion.fecha).toLocaleDateString('es-CO', {
                     day: 'numeric',
                     month: 'long',
                   })}
@@ -230,6 +237,7 @@ function Precios() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full xl:max-w-md">
               <input
+                data-kaffi="precios-busqueda"
                 type="text"
                 placeholder="Busca por nombre del comprador"
                 value={busqueda}
@@ -238,7 +246,7 @@ function Precios() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div data-kaffi="precios-filtros" className="flex flex-wrap gap-2 pt-1">
               {filtros.map((f) => (
                 <button
                   key={f}
@@ -294,7 +302,7 @@ function Precios() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div data-kaffi="precios-lista" className="space-y-3">
               {preciosVisibles.map((item, i) => (
                 <article
                   key={i}

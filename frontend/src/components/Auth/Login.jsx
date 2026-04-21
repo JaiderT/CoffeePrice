@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth.js';
+import { abrirGuiaKaffi } from "../../utils/kaffiEvents";
 
 export default function Login() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -34,7 +35,7 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
+      login(data.user);
 
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
@@ -150,6 +151,20 @@ export default function Login() {
                 <p className="text-xs sm:text-sm text-gray-400">Entra a tu cuenta para ver los precios de tu zona</p>
               </div>
 
+              <div className="rounded-2xl border border-[#E7D9BF] bg-[#FFF8EC] p-3">
+                <p className="text-sm font-semibold text-[#3B1F0A]">Si se enreda para entrar, Kaffi le ayuda</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#7B5C3E]">
+                  Le explica cómo iniciar sesión o qué hacer si no recuerda la contraseña.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => abrirGuiaKaffi("login")}
+                  className="mt-3 rounded-full bg-[#3D1F0F] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#2C1A0E]"
+                >
+                  Ayúdeme a entrar
+                </button>
+              </div>
+
               {/* Email */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">
@@ -160,6 +175,7 @@ export default function Login() {
                     📧
                   </span>
                   <input
+                    data-kaffi="login-email"
                     type="email"
                     placeholder="tucorreo@gmail.com"
                     required
@@ -180,6 +196,7 @@ export default function Login() {
                     🔒
                   </span>
                   <input
+                    data-kaffi="login-password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Tu contraseña"
                     required
@@ -235,6 +252,7 @@ export default function Login() {
 
               {/* Botón submit */}
               <button
+                data-kaffi="login-submit"
                 type="submit"
                 disabled={loading}
                 className="w-full py-2.5 sm:py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28]"

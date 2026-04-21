@@ -41,13 +41,15 @@ import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
 import LayoutPublico from "./components/Layout/LayoutPublico.jsx";
 import PrivateRoute from "./components/Layout/PrivateRoute.jsx";
 import NotFound from './components/NotFound.jsx';
+import Kaffi from './components/kaffi.jsx';
 
 function App() {
   useAlertas();
 
   return (
     <BrowserRouter>
-      <Routes>
+      <>
+        <Routes>
 
         {/* ── PÚBLICAS ── */}
         <Route path="/" element={
@@ -127,7 +129,9 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
 
-      </Routes>
+        </Routes>
+        <Kaffi />
+      </>
     </BrowserRouter>
   );
 }

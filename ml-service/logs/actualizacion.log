@@ -1,0 +1,489 @@
+2026-04-20 15:07:28,969 | INFO | ============================================================
+2026-04-20 15:07:28,969 | INFO | INICIO ACTUALIZACIÓN — 2026-04-20
+2026-04-20 15:07:28,970 | INFO | ============================================================
+2026-04-20 15:07:28,970 | INFO | ▶ Iniciando: Actualizar TRM
+2026-04-20 15:07:30,719 | ERROR | ❌ FALLÓ: Actualizar TRM
+2026-04-20 15:07:30,719 | ERROR |    Error: Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\scripts\obtener_trm.py", line 28, in obtener_trm_api_principal
+    print(f'  \u26a0 TRM API principal: status {response.status_code}')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUA
+2026-04-20 15:07:30,721 | INFO | ▶ Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:07:32,672 | ERROR | ❌ FALLÓ: Obtener precio KC (Bolsa NY)
+2026-04-20 15:07:32,672 | ERROR |    Error: Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\scripts\obtener_kc.py", line 32, in obtener_kc_yfinance
+    print(f'  \u2705 yfinance KC=F: {precio_usx:.2f} ¢/lb ({fecha})')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUARIO\AppDat
+2026-04-20 15:07:32,672 | INFO | ▶ Iniciando: Obtener precio FNC real
+2026-04-20 15:07:39,715 | ERROR | ❌ FALLÓ: Obtener precio FNC real
+2026-04-20 15:07:39,715 | ERROR |    Error: Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\scripts\obtener_fnc.py", line 59, in obtener_precio_fnc_metodo1
+    print('  \u26a0 No se encontró precio FNC en la web')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUARIO\AppData\Local\Programs\
+2026-04-20 15:07:39,715 | INFO | ▶ Iniciando: Limpiar datos
+2026-04-20 15:07:40,387 | INFO | ✅ OK: Limpiar datos
+2026-04-20 15:07:40,388 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:07:40,388 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:07:40,388 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:07:40,388 | INFO |    
+2026-04-20 15:07:40,388 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:07:40,388 | INFO | ▶ Iniciando: Entrenar modelo
+2026-04-20 15:07:42,524 | ERROR | ❌ FALLÓ: Entrenar modelo
+2026-04-20 15:07:42,524 | ERROR |    Error: Importing plotly failed. Interactive plots will not work.
+Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\entrenar.py", line 131, in <module>
+    print('\U0001f4e1 Actualizando datos desde APIs...')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUARI
+2026-04-20 15:07:42,525 | WARNING | ⚠ Entrenamiento falló — usando modelo anterior
+2026-04-20 15:07:42,525 | INFO | ▶ Iniciando: Generar predicciones
+2026-04-20 15:07:42,562 | ERROR | ❌ FALLÓ: Generar predicciones
+2026-04-20 15:07:42,562 | ERROR |    Error: C:\Users\USUARIO\AppData\Local\Programs\Python\Python313\python.exe: can't open file 'C:\\Proyecto\\CoffePrice\\ml-service\\predecir.py': [Errno 2] No such file or directory
+
+2026-04-20 15:07:42,562 | INFO | ▶ Iniciando: Importar a MongoDB
+2026-04-20 15:07:43,002 | INFO | ✅ OK: Importar a MongoDB
+2026-04-20 15:07:43,003 | INFO |    Conexion cerrada
+2026-04-20 15:07:43,003 | INFO | ============================================================
+2026-04-20 15:07:43,003 | WARNING | ⚠ COMPLETADO CON ERRORES EN: ['TRM', 'KC', 'FNC', 'entrenar', 'predicciones']
+2026-04-20 15:07:43,003 | INFO | ============================================================
+2026-04-20 15:30:55,865 | INFO | ============================================================
+2026-04-20 15:30:55,865 | INFO | INICIO ACTUALIZACIÓN — 2026-04-20
+2026-04-20 15:30:55,865 | INFO | ============================================================
+2026-04-20 15:30:55,865 | INFO | ▶ Iniciando: Actualizar TRM
+2026-04-20 15:30:57,739 | INFO | ✅ OK: Actualizar TRM
+2026-04-20 15:30:57,740 | INFO |    [WARN] TRM API status: 404
+2026-04-20 15:30:57,740 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:30:57,740 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:30:57,740 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 15:30:57,740 | INFO | ▶ Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:30:59,382 | INFO | ✅ OK: Obtener precio KC (Bolsa NY)
+2026-04-20 15:30:59,382 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 15:30:59,383 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 15:30:59,383 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 15:30:59,383 | INFO | ▶ Iniciando: Obtener precio FNC real
+2026-04-20 15:31:07,257 | INFO | ✅ OK: Obtener precio FNC real
+2026-04-20 15:31:07,257 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:31:07,257 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:31:07,257 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 15:31:07,258 | INFO |    [INFO] Precio FNC para 2026-04-20 ya existe
+2026-04-20 15:31:07,258 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 15:31:07,258 | INFO | ▶ Iniciando: Limpiar datos
+2026-04-20 15:31:07,862 | INFO | ✅ OK: Limpiar datos
+2026-04-20 15:31:07,862 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:31:07,863 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:31:07,863 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:31:07,863 | INFO |    
+2026-04-20 15:31:07,863 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:31:07,863 | INFO | ▶ Iniciando: Entrenar modelo
+2026-04-20 15:31:09,153 | ERROR | ❌ FALLÓ: Entrenar modelo
+2026-04-20 15:31:09,154 | ERROR |    Error: Importing plotly failed. Interactive plots will not work.
+Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\entrenar.py", line 131, in <module>
+    print('\U0001f4e1 Actualizando datos desde APIs...')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUARI
+2026-04-20 15:31:09,154 | WARNING | ⚠ Entrenamiento falló — usando modelo anterior
+2026-04-20 15:31:09,154 | INFO | ▶ Iniciando: Generar predicciones
+2026-04-20 15:31:12,862 | INFO | ✅ OK: Generar predicciones
+2026-04-20 15:31:12,862 | INFO |      Factor usado    : 0.8468
+2026-04-20 15:31:12,862 | INFO |      Precio estimado hoy (2026-04-07): $3,221,812
+2026-04-20 15:31:12,862 | INFO |      Rango hoy       : $2,923,855 - $3,510,352
+2026-04-20 15:31:12,862 | INFO |    
+2026-04-20 15:31:12,862 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 15:31:12,863 | INFO | ▶ Iniciando: Importar a MongoDB
+2026-04-20 15:31:13,276 | INFO | ✅ OK: Importar a MongoDB
+2026-04-20 15:31:13,276 | INFO |    Conexion cerrada
+2026-04-20 15:31:13,276 | INFO | ============================================================
+2026-04-20 15:31:13,276 | WARNING | ⚠ COMPLETADO CON ERRORES EN: ['entrenar']
+2026-04-20 15:31:13,276 | INFO | ============================================================
+2026-04-20 15:35:25,358 | INFO | ============================================================
+2026-04-20 15:35:25,359 | INFO | INICIO ACTUALIZACIÓN — 2026-04-20
+2026-04-20 15:35:25,359 | INFO | ============================================================
+2026-04-20 15:35:25,359 | INFO | ▶ Iniciando: Actualizar TRM
+2026-04-20 15:35:27,210 | INFO | ✅ OK: Actualizar TRM
+2026-04-20 15:35:27,210 | INFO |    [WARN] TRM API status: 404
+2026-04-20 15:35:27,210 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:35:27,210 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:35:27,210 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 15:35:27,211 | INFO | ▶ Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:35:58,237 | INFO | ✅ OK: Obtener precio KC (Bolsa NY)
+2026-04-20 15:35:58,237 | INFO |    [WARN] yfinance: no retorno datos para KC=F
+2026-04-20 15:35:58,237 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 15:35:58,237 | INFO |    KC final: 301.00 centavos/lb (fuente: emergencia)
+2026-04-20 15:35:58,237 | INFO | ▶ Iniciando: Obtener precio FNC real
+2026-04-20 15:36:06,301 | INFO | ✅ OK: Obtener precio FNC real
+2026-04-20 15:36:06,302 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:36:06,302 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:36:06,302 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 15:36:06,302 | INFO |    [INFO] Precio FNC para 2026-04-20 ya existe
+2026-04-20 15:36:06,302 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 15:36:06,302 | INFO | ▶ Iniciando: Limpiar datos
+2026-04-20 15:36:06,918 | INFO | ✅ OK: Limpiar datos
+2026-04-20 15:36:06,918 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:36:06,918 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:36:06,918 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:36:06,918 | INFO |    
+2026-04-20 15:36:06,919 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:36:06,919 | INFO | ▶ Iniciando: Entrenar modelo
+2026-04-20 15:36:14,924 | INFO | ✅ OK: Entrenar modelo
+2026-04-20 15:36:14,924 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 15:36:14,924 | INFO |      Registros entrenados: 8708
+2026-04-20 15:36:14,924 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 15:36:14,924 | INFO |      Regresores usados: TRM
+2026-04-20 15:36:14,925 | INFO |    =======================================================
+2026-04-20 15:36:14,925 | INFO | ▶ Iniciando: Generar predicciones
+2026-04-20 15:36:16,480 | ERROR | ❌ FALLÓ: Generar predicciones
+2026-04-20 15:36:16,481 | ERROR |    Error: Importing plotly failed. Interactive plots will not work.
+Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\predecir.py", line 38, in <module>
+    prediccion = modelo.predict(futuro)
+  File "C:\Users\USUARIO\AppData\Local\Programs\Python\Python313\Lib\site-packages\prophet
+2026-04-20 15:36:16,481 | INFO | ▶ Iniciando: Importar a MongoDB
+2026-04-20 15:36:16,855 | INFO | ✅ OK: Importar a MongoDB
+2026-04-20 15:36:16,855 | INFO |    Conexion cerrada
+2026-04-20 15:36:16,855 | INFO | ============================================================
+2026-04-20 15:36:16,856 | WARNING | ⚠ COMPLETADO CON ERRORES EN: ['predicciones']
+2026-04-20 15:36:16,856 | INFO | ============================================================
+2026-04-20 15:44:06,961 | INFO | ============================================================
+2026-04-20 15:44:06,962 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 15:44:06,962 | INFO | ============================================================
+2026-04-20 15:44:06,962 | INFO | Iniciando: Actualizar TRM
+2026-04-20 15:44:08,678 | INFO | OK: Actualizar TRM
+2026-04-20 15:44:08,678 | INFO |    [WARN] TRM API status: 404
+2026-04-20 15:44:08,678 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:44:08,678 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:44:08,678 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 15:44:08,678 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:44:10,564 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 15:44:10,565 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 15:44:10,565 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 15:44:10,565 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 15:44:10,565 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 15:44:25,530 | INFO | OK: Obtener precio FNC real
+2026-04-20 15:44:25,530 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:44:25,530 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:44:25,530 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 15:44:25,530 | INFO |    [INFO] Precio FNC para 2026-04-20 ya existe
+2026-04-20 15:44:25,530 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 15:44:25,530 | INFO | Iniciando: Limpiar datos
+2026-04-20 15:44:26,168 | INFO | OK: Limpiar datos
+2026-04-20 15:44:26,169 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:44:26,169 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:44:26,169 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:44:26,169 | INFO |    
+2026-04-20 15:44:26,169 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:44:26,169 | INFO | Iniciando: Entrenar modelo
+2026-04-20 15:44:33,575 | INFO | OK: Entrenar modelo
+2026-04-20 15:44:33,575 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 15:44:33,575 | INFO |      Registros entrenados: 8708
+2026-04-20 15:44:33,575 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 15:44:33,575 | INFO |      Regresores usados: KC y TRM
+2026-04-20 15:44:33,575 | INFO |    =======================================================
+2026-04-20 15:44:33,575 | INFO | Iniciando: Generar predicciones
+2026-04-20 15:44:36,773 | INFO | OK: Generar predicciones
+2026-04-20 15:44:36,773 | INFO |      Rango hoy       : $3,336,000 - $3,581,000
+2026-04-20 15:44:36,773 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 15:44:36,773 | INFO |      TRM usada       : $3,678.19
+2026-04-20 15:44:36,773 | INFO |    
+2026-04-20 15:44:36,773 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 15:44:36,774 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 15:44:37,188 | INFO | OK: Importar a MongoDB
+2026-04-20 15:44:37,189 | INFO |    Conexion cerrada
+2026-04-20 15:44:37,189 | INFO | Iniciando: Evaluar precision
+2026-04-20 15:44:37,914 | ERROR | FALLO: Evaluar precision
+2026-04-20 15:44:37,914 | ERROR |    Error: Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\evaluar.py", line 68, in <module>
+    evaluar_prediccion_del_dia()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Proyecto\CoffePrice\ml-service\evaluar.py", line 32, in evaluar_prediccion_del_dia
+    df_merge = pd.merge(
+        df_real[['fecha', 'precio']],
+        df_pred[['fecha', 'precioestimado']],
+        on='fecha', how='inner'
+    )
+  File "C:\Users\USUARIO\AppData\Local\Programs\Python\Python313\Lib\site-packages
+2026-04-20 15:44:37,914 | WARNING | Evaluacion fallo; no es un error critico
+2026-04-20 15:44:37,914 | INFO | ============================================================
+2026-04-20 15:44:37,914 | INFO | ACTUALIZACION COMPLETADA SIN ERRORES
+2026-04-20 15:44:37,915 | INFO | ============================================================
+2026-04-20 15:45:31,233 | INFO | ============================================================
+2026-04-20 15:45:31,234 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 15:45:31,234 | INFO | ============================================================
+2026-04-20 15:45:31,234 | INFO | Iniciando: Actualizar TRM
+2026-04-20 15:45:33,109 | INFO | OK: Actualizar TRM
+2026-04-20 15:45:33,110 | INFO |    [WARN] TRM API status: 404
+2026-04-20 15:45:33,110 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:45:33,110 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:45:33,110 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 15:45:33,110 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:45:35,011 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 15:45:35,011 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 15:45:35,011 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 15:45:35,012 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 15:45:35,012 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 15:45:46,046 | INFO | OK: Obtener precio FNC real
+2026-04-20 15:45:46,046 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:45:46,046 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:45:46,046 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 15:45:46,047 | INFO |    [INFO] Precio FNC para 2026-04-20 ya existe
+2026-04-20 15:45:46,047 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 15:45:46,047 | INFO | Iniciando: Limpiar datos
+2026-04-20 15:45:46,702 | INFO | OK: Limpiar datos
+2026-04-20 15:45:46,702 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:45:46,702 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:45:46,702 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:45:46,702 | INFO |    
+2026-04-20 15:45:46,702 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:45:46,702 | INFO | Iniciando: Entrenar modelo
+2026-04-20 15:45:54,196 | INFO | OK: Entrenar modelo
+2026-04-20 15:45:54,196 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 15:45:54,196 | INFO |      Registros entrenados: 8708
+2026-04-20 15:45:54,196 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 15:45:54,196 | INFO |      Regresores usados: KC y TRM
+2026-04-20 15:45:54,196 | INFO |    =======================================================
+2026-04-20 15:45:54,196 | INFO | Iniciando: Generar predicciones
+2026-04-20 15:45:57,313 | INFO | OK: Generar predicciones
+2026-04-20 15:45:57,314 | INFO |      Rango hoy       : $3,326,000 - $3,585,000
+2026-04-20 15:45:57,314 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 15:45:57,314 | INFO |      TRM usada       : $3,678.19
+2026-04-20 15:45:57,314 | INFO |    
+2026-04-20 15:45:57,314 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 15:45:57,314 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 15:45:57,724 | INFO | OK: Importar a MongoDB
+2026-04-20 15:45:57,724 | INFO |    Conexion cerrada
+2026-04-20 15:45:57,724 | INFO | Iniciando: Evaluar precision
+2026-04-20 15:45:58,410 | ERROR | FALLO: Evaluar precision
+2026-04-20 15:45:58,410 | ERROR |    Error: Traceback (most recent call last):
+  File "C:\Proyecto\CoffePrice\ml-service\evaluar.py", line 69, in <module>
+    evaluar_prediccion_del_dia()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Proyecto\CoffePrice\ml-service\evaluar.py", line 17, in evaluar_prediccion_del_dia
+    df_real['fecha'] = pd.to_datetime(df_real['fecha']).dt.normalize()
+                       ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\USUARIO\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\tools\d
+2026-04-20 15:45:58,410 | WARNING | Evaluacion fallo; no es un error critico
+2026-04-20 15:45:58,410 | INFO | ============================================================
+2026-04-20 15:45:58,410 | INFO | ACTUALIZACION COMPLETADA SIN ERRORES
+2026-04-20 15:45:58,410 | INFO | ============================================================
+2026-04-20 15:52:36,751 | INFO | ============================================================
+2026-04-20 15:52:36,751 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 15:52:36,751 | INFO | ============================================================
+2026-04-20 15:52:36,751 | INFO | Iniciando: Actualizar TRM
+2026-04-20 15:52:38,499 | INFO | OK: Actualizar TRM
+2026-04-20 15:52:38,500 | INFO |    [WARN] TRM API status: 404
+2026-04-20 15:52:38,500 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:52:38,500 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:52:38,500 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 15:52:38,500 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 15:52:40,333 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 15:52:40,333 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 15:52:40,333 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 15:52:40,333 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 15:52:40,333 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 15:52:48,382 | INFO | OK: Obtener precio FNC real
+2026-04-20 15:52:48,382 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 15:52:48,382 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 15:52:48,382 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 15:52:48,382 | INFO |    [INFO] Precio FNC para 2026-04-20 ya existe
+2026-04-20 15:52:48,382 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 15:52:48,382 | INFO | Iniciando: Limpiar datos
+2026-04-20 15:52:49,033 | INFO | OK: Limpiar datos
+2026-04-20 15:52:49,034 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 15:52:49,034 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 15:52:49,034 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 15:52:49,034 | INFO |    
+2026-04-20 15:52:49,034 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 15:52:49,034 | INFO | Iniciando: Entrenar modelo
+2026-04-20 15:52:56,577 | INFO | OK: Entrenar modelo
+2026-04-20 15:52:56,577 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 15:52:56,577 | INFO |      Registros entrenados: 8708
+2026-04-20 15:52:56,577 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 15:52:56,577 | INFO |      Regresores usados: KC y TRM
+2026-04-20 15:52:56,577 | INFO |    =======================================================
+2026-04-20 15:52:56,577 | INFO | Iniciando: Generar predicciones
+2026-04-20 15:53:20,948 | INFO | OK: Generar predicciones
+2026-04-20 15:53:20,948 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 15:53:20,948 | INFO |      TRM usada       : $3,678.19
+2026-04-20 15:53:20,948 | INFO |      FNC ancla       : $2,190,000
+2026-04-20 15:53:20,948 | INFO |    
+2026-04-20 15:53:20,948 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 15:53:20,948 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 15:53:21,433 | INFO | OK: Importar a MongoDB
+2026-04-20 15:53:21,433 | INFO |    Conexion cerrada
+2026-04-20 15:53:21,433 | INFO | Iniciando: Evaluar precision
+2026-04-20 15:53:22,178 | INFO | OK: Evaluar precision
+2026-04-20 15:53:22,179 | INFO |    Ultimos dias:
+2026-04-20 15:53:22,179 | INFO |         fecha  precio  precioestimado  error_pct
+2026-04-20 15:53:22,179 | INFO |    2026-04-20 2190000         2190000        0.0
+2026-04-20 15:53:22,179 | INFO |    =======================================================
+2026-04-20 15:53:22,179 | INFO |    [OK] Historial guardado: datos/historial_errores.csv
+2026-04-20 15:53:22,179 | INFO | ============================================================
+2026-04-20 15:53:22,179 | INFO | ACTUALIZACION COMPLETADA SIN ERRORES
+2026-04-20 15:53:22,179 | INFO | ============================================================
+2026-04-20 16:31:54,051 | INFO | ============================================================
+2026-04-20 16:31:54,051 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 16:31:54,051 | INFO | ============================================================
+2026-04-20 16:31:54,052 | INFO | Iniciando: Actualizar TRM
+2026-04-20 16:31:55,927 | INFO | OK: Actualizar TRM
+2026-04-20 16:31:55,928 | INFO |    [WARN] TRM API status: 404
+2026-04-20 16:31:55,928 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:31:55,928 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:31:55,929 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 16:31:55,929 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 16:31:58,597 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 16:31:58,597 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 16:31:58,597 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 16:31:58,598 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 16:31:58,598 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 16:32:06,174 | INFO | OK: Obtener precio FNC real
+2026-04-20 16:32:06,174 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:32:06,174 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:32:06,175 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 16:32:06,175 | INFO |    [INFO] No se guarda formula_kc_trm en precios_fnc_reales.csv para no contaminar el historico real
+2026-04-20 16:32:06,175 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 16:32:06,175 | INFO | Iniciando: Limpiar datos
+2026-04-20 16:32:07,021 | INFO | OK: Limpiar datos
+2026-04-20 16:32:07,021 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 16:32:07,022 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 16:32:07,022 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 16:32:07,022 | INFO |    
+2026-04-20 16:32:07,022 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 16:32:07,023 | INFO | Iniciando: Entrenar modelo
+2026-04-20 16:32:15,736 | INFO | OK: Entrenar modelo
+2026-04-20 16:32:15,737 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 16:32:15,737 | INFO |      Registros entrenados: 8708
+2026-04-20 16:32:15,737 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 16:32:15,737 | INFO |      Regresores usados: KC y TRM
+2026-04-20 16:32:15,738 | INFO |    =======================================================
+2026-04-20 16:32:15,738 | INFO | Iniciando: Generar predicciones
+2026-04-20 16:32:57,836 | INFO | OK: Generar predicciones
+2026-04-20 16:32:57,837 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 16:32:57,837 | INFO |      TRM usada       : $3,678.19
+2026-04-20 16:32:57,837 | INFO |      FNC ancla       : $2,190,000
+2026-04-20 16:32:57,838 | INFO |    
+2026-04-20 16:32:57,838 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 16:32:57,838 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 16:32:58,448 | INFO | OK: Importar a MongoDB
+2026-04-20 16:32:58,448 | INFO |    Conexion cerrada
+2026-04-20 16:32:58,449 | INFO | Iniciando: Evaluar precision
+2026-04-20 16:32:59,596 | INFO | OK: Evaluar precision
+2026-04-20 16:32:59,596 | INFO |    Ultimos dias:
+2026-04-20 16:32:59,597 | INFO |         fecha  precio  precioestimado  error_pct
+2026-04-20 16:32:59,597 | INFO |    2026-04-20 2190000         2190000        0.0
+2026-04-20 16:32:59,597 | INFO |    =======================================================
+2026-04-20 16:32:59,598 | INFO |    [OK] Historial guardado: datos/historial_errores.csv
+2026-04-20 16:32:59,598 | INFO | ============================================================
+2026-04-20 16:32:59,598 | INFO | ACTUALIZACION COMPLETADA SIN ERRORES
+2026-04-20 16:32:59,599 | INFO | ============================================================
+2026-04-20 16:35:13,108 | INFO | ============================================================
+2026-04-20 16:35:13,109 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 16:35:13,109 | INFO | ============================================================
+2026-04-20 16:35:13,110 | INFO | Iniciando: Actualizar TRM
+2026-04-20 16:35:20,729 | INFO | OK: Actualizar TRM
+2026-04-20 16:35:20,729 | INFO |    [WARN] TRM API status: 404
+2026-04-20 16:35:20,730 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:35:20,730 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:35:20,730 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 16:35:20,730 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 16:35:32,445 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 16:35:32,446 | INFO |    [WARN] yfinance: no retorno datos para KC=F
+2026-04-20 16:35:32,446 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 16:35:32,447 | INFO |    KC final: 301.00 centavos/lb (fuente: emergencia)
+2026-04-20 16:35:32,447 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 16:35:41,916 | INFO | OK: Obtener precio FNC real
+2026-04-20 16:35:41,916 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:35:41,917 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:35:41,917 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 16:35:41,917 | INFO |    [INFO] No se guarda formula_kc_trm en precios_fnc_reales.csv para no contaminar el historico real
+2026-04-20 16:35:41,917 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 16:35:41,918 | INFO | Iniciando: Limpiar datos
+2026-04-20 16:35:42,705 | INFO | OK: Limpiar datos
+2026-04-20 16:35:42,705 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 16:35:42,706 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 16:35:42,706 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 16:35:42,706 | INFO |    
+2026-04-20 16:35:42,706 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 16:35:42,707 | INFO | Iniciando: Entrenar modelo
+2026-04-20 16:35:51,044 | INFO | OK: Entrenar modelo
+2026-04-20 16:35:51,044 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 16:35:51,044 | INFO |      Registros entrenados: 8708
+2026-04-20 16:35:51,045 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 16:35:51,045 | INFO |      Regresores usados: KC y TRM
+2026-04-20 16:35:51,045 | INFO |    =======================================================
+2026-04-20 16:35:51,045 | INFO | Iniciando: Generar predicciones
+2026-04-20 16:36:18,169 | INFO | OK: Generar predicciones
+2026-04-20 16:36:18,169 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 16:36:18,169 | INFO |      TRM usada       : $3,678.19
+2026-04-20 16:36:18,170 | INFO |      FNC ancla       : $2,190,000
+2026-04-20 16:36:18,170 | INFO |    
+2026-04-20 16:36:18,170 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 16:36:18,170 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 16:36:18,782 | INFO | OK: Importar a MongoDB
+2026-04-20 16:36:18,783 | INFO |    Conexion cerrada
+2026-04-20 16:36:18,783 | INFO | Iniciando: Evaluar precision
+2026-04-20 16:36:19,925 | INFO | OK: Evaluar precision
+2026-04-20 16:36:19,926 | INFO |    Ultimos dias:
+2026-04-20 16:36:19,926 | INFO |         fecha  precio  precioestimado  error_pct
+2026-04-20 16:36:19,926 | INFO |    2026-04-20 2190000         2190000        0.0
+2026-04-20 16:36:19,926 | INFO |    =======================================================
+2026-04-20 16:36:19,927 | INFO |    [OK] Historial guardado: datos/historial_errores.csv
+2026-04-20 16:36:19,927 | INFO | ============================================================
+2026-04-20 16:36:19,927 | INFO | ACTUALIZACION COMPLETADA SIN ERRORES
+2026-04-20 16:36:19,927 | INFO | ============================================================
+2026-04-20 16:44:17,156 | INFO | ============================================================
+2026-04-20 16:44:17,156 | INFO | INICIO ACTUALIZACION - 2026-04-20
+2026-04-20 16:44:17,157 | INFO | ============================================================
+2026-04-20 16:44:17,157 | INFO | Iniciando: Actualizar TRM
+2026-04-20 16:44:19,086 | INFO | OK: Actualizar TRM
+2026-04-20 16:44:19,086 | INFO |    [WARN] TRM API status: 404
+2026-04-20 16:44:19,087 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:44:19,087 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:44:19,087 | INFO |    TRM final: $3,678.19 - Fecha: 2026-04-08
+2026-04-20 16:44:19,087 | INFO | Iniciando: Obtener precio KC (Bolsa NY)
+2026-04-20 16:44:21,310 | INFO | OK: Obtener precio KC (Bolsa NY)
+2026-04-20 16:44:21,311 | INFO |    [OK] yfinance KC=F: 287.85 centavos/lb (2026-04-20)
+2026-04-20 16:44:21,311 | INFO |    [INFO] KC para 2026-04-20 ya existe
+2026-04-20 16:44:21,311 | INFO |    KC final: 287.85 centavos/lb (fuente: yfinance)
+2026-04-20 16:44:21,311 | INFO | Iniciando: Obtener precio FNC real
+2026-04-20 16:44:29,097 | INFO | OK: Obtener precio FNC real
+2026-04-20 16:44:29,097 | INFO |    [INFO] Fallback: usando CSV local para TRM
+2026-04-20 16:44:29,098 | INFO |    [OK] TRM desde CSV: $3,678.19 (2026-04-08)
+2026-04-20 16:44:29,098 | INFO |    [OK] FNC calculado: $3,222,000
+2026-04-20 16:44:29,098 | INFO |    [INFO] No se guarda formula_kc_trm en precios_fnc_reales.csv para no contaminar el historico real
+2026-04-20 16:44:29,099 | INFO |    Precio FNC final: $3,222,000 (fuente: formula_kc_trm)
+2026-04-20 16:44:29,099 | INFO | Iniciando: Limpiar datos
+2026-04-20 16:44:30,006 | INFO | OK: Limpiar datos
+2026-04-20 16:44:30,006 | INFO |      Precio minimo         : 0.35 USD/lb
+2026-04-20 16:44:30,007 | INFO |      Precio maximo         : 4.3356 USD/lb
+2026-04-20 16:44:30,007 | INFO |      Precio promedio       : 1.3669 USD/lb
+2026-04-20 16:44:30,007 | INFO |    
+2026-04-20 16:44:30,008 | INFO |    OK - Archivo guardado en: datos/precios_cafe_limpio.csv
+2026-04-20 16:44:30,008 | INFO | Iniciando: Entrenar modelo
+2026-04-20 16:44:42,963 | INFO | OK: Entrenar modelo
+2026-04-20 16:44:42,964 | INFO |    RESUMEN DEL ENTRENAMIENTO:
+2026-04-20 16:44:42,964 | INFO |      Registros entrenados: 8708
+2026-04-20 16:44:42,965 | INFO |      Rango de fechas: 1991-11-27 a 2026-04-06
+2026-04-20 16:44:42,965 | INFO |      Regresores usados: KC y TRM
+2026-04-20 16:44:42,966 | INFO |    =======================================================
+2026-04-20 16:44:42,966 | INFO | Iniciando: Generar predicciones
+2026-04-20 16:45:13,951 | INFO | OK: Generar predicciones
+2026-04-20 16:45:13,951 | INFO |      KC usado        : 287.85 centavos/lb
+2026-04-20 16:45:13,952 | INFO |      TRM usada       : $3,678.19
+2026-04-20 16:45:13,952 | INFO |      FNC ancla       : $2,190,000
+2026-04-20 16:45:13,952 | INFO |    
+2026-04-20 16:45:13,952 | INFO |    [OK] Predicciones guardadas en: ../backend/datos\predicciones.json
+2026-04-20 16:45:13,953 | INFO | Iniciando: Importar a MongoDB
+2026-04-20 16:45:20,965 | INFO | OK: Importar a MongoDB
+2026-04-20 16:45:20,965 | ERROR | EXCEPCION en Importar a MongoDB: 'NoneType' object has no attribute 'strip'
+2026-04-20 16:45:20,966 | INFO | Iniciando: Evaluar precision
+2026-04-20 16:45:21,890 | INFO | OK: Evaluar precision
+2026-04-20 16:45:21,891 | INFO |    Ultimos dias:
+2026-04-20 16:45:21,891 | INFO |         fecha  precio  precioestimado  error_pct
+2026-04-20 16:45:21,892 | INFO |    2026-04-20 2190000         2190000        0.0
+2026-04-20 16:45:21,892 | INFO |    =======================================================
+2026-04-20 16:45:21,892 | INFO |    [OK] Historial guardado: datos/historial_errores.csv
+2026-04-20 16:45:21,893 | INFO | ============================================================
+2026-04-20 16:45:21,893 | WARNING | ACTUALIZACION COMPLETADA CON ERRORES EN: ['mongodb']
+2026-04-20 16:45:21,893 | INFO | ============================================================

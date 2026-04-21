@@ -26,6 +26,67 @@ const STOPWORDS = new Set([
     'mas', 'muy', 'pero', 'cada', 'ese', 'esa', 'aqui', 'alli', 'real'
 ]);
 
+const TITULOS_GENERICOS = [
+    'panorama del cafe',
+    'actualidad cafetera',
+    'noticias del cafe',
+    'mercado del cafe',
+    'panorama cafetero',
+    'situacion del cafe',
+    'asi amanece el cafe',
+    'asi se mueve el cafe',
+    'resumen cafetero',
+    'caficultura en contexto',
+];
+
+const PALABRAS_CAFE_RELEVANTES = [
+    'cafe',
+    'caficult',
+    'cafetal',
+    'cafetera',
+    'cafetero',
+    'grano',
+    'pergamino',
+    'federacion nacional de cafeteros',
+    'comite de cafeteros',
+    'fnc',
+    'cosecha',
+    'cultivo',
+    'mercado del cafe',
+    'precio del cafe',
+    'venta de cafe',
+    'compra de cafe',
+    'exportaciones de cafe',
+    'clima agricola',
+    'zonas cafeteras',
+];
+
+const PALABRAS_RUIDO_RELEVANTES = [
+    'sub 17',
+    'sub17',
+    'mundial',
+    'conmebol',
+    'futbol',
+    'goleada',
+    'penal',
+    'jugador',
+    'liga',
+    'seleccion',
+    'tenis',
+    'baloncesto',
+    'beisbol',
+    'farandula',
+    'celebridad',
+    'novela',
+    'actor',
+    'serie',
+    'asesinato',
+    'capturado',
+    'policia',
+    'judicial',
+    'accidente',
+];
+
 function normalizarTexto(texto = '') {
     return texto
         .normalize('NFD')
@@ -34,6 +95,10 @@ function normalizarTexto(texto = '') {
         .replace(/[^a-z0-9\s]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+function contieneFrase(texto = '', frases = []) {
+    return frases.some((frase) => texto.includes(frase));
 }
 
 function obtenerTokens(texto = '') {
@@ -55,6 +120,139 @@ function calcularSimilitud(tokensA = [], tokensB = []) {
 
     const union = new Set([...setA, ...setB]).size;
     return union ? interseccion / union : 0;
+}
+
+function limpiarTitulo(texto = '') {
+    return texto
+        .replace(/\s+/g, ' ')
+        .replace(/\s+[:\-–|]+\s*$/g, '')
+        .trim();
+}
+
+function capitalizarTitulo(texto = '') {
+    const limpio = limpiarTitulo(texto);
+    if (!limpio) return '';
+    return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+}
+
+function esTituloGenerico(titulo = '') {
+    const normalizado = normalizarTexto(titulo);
+    if (!normalizado) return true;
+    if (normalizado.length < 18) return true;
+    return TITULOS_GENERICOS.some((base) => normalizado.includes(base));
+}
+
+function resolverTituloFinal(tituloGenerado = '', tituloFuente = '') {
+    const generado = capitalizarTitulo(tituloGenerado);
+    const fuente = capitalizarTitulo(tituloFuente);
+
+    if (!generado) return fuente;
+    if (!fuente) return generado;
+    if (esTituloGenerico(generado)) return fuente;
+
+    const similitud = calcularSimilitud(
+        obtenerTokens(generado),
+        obtenerTokens(fuente)
+    );
+
+    if (similitud < 0.22) return fuente;
+
+    return generado;
+}
+
+function limpiarTextoAdaptado(texto = '') {
+    return texto
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function fuenteMencionaContextoLocal(articulo = {}) {
+    const textoFuente = normalizarTexto(
+        `${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`
+    );
+
+    return textoFuente.includes('el pital') || textoFuente.includes('pital') || textoFuente.includes('huila');
+}
+
+function eliminarContextoForzado(texto = '', articulo = {}) {
+    const limpio = limpiarTextoAdaptado(texto);
+    if (!limpio) return '';
+    if (fuenteMencionaContextoLocal(articulo)) return limpio;
+
+    return limpio
+        .replace(/\b(en|desde|para|de)\s+El Pital,\s*Huila\b/gi, '')
+        .replace(/\b(en|desde|para|de)\s+El Pital\b/gi, '')
+        .replace(/\b(en|desde|para|de)\s+Huila\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.;:])/g, '$1')
+        .trim();
+}
+
+function esAdaptacionForzada(adaptada = {}, articulo = {}) {
+    if (fuenteMencionaContextoLocal(articulo)) return false;
+
+    const textoAdaptado = normalizarTexto(
+        `${adaptada.titulo || ''} ${adaptada.resumen || ''} ${adaptada.contenido || ''}`
+    );
+
+    if (!textoAdaptado) return false;
+
+    return (
+        textoAdaptado.includes('el pital') ||
+        textoAdaptado.includes('pital') ||
+        textoAdaptado.includes('caficultores de el pital')
+    );
+}
+
+function esTextoCafeRelevante(texto = '') {
+    return contieneFrase(normalizarTexto(texto), PALABRAS_CAFE_RELEVANTES);
+}
+
+function esTextoRuido(texto = '') {
+    return contieneFrase(normalizarTexto(texto), PALABRAS_RUIDO_RELEVANTES);
+}
+
+function evaluarNoticiaDanada(noticia = {}) {
+    const razones = [];
+    const textoFuente = `${noticia.sourceTitle || ''} ${noticia.fuente || ''} ${noticia.sourceDomain || ''}`;
+    const textoPublico = `${noticia.titulo || ''} ${noticia.resumen || ''} ${noticia.contenido || ''}`;
+
+    if (esTextoRuido(textoFuente) || esTextoRuido(textoPublico)) {
+        razones.push('tema_ajeno_al_cafe');
+    }
+
+    if (!esTextoCafeRelevante(textoFuente)) {
+        razones.push('fuente_sin_relacion_cafetera');
+    }
+
+    if (!fuenteMencionaContextoLocal({
+        titulo: noticia.sourceTitle,
+        resumen: '',
+        contenido: '',
+    }) && esAdaptacionForzada({
+        titulo: noticia.titulo,
+        resumen: noticia.resumen,
+        contenido: noticia.contenido,
+    }, {
+        titulo: noticia.sourceTitle,
+        resumen: '',
+        contenido: '',
+    })) {
+        razones.push('contexto_local_forzado');
+    }
+
+    if (noticia.sourceTitle) {
+        const similitudTitulo = calcularSimilitud(
+            obtenerTokens(noticia.titulo || ''),
+            obtenerTokens(noticia.sourceTitle || '')
+        );
+
+        if (similitudTitulo < 0.16) {
+            razones.push('titulo_desalineado');
+        }
+    }
+
+    return [...new Set(razones)];
 }
 
 function prepararNoticiaParaComparacion(noticia = {}) {
@@ -176,7 +374,7 @@ async function obtenerContexto() {
 }
 
 function construirPromptAdaptacion(articulo, ctx) {
-    return `Eres editor periodistico de CoffePrice para caficultores de El Pital, Huila.
+    return `Eres editor periodistico de CoffePrice para usuarios del sector cafetero colombiano.
 
 CONTEXTO LOCAL:
 - Mejor precio local: $${ctx.mejorPrecio.toLocaleString()} COP por carga
@@ -195,7 +393,7 @@ ARTICULO REAL A RESUMIR:
 - URL: ${articulo.url}
 
 REGLAS:
-- Resume y adapta esta noticia real al contexto de caficultores colombianos
+- Resume y adapta esta noticia sin cambiar su tema central
 - No inventes hechos nuevos
 - Si falta un dato, no lo rellenes
 - Mantén el enfoque practico y claro
@@ -213,6 +411,49 @@ Responde solo con JSON valido:
 }`;
 }
 
+function construirPromptAdaptacionV2(articulo, ctx) {
+    return `Eres editor periodistico de CoffePrice para usuarios del sector cafetero colombiano.
+
+CONTEXTO LOCAL:
+- Mejor precio local: $${ctx.mejorPrecio.toLocaleString()} COP por carga
+- Comprador top: ${ctx.compradorTop}
+- Precio promedio local: $${ctx.precioPromedio.toLocaleString()} COP por carga
+- TRM: $${ctx.trm.toLocaleString()} COP por dolar
+- Clima actual: ${ctx.climaTexto}
+
+ARTICULO REAL A RESUMIR:
+- Titulo original: ${articulo.titulo}
+- Fuente: ${articulo.fuente} (${articulo.dominioFuente})
+- Fecha publicacion: ${articulo.fechaPublicacion}
+- Descripcion: ${articulo.resumen || 'Sin descripcion'}
+- Contenido: ${articulo.contenido || 'Sin contenido'}
+- Categoria sugerida: ${articulo.categoriaSugerida}
+- URL: ${articulo.url}
+
+REGLAS:
+- Resume y adapta esta noticia sin cambiar su tema central
+- No inventes hechos nuevos
+- Si falta un dato, no lo rellenes
+- Manten el enfoque practico y claro
+- No conviertas una noticia general en una noticia de El Pital, Huila o caficultores si la fuente no lo menciona
+- No cambies deportes, farandula, judicial o politica general para hacerlos parecer noticias del cafe
+- Si la noticia no trata realmente sobre cafe, caficultura, clima agricola, produccion, mercado cafetero o Federacion Nacional de Cafeteros, marca descartar=true
+- Elige una sola categoria valida entre: mercado, clima, consejos, fnc, produccion, internacional, el_pital
+- El titulo debe sonar natural en espanol colombiano
+- El resumen debe tener maximo 220 caracteres
+- El contenido debe tener 2 o 3 parrafos breves
+
+Responde solo con JSON valido:
+{
+  "descartar": false,
+  "motivo": "",
+  "titulo": "titulo adaptado",
+  "resumen": "resumen corto",
+  "contenido": "contenido adaptado",
+  "categoria": "categoria valida"
+}`;
+}
+
 async function adaptarArticuloConIA(articulo, ctx) {
     if (!openaiClient) {
         openaiClient = new OpenAI({
@@ -220,7 +461,7 @@ async function adaptarArticuloConIA(articulo, ctx) {
         });
     }
 
-    const prompt = construirPromptAdaptacion(articulo, ctx);
+    const prompt = construirPromptAdaptacionV2(articulo, ctx);
 
     const completion = await openaiClient.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -242,10 +483,20 @@ async function adaptarArticuloConIA(articulo, ctx) {
     const texto = completion.choices[0].message.content;
     const parsed = JSON.parse(texto);
 
+    if (parsed.descartar) {
+        return {
+            descartar: true,
+            motivo: parsed.motivo?.trim() || 'Articulo no relacionado con el sector cafetero.',
+        };
+    }
+
     return {
-        titulo: parsed.titulo?.trim(),
-        resumen: parsed.resumen?.trim(),
-        contenido: parsed.contenido?.trim(),
+        titulo: eliminarContextoForzado(
+            resolverTituloFinal(parsed.titulo?.trim(), articulo.titulo),
+            articulo
+        ),
+        resumen: eliminarContextoForzado(parsed.resumen?.trim(), articulo),
+        contenido: eliminarContextoForzado(parsed.contenido?.trim(), articulo),
         categoria: (parsed.categoria || articulo.categoriaSugerida || 'mercado').toLowerCase().trim(),
     };
 }
@@ -306,7 +557,17 @@ export async function generarNoticiasDelDia() {
             continue;
         }
 
+        if (adaptada.descartar) {
+            console.log(`[NoticiaAuto] Articulo descartado por relevancia: '${articulo.titulo}'`);
+            continue;
+        }
+
         if (!adaptada.titulo || !adaptada.resumen || !adaptada.contenido) {
+            continue;
+        }
+
+        if (esAdaptacionForzada(adaptada, articulo)) {
+            console.log(`[NoticiaAuto] Adaptacion forzada descartada: '${articulo.titulo}'`);
             continue;
         }
 
@@ -416,4 +677,56 @@ export async function limpiarNoticiasViejas() {
     }
 
     return resultado.deletedCount;
+}
+
+export async function limpiarNoticiasDanadas({
+    dryRun = false,
+    soloAutoGeneradas = true,
+    limite = 100,
+} = {}) {
+    const filtro = soloAutoGeneradas ? { autoGenerada: true } : {};
+    const noticias = await Noticia.find(filtro)
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .limit(limite);
+
+    const candidatas = noticias
+        .map((noticia) => ({
+            noticia,
+            razones: evaluarNoticiaDanada(noticia),
+        }))
+        .filter(({ razones }) => razones.length > 0);
+
+    if (dryRun) {
+        return {
+            eliminadas: 0,
+            encontradas: candidatas.length,
+            candidatas: candidatas.map(({ noticia, razones }) => ({
+                _id: noticia._id,
+                titulo: noticia.titulo,
+                sourceTitle: noticia.sourceTitle,
+                categoria: noticia.categoria,
+                razones,
+            })),
+        };
+    }
+
+    const ids = candidatas.map(({ noticia }) => noticia._id);
+    let eliminadas = 0;
+
+    if (ids.length > 0) {
+        const resultado = await Noticia.deleteMany({ _id: { $in: ids } });
+        eliminadas = resultado.deletedCount || 0;
+    }
+
+    return {
+        eliminadas,
+        encontradas: candidatas.length,
+        candidatas: candidatas.map(({ noticia, razones }) => ({
+            _id: noticia._id,
+            titulo: noticia.titulo,
+            sourceTitle: noticia.sourceTitle,
+            categoria: noticia.categoria,
+            razones,
+        })),
+    };
 }

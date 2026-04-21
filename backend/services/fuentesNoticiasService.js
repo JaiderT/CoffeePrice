@@ -30,6 +30,59 @@ function limpiarContenidoFuente(texto = '') {
         .trim();
 }
 
+const PALABRAS_CAFE = [
+    'cafe',
+    'caficult',
+    'cafetal',
+    'cafetera',
+    'cafetero',
+    'grano',
+    'pergamino',
+    'federacion nacional de cafeteros',
+    'comite de cafeteros',
+    'fnc',
+    'cosecha',
+    'cultivo de cafe',
+    'precio del cafe',
+    'mercado del cafe',
+    'compra de cafe',
+    'venta de cafe',
+    'cafe colombiano',
+    'exportaciones de cafe',
+    'bolsa del cafe',
+];
+
+const PALABRAS_RUIDO = [
+    'sub 17',
+    'sub17',
+    'mundial',
+    'conmebol',
+    'futbol',
+    'goleada',
+    'penal',
+    'jugador',
+    'partido',
+    'liga',
+    'seleccion',
+    'tenis',
+    'baloncesto',
+    'beisbol',
+    'farandula',
+    'celebridad',
+    'novela',
+    'actor',
+    'serie',
+    'asesinato',
+    'capturado',
+    'policia',
+    'judicial',
+    'accidente',
+];
+
+function contieneAlgunaFrase(texto = '', frases = []) {
+    return frases.some((frase) => texto.includes(frase));
+}
+
 function normalizarArticulo(raw = {}, categoriaSugerida = 'mercado') {
     const titulo = limpiarContenidoFuente(raw.title || '');
     const resumen = limpiarContenidoFuente(raw.description || '');
@@ -59,8 +112,8 @@ function construirConsultasNoticias() {
         {
             categoria: 'el_pital',
             consultas: [
-                '"El Pital" OR Huila OR "sur del Huila" OR caficultores huila',
-                'Huila cafe OR caficultores huila OR "precio del cafe huila"',
+                '"El Pital" cafe OR "caficultores de El Pital" OR "precio del cafe" Huila',
+                '"Huila" "caficultores" OR "sur del Huila" cafe OR "cafe huila"',
             ],
         },
         {
@@ -191,6 +244,9 @@ function esArticuloUtil(articulo = {}) {
     if (titulo.includes('newsletter')) return false;
     if (articulo.dominioFuente.includes('youtube.com')) return false;
     if (articulo.dominioFuente.includes('youtu.be')) return false;
+
+    if (contieneAlgunaFrase(texto, PALABRAS_RUIDO)) return false;
+    if (!contieneAlgunaFrase(texto, PALABRAS_CAFE)) return false;
 
     return true;
 }

@@ -1,91 +1,116 @@
-# entrenar.py
-# Ejecutar: python entrenar.py
-# Requiere: datos/precios_cafe_limpio.csv  (desde 27/11/1991)
-#           datos/trm_historica.csv        (desde 27/11/1991)
-# Resultado: genera modelos/modelo_cafe.pkl
+import os
+import pickle
 
 import pandas as pd
 from prophet import Prophet
-import pickle
-import os
-from datetime import datetime
+
+PRIMA_COLOMBIA = 30.0
+LBS_POR_KG = 2.20462
+KG_POR_CARGA = 125
+
+
+def cargar_trm_historica(ruta_trm):
+    df_trm = pd.read_csv(ruta_trm, sep=';', decimal=',', quotechar='"')
+
+    if list(df_trm.columns) != ['ds', 'trm']:
+        df_trm = df_trm.rename(columns={
+            'Periodo(MMM DD, AAAA)': 'ds',
+            'Tasa Representativa del Mercado (TRM)': 'trm',
+        })
+
+    df_trm = df_trm[['ds', 'trm']].copy()
+    df_trm['ds'] = pd.to_datetime(df_trm['ds'])
+    df_trm['trm'] = pd.to_numeric(df_trm['trm'], errors='coerce')
+    return df_trm.dropna(subset=['ds', 'trm']).sort_values('ds')
+
 
 print('=' * 55)
 print('  ENTRENAMIENTO DEL MODELO - CoffePrice')
 print('=' * 55)
 print()
 
-# PASO 1: CARGAR DATOS LIMPIOS (ya recortados desde 1991)
-df_precios = pd.read_csv(
-    'datos/precios_cafe_limpio.csv',
-    parse_dates=['ds']
-)
+print('Cargando datos historicos de cafe...')
+ruta_precios = 'datos/precios_cafe_limpio.csv'
+if not os.path.exists(ruta_precios):
+    print('[ERROR] No se encuentra el archivo de datos limpios.')
+    print('   Ejecuta primero: python limpiar_datos.py')
+    raise SystemExit(1)
+
+df_precios = pd.read_csv(ruta_precios, parse_dates=['ds'])
 print(f'Precios cargados: {len(df_precios)} registros')
-print('Desde: ' + df_precios['ds'].min().strftime('%d/%m/%Y'))
-print('Hasta: ' + df_precios['ds'].max().strftime('%d/%m/%Y'))
+print(f'  Desde: {df_precios["ds"].min().date()} hasta: {df_precios["ds"].max().date()}')
+print()
 
-# PASO 2: CARGAR TRM HISTORICA (desde 27/11/1991 del Banrep)
-df_trm = pd.read_csv('datos/trm_historica.csv', sep=';', decimal=',', quotechar='"')
-print('Columnas del archivo TRM: ' + str(list(df_trm.columns)))
+print('Cargando TRM historica...')
+ruta_trm = 'datos/trm_historica.csv'
+if not os.path.exists(ruta_trm):
+    print('[ERROR] No existe trm_historica.csv')
+    raise SystemExit(1)
 
-# Renombrar columnas al formato estandar
-df_trm = df_trm.rename(columns={
-    'Periodo(MMM DD, AAAA)': 'ds',
-    'Tasa Representativa del Mercado (TRM)': 'trm'
-})
-df_trm['ds'] = pd.to_datetime(df_trm['ds'])
+df_trm = cargar_trm_historica(ruta_trm)
 print(f'TRM cargada: {len(df_trm)} registros')
 
-# PASO 3: UNIR PRECIOS CON TRM
-df = pd.merge(df_precios, df_trm[['ds', 'trm']], on='ds', how='left')
+print('Preparando dataset de entrenamiento...')
+df = pd.merge(df_precios, df_trm, on='ds', how='left')
+df['trm'] = df['trm'].interpolate(method='linear').ffill().bfill()
 
-# PASO 4: RELLENAR TRM FALTANTE
-df['trm'] = df['trm'].interpolate(method='linear')
-df['trm'] = df['trm'].ffill().bfill()
-print('TRM faltante rellenada por interpolacion lineal')
+# El precio historico limpio representa el contrato C en USD/lb.
+# Lo convertimos a centavos para usarlo como regresor explicativo.
+df['kc_centavos_lb'] = (df['y'] * 100).round(2)
 
-# PASO 5: CONVERTIR A COP POR CARGA
-# precio_usd_lb x libras_por_kg x kg_por_carga x TRM
-df['y'] = df['y'] * 2.20462 * 125 * df['trm']
-print('Precios convertidos a COP por carga')
-print('Precio promedio historico: ' + f'{df["y"].mean():,.0f} COP/carga')
-
-# PASO 6: PREPARAR DATOS FINALES PARA PROPHET
-df_final = df[['ds', 'y']].dropna()
-print(f'Registros totales: {len(df_final)}')
-
-# PASO 6.1: FILTRAR DESDE 2022
-# Usamos solo los últimos 4 años para que el modelo aprenda
-# con precios y TRM más cercanos al contexto actual del mercado
-df_final = df_final[df_final['ds'] >= '2022-01-01']
-print(f'Registros desde 2022: {len(df_final)}')
-print('Desde: ' + df_final['ds'].min().strftime('%d/%m/%Y'))
-print('Hasta: ' + df_final['ds'].max().strftime('%d/%m/%Y'))
-print('Precio promedio 2022-2026: ' + f'{df_final["y"].mean():,.0f} COP/carga')
-
-# PASO 7: CONFIGURAR EL MODELO
-modelo = Prophet(
-    yearly_seasonality      = True,
-    weekly_seasonality      = False,
-    daily_seasonality       = False,
-    changepoint_prior_scale = 0.05,
-    interval_width          = 0.80
+# El objetivo del modelo queda en COP/carga usando la formula FNC.
+df['y'] = (
+    ((df['kc_centavos_lb'] + PRIMA_COLOMBIA) / 100.0)
+    * LBS_POR_KG
+    * KG_POR_CARGA
+    * df['trm']
 )
 
-# PASO 8: ENTRENAR
+df_final = df[['ds', 'y', 'kc_centavos_lb', 'trm']].dropna().sort_values('ds')
+if df_final.empty:
+    print('[ERROR] No quedaron datos validos para entrenamiento.')
+    raise SystemExit(1)
+
+os.makedirs('datos', exist_ok=True)
+ruta_debug = 'datos/ultimos_datos_entrenamiento.csv'
+df_final.to_csv(ruta_debug, index=False)
+
+print(f'Registros finales para entrenamiento: {len(df_final)}')
+print(f'  Rango: {df_final["ds"].min().date()} a {df_final["ds"].max().date()}')
+print(f'  Precio promedio: ${df_final["y"].mean():,.0f} COP/carga')
 print()
-print('Entrenando... (puede tardar 1-3 minutos)')
-inicio = datetime.now()
+
+print('Configurando modelo Prophet...')
+modelo = Prophet(
+    yearly_seasonality=True,
+    weekly_seasonality=True,
+    daily_seasonality=False,
+    changepoint_prior_scale=0.10,
+    interval_width=0.80,
+    seasonality_prior_scale=12.0,
+)
+modelo.add_regressor('kc_centavos_lb')
+modelo.add_regressor('trm')
+print('  + Regresor KC agregado')
+print('  + Regresor TRM agregado')
+
+print()
+print('Entrenando modelo...')
 modelo.fit(df_final)
-segundos = (datetime.now() - inicio).seconds
-print(f'Entrenamiento completado en {segundos} segundos')
+print('[OK] Modelo entrenado correctamente')
 
-# PASO 9: GUARDAR EL MODELO EN DISCO
 os.makedirs('modelos', exist_ok=True)
-ruta = 'modelos/modelo_cafe.pkl'
-with open(ruta, 'wb') as f:
-    pickle.dump(modelo, f)
+ruta_modelo = 'modelos/modelo_cafe.pkl'
+with open(ruta_modelo, 'wb') as archivo_modelo:
+    pickle.dump(modelo, archivo_modelo)
+
+print(f'[OK] Modelo guardado en: {ruta_modelo}')
+print(f'[OK] Dataset de apoyo guardado en: {ruta_debug}')
 
 print()
-print(f'OK - Modelo guardado en: {ruta}')
-print(f'   Tamano: {os.path.getsize(ruta) / 1024:.1f} KB')
+print('=' * 55)
+print('RESUMEN DEL ENTRENAMIENTO:')
+print(f'  Registros entrenados: {len(df_final)}')
+print(f'  Rango de fechas: {df_final["ds"].min().date()} a {df_final["ds"].max().date()}')
+print('  Regresores usados: KC y TRM')
+print('=' * 55)

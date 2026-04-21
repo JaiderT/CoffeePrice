@@ -13,6 +13,7 @@ import {
 import rolMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
 router.get("/", authMiddleware, rolMiddleware("admin"), getusuario);
 router.put("/:id/estado", authMiddleware, rolMiddleware("admin"), cambiarestado);
@@ -34,6 +35,11 @@ router.put("/perfil", authMiddleware, async (req, res) => {
 router.put("/password", authMiddleware, async (req, res) => {
   try {
     const { passwordactual, passwordnueva } = req.body;
+    if (!PASSWORD_REGEX.test(passwordnueva)) {
+      return res.status(400).json({
+        message: "La contraseña debe tener mínimo 10 caracteres, una mayúscula, una minúscula y un número"
+      });
+    }
     const usuario = await Usuario.findById(req.user.id);
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     const esValida = await bcrypt.compare(passwordactual, usuario.password);
@@ -53,4 +59,3 @@ router.put("/:id/password", authMiddleware, rolMiddleware("admin"), cambiarpassw
 router.delete("/:id", authMiddleware, rolMiddleware("admin"), eliminarusuario);
 
 export default router;
-
