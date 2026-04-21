@@ -9,13 +9,11 @@ export function AlertasProvider({ children }) {
   const [mostrarBanner, setMostrarBanner] = useState(false);
 
   const verificarAlertas = useCallback(async () => {
-    const token = localStorage.getItem('token');
     const usuarioId = localStorage.getItem('usuarioId');
-    if (!token || !usuarioId) return;
+    if (!usuarioId) return;
     try {
       const { data } = await axios.get(
-        `${API_URL}/api/alertas/verificar/${usuarioId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${API_URL}/api/alertas/verificar/${usuarioId}`
       );
       if (data.length > 0) {
         setAlertasDisparadas(data);
@@ -33,11 +31,8 @@ export function AlertasProvider({ children }) {
   }, [API_URL]);
 
   const confirmarAlerta = async (alerta) => {
-    const token = localStorage.getItem('token');
     try {
-      await axios.delete(`${API_URL}/api/alertas/${alerta._id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/alertas/${alerta._id}`);
     } catch { /* silencioso */ }
     const nuevas = alertasDisparadas.filter(a => a._id !== alerta._id);
     setAlertasDisparadas(nuevas);
@@ -50,9 +45,8 @@ export function AlertasProvider({ children }) {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     const usuarioId = localStorage.getItem('usuarioId');
-    if (!token || !usuarioId) return;
+    if (!usuarioId) return;
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }

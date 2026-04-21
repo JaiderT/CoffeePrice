@@ -29,6 +29,7 @@ export default function PerfilAdmin() {
   const [cargandoReseñas, setCargandoReseñas] = useState(false);
   const [cargandoPlataforma, setCargandoPlataforma] = useState(false);
   const [cargandoNoticias, setCargandoNoticias] = useState(false);
+  const [limpiandoNoticias, setLimpiandoNoticias] = useState(false);
   const [filtroUsuarios, setFiltroUsuarios] = useState('todos');
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -209,6 +210,29 @@ export default function PerfilAdmin() {
       obtenerNoticias();
     } catch {
       mostrarMensaje('error', 'Error al eliminar noticia');
+    }
+  };
+
+  const handleLimpiarNoticiasDanadas = async () => {
+    const confirmar = window.confirm('Se eliminarán noticias automáticas sospechosas para dejar la presentación más limpia. ¿Desea continuar?');
+    if (!confirmar) return;
+
+    setLimpiandoNoticias(true);
+    try {
+      const { data } = await axios.post(`${API_URL}/api/noticias/limpiar-danadas`, {
+        dryRun: false,
+        soloAutoGeneradas: true,
+        limite: 250,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      mostrarMensaje('exito', data?.message || 'Noticias dañadas limpiadas correctamente');
+      obtenerNoticias();
+    } catch {
+      mostrarMensaje('error', 'Error al limpiar noticias dañadas');
+    } finally {
+      setLimpiandoNoticias(false);
     }
   };
 
@@ -730,11 +754,20 @@ export default function PerfilAdmin() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Gestionar noticias</h3>
-              <button
-                onClick={() => { setNoticiaEditar(null); setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' }); setMostrarFormNoticia(true); }}
-                className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
-                <i className="fa-solid fa-plus"></i> Nueva noticia
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLimpiarNoticiasDanadas}
+                  disabled={limpiandoNoticias}
+                  className="bg-[#7A4020] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#5f2f15] transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  <i className="fa-solid fa-broom"></i>
+                  {limpiandoNoticias ? 'Limpiando...' : 'Limpiar dañadas'}
+                </button>
+                <button
+                  onClick={() => { setNoticiaEditar(null); setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' }); setMostrarFormNoticia(true); }}
+                  className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
+                  <i className="fa-solid fa-plus"></i> Nueva noticia
+                </button>
+              </div>
             </div>
 
             {cargandoNoticias ? (

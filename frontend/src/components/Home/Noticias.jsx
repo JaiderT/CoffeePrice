@@ -79,6 +79,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       if (token && usuarioId) {
         await fetch(`${API_URL}/api/alertas-noticias`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -118,6 +119,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       if (token && usuarioId) {
         await fetch(`${API_URL}/api/alertas-noticias`, {
           method: 'DELETE',
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -267,6 +269,7 @@ export default function Noticias() {
       if (!token || !usuarioId) return;
       try {
         const res = await fetch(`${API_URL}/api/alertas-noticias/usuario/${usuarioId}`, {
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

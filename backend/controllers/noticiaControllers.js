@@ -1,5 +1,5 @@
 import Noticia from "../models/noticia.js";
-import { asegurarNoticiasRecientes } from "../services/noticiaAutoService.js";
+import { asegurarNoticiasRecientes, limpiarNoticiasDanadas } from "../services/noticiaAutoService.js";
 import AlertaNoticia from "../models/alertaNoticia.js";
 import { enviarAlertaNoticia } from "../services/emailService.js";
 
@@ -98,5 +98,21 @@ export const deleteNoticia = async (req, res) => {
         res.json({ message: "Noticia eliminada correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar noticia", error: error.message });
+    }
+};
+
+export const limpiarNoticiasDanadasController = async (req, res) => {
+    try {
+        const { dryRun = false, soloAutoGeneradas = true, limite = 150 } = req.body || {};
+        const resultado = await limpiarNoticiasDanadas({ dryRun, soloAutoGeneradas, limite });
+
+        res.json({
+            message: dryRun
+                ? `Se encontraron ${resultado.encontradas} noticias sospechosas`
+                : `Se limpiaron ${resultado.eliminadas} noticias sospechosas`,
+            ...resultado,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error al limpiar noticias dañadas", error: error.message });
     }
 };

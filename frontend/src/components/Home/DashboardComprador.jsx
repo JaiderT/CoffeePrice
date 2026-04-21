@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Link } from 'react-router-dom';
+import { abrirGuiaKaffi } from '../../utils/kaffiEvents';
 
 function DashboardComprador() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -375,7 +376,7 @@ function DashboardComprador() {
 
       {/* DASHBOARD */}
       {pestana === 'dashboard' && (
-        <div className="px-6 md:px-8 py-6 space-y-6">
+        <div data-kaffi="dashboard-resumen" className="px-6 md:px-8 py-6 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[#2C1A0E] rounded-2xl p-4 shadow-sm">
               <p className="text-[#D8C7A8] text-xs uppercase font-semibold">Precio actual</p>
@@ -734,8 +735,14 @@ function DashboardComprador() {
 
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-4">⚡ Acciones rápidas</p>
-              <div className="space-y-2">
-                <button onClick={() => setMostrarFormulario(true)}
+              <button
+                onClick={() => abrirGuiaKaffi('dashboard_comprador')}
+                className="mb-3 w-full rounded-xl border border-[#C8A96E] bg-[#FFF8EC] px-4 py-2.5 text-left text-xs font-semibold text-[#3D1F0F] transition hover:bg-[#F5ECD7]"
+              >
+                Que Kaffi me haga un recorrido de este panel
+              </button>
+              <div data-kaffi="dashboard-acciones" className="space-y-2">
+                <button data-kaffi="dashboard-publicar" onClick={() => setMostrarFormulario(true)}
                   className="w-full bg-[#2C1A0E] text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors text-left px-4 flex items-center gap-2">
                   <i className="fa-solid fa-plus"></i> Publicar nuevo precio del día
                 </button>
@@ -763,20 +770,29 @@ function DashboardComprador() {
           <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Publicar precio del día</h3>
-              <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => abrirGuiaKaffi('publicar_precio')}
+                  className="rounded-full border border-[#C8A96E] px-3 py-1 text-[11px] font-semibold text-[#3D1F0F] transition hover:bg-[#FFF8EC]"
+                >
+                  Guia de Kaffi
+                </button>
+                <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
             </div>
             <form onSubmit={handlePublicar}>
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Precio por carga (COP)</label>
-                <input type="number" placeholder="Ej: 1950000" required value={nuevoPrecio.preciocarga}
+                <input data-kaffi="precio-carga" type="number" placeholder="Ej: 1950000" required value={nuevoPrecio.preciocarga}
                   onChange={(e) => setNuevoPrecio({ ...nuevoPrecio, preciocarga: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div className="mb-6">
                 <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de café</label>
-                <select value={nuevoPrecio.tipocafe}
+                <select data-kaffi="precio-tipo" value={nuevoPrecio.tipocafe}
                   onChange={(e) => setNuevoPrecio({ ...nuevoPrecio, tipocafe: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="pergamino_seco">Pergamino seco</option>
@@ -790,7 +806,7 @@ function DashboardComprador() {
                   className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar
                 </button>
-                <button type="submit"
+                <button data-kaffi="precio-submit" type="submit"
                   className="flex-1 bg-[#C8A96E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
                   Publicar
                 </button>

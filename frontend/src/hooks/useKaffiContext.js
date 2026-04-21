@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-export const useKaffiContext = (setMensajes, setAbierto) => {
+export const useKaffiContext = (setMensajes) => {
   const location = useLocation();
   
   useEffect(() => {
@@ -15,15 +15,15 @@ export const useKaffiContext = (setMensajes, setAbierto) => {
         mensaje: "📊 Aquí están los precios del pergamino seco. ¿Sabías que los martes suelen haber mejores ofertas?",
         tiempo: 2000
       },
-      '/compradores': {
+      '/mapa': {
         mensaje: "🤝 Buscando compradores en El Pital? Te ayudo a comparar precios y condiciones de pago.",
         tiempo: 2000
       },
-      '/registro': {
+      '/register': {
         mensaje: "📝 Para registrarte solo necesitas nombre, teléfono y tu vereda. ¿En qué te ayudo?",
         tiempo: 2500
       },
-      '/dashboard': {
+      '/comprador/dashboard': {
         mensaje: "📊 Aquí puedes ver tus estadísticas de venta. ¿Quieres consejos para mejorar tus precios?",
         tiempo: 2000
       },
@@ -42,12 +42,11 @@ export const useKaffiContext = (setMensajes, setAbierto) => {
             role: "assistant", 
             content: tip.mensaje 
           }]);
-          setAbierto(true);
           sessionStorage.setItem(`tip_${location.pathname}`, 'visto');
         }, tip.tiempo);
         
         return () => clearTimeout(timeout);
       }
     }
-  }, [location.pathname, setMensajes, setAbierto]);
+  }, [location.pathname, setMensajes]);
 };

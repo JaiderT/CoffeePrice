@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import usuario from "../models/usuario.js";
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+
 const transporte = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -108,8 +110,7 @@ export const solicitarCodigo = async (req, res) => {
     } catch (error) {
         console.error("Error al enviar el codigo", error);
         res.status(500).json({
-            message: "Error al procesar la solicitud",
-            error: error.message
+            message: "Error al procesar la solicitud"
         });
     }
 };
@@ -128,7 +129,7 @@ export const cambiarPassword = async (req, res) => {
             });
         }
 
-        if (nuevaPassword.length < 8) {
+        if (!PASSWORD_REGEX.test(nuevaPassword)) {
             return res.status(400).json({
                 message: "La contraseña debe tener al menos 8 caracteres"
             });

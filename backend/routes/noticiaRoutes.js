@@ -5,6 +5,7 @@ import {
     createNoticia,
     updateNoticia,
     deleteNoticia,
+    limpiarNoticiasDanadasController,
 } from "../controllers/noticiaControllers.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import roleMiddleware from "../middlewares/rolMiddleware.js";
@@ -17,6 +18,7 @@ router.get("/:id", getNoticiaById);
 router.post("/", authMiddleware, roleMiddleware("admin"), createNoticia);
 router.put("/:id", authMiddleware, roleMiddleware("admin"), updateNoticia);
 router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteNoticia);
+router.post("/limpiar-danadas", authMiddleware, roleMiddleware("admin"), limpiarNoticiasDanadasController);
 router.post('/generar-automaticas', authMiddleware, roleMiddleware('admin'),
     async (req, res) => {
         try {
