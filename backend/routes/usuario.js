@@ -21,11 +21,21 @@ router.put("/:id/estado", authMiddleware, rolMiddleware("admin"), cambiarestado)
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {
     const { nombre, apellido, celular } = req.body;
+
+    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+    if (!nombre || !soloLetras.test(nombre.trim())) {
+      return res.status(400).json({ message: "El nombre solo puede contener letras" });
+    }
+    if (!apellido || !soloLetras.test(apellido.trim())) {
+      return res.status(400).json({ message: "El apellido solo puede contener letras" });
+    }
+
     const usuario = await Usuario.findByIdAndUpdate(
       req.user.id,
       { nombre, apellido, celular },
       { new: true, runValidators: true }
-    ) .select("-password");
+    ).select("-password");
+
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(usuario);
   } catch (error) {
