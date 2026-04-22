@@ -204,9 +204,14 @@ function Alertas() {
               Gestiona tus alertas de precios y noticias del café.
             </p>
           </div>
-          <button onClick={() => { setPestana('precios'); setMostrarForm(true); }}
-            className="bg-[#C8A96E] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
-            <i className="fa-solid fa-plus"></i> Nueva alerta
+          <button onClick={() => {
+            if (pestana === 'noticias') {
+              setMostrarFormNoticia(true);
+              } else {
+                setMostrarForm(true);
+              }
+            }}
+              className="bg-[#C8A96E] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2"><i className="fa-solid fa-plus"></i> Nueva alerta
           </button>
         </div>
       </div>

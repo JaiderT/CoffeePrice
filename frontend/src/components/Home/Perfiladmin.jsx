@@ -291,21 +291,30 @@ export default function PerfilAdmin() {
   };
 
   const handleGuardarDatos = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      actualizarUsuario(datos);
-      mostrarMensaje('exito', 'Datos actualizados correctamente');
-      setModo('ver');
-    } catch {
-      mostrarMensaje('error', 'Error al actualizar los datos');
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+  if (!soloLetras.test(datos.nombre.trim())) {
+    mostrarMensaje('error', 'El nombre solo puede contener letras');
+    return;
+  }
+  if (!soloLetras.test(datos.apellido.trim())) {
+    mostrarMensaje('error', 'El apellido solo puede contener letras');
+    return;
+  }
+  setLoading(true);
+  try {
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    actualizarUsuario(datos);
+    mostrarMensaje('exito', 'Datos actualizados correctamente');
+    setModo('ver');
+  } catch {
+    mostrarMensaje('error', 'Error al actualizar los datos');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCambiarPassword = async (e) => {
     e.preventDefault();
