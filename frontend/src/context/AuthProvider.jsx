@@ -113,18 +113,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
-<<<<<<< HEAD
-    
-    localStorage.removeItem('token');
-    localStorage.removeItem('rol');
-    localStorage.removeItem('name');
-    localStorage.removeItem('apellido');
-    localStorage.removeItem('usuarioId');
-    localStorage.removeItem('celular');
-    localStorage.removeItem('email');
-=======
     limpiarUsuarioLocal();
->>>>>>> 6c71e8e (froned)
     setUsuario(null);
   };
 
