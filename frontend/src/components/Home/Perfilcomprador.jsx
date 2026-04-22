@@ -145,7 +145,7 @@ export default function PerfilComprador() {
 
         {/* Card personal */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div className="h-24 bg-gradient-to-r from-[#3D1F0F] to-[#C8A96E] relative">
+          <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#C8A96E] relative">
             <div className="absolute -bottom-8 left-8">
               <div className="w-16 h-16 rounded-2xl bg-[#2C1A0E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
                 {iniciales}

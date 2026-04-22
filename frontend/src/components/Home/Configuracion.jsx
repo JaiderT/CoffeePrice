@@ -253,7 +253,7 @@ function Configuracion() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5ECD7]">
+    <div className="min-h-screen bg-[#F5ECD7] pb-10">
 
       {/* Header */}
       <div className="px-6 md:px-8 py-6 border-b border-[#E0D0B0]">
@@ -291,7 +291,7 @@ function Configuracion() {
         ))}
       </div>
 
-      <div className="px-6 md:px-8 py-6 max-w-4xl">
+      <div className="px-6 md:px-8 py-6 w-full">
 
         {/* GENERAL */}
         {pestana === 'general' && (
