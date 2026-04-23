@@ -15,7 +15,7 @@ export const createcomprador = async (req, res) => {
             return res.status(403).json({
                 message: "Solo los usuarios con rol comprador pueden crear este perfil"
             });
-            }
+        }
 
         const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre, latitud, longitud } = req.body;
 
@@ -23,6 +23,14 @@ export const createcomprador = async (req, res) => {
             return res.status(400).json({
                 message: "Nombre de empresa, dirección y teléfono son obligatorios"
             });
+        }
+
+        // Verificar si ya existe una empresa con ese nombre
+        const empresaExistente = await CompradorModel.findOne({
+            nombreempresa: { $regex: new RegExp(`^${nombreempresa.trim()}$`, 'i') }
+        });
+        if (empresaExistente) {
+            return res.status(400).json({ message: "Ya existe una empresa registrada con ese nombre" });
         }
 
         const usuario = req.user.id;
@@ -59,7 +67,7 @@ export const createcomprador = async (req, res) => {
 
 export const updatecomprador = async (req, res) => {
     try {
-        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre } = req.body;
+        const { nombreempresa, direccion, telefono, horario, horarioApertura, horarioCierre, latitud, longitud } = req.body;
 
         const compradorExistente = await CompradorModel.findById(req.params.id);
 
@@ -76,12 +84,24 @@ export const updatecomprador = async (req, res) => {
             });
         }
 
-        if (nombreempresa !== undefined) compradorExistente.nombreempresa = nombreempresa.trim();
+        if (nombreempresa !== undefined) {
+            const empresaExistente = await CompradorModel.findOne({
+                nombreempresa: { $regex: new RegExp(`^${nombreempresa.trim()}$`, 'i') },
+                _id: { $ne: compradorExistente._id }
+            });
+            if (empresaExistente) {
+                return res.status(400).json({ message: "Ya existe una empresa registrada con ese nombre" });
+            }
+            compradorExistente.nombreempresa = nombreempresa.trim();
+        }
+
         if (direccion !== undefined) compradorExistente.direccion = direccion.trim();
         if (telefono !== undefined) compradorExistente.telefono = telefono.trim();
         if (horario !== undefined) compradorExistente.horario = horario.trim();
         if (horarioApertura !== undefined) compradorExistente.horarioApertura = horarioApertura;
         if (horarioCierre !== undefined) compradorExistente.horarioCierre = horarioCierre;
+        if (latitud !== undefined) compradorExistente.latitud = latitud ? parseFloat(latitud) : null;
+        if (longitud !== undefined) compradorExistente.longitud = longitud ? parseFloat(longitud) : null;
 
         await compradorExistente.save();
         res.json(compradorExistente);

@@ -10,6 +10,7 @@ const compradorSchema = new mongoose.Schema(
             type: String,
             required: [true, "nombre de la empresa necesaria"],
             trim: true,
+            unique: true,
         },
         direccion: {
             type: String,
