@@ -9,11 +9,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: ' Precios del café' },
-  { value: 'internacional', label: ' Mercado internacional' },
+  { value: 'mercado', label: 'Precios del cafe' },
+  { value: 'internacional', label: 'Mercado internacional' },
   { value: 'clima', label: 'Clima y cosechas' },
-  { value: 'fnc', label: 'Federación Cafeteros' },
-  { value: 'produccion', label: 'Producción' },
+  { value: 'fnc', label: 'Federacion Cafeteros' },
+  { value: 'produccion', label: 'Produccion' },
   { value: 'consejos', label: 'Consejos para caficultores' },
   { value: 'el_pital', label: 'Noticias de El Pital' },
 ];
@@ -40,16 +40,19 @@ const categoriaEmoji = {
 
 function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   const [paso, setPaso] = useState('seleccion');
-  const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState(
-    alertasActivas.categorias || []
-  );
+  const [cargando, setCargando] = useState(false);
+  const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState(alertasActivas.categorias || []);
+  const [canalesSeleccionados, setCanalesSeleccionados] = useState({
+    push: alertasActivas.canales?.push ?? true,
+    email: alertasActivas.canales?.email ?? false,
+  });
 
-  const categorias = CATEGORIAS.filter(c => c.value !== 'todas');
+  const categorias = CATEGORIAS.filter((categoria) => categoria.value !== 'todas');
   const usuarioId = localStorage.getItem('usuarioId');
 
   const toggleCategoria = (id) => {
     setCategoriasSeleccionadas((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((categoria) => categoria !== id) : [...prev, id]
     );
   };
 
@@ -85,18 +88,30 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
         });
       }
 
-      const config = { activas: true, categorias: categoriasSeleccionadas, canales: canalesSeleccionados };
+      const config = {
+        activas: true,
+        categorias: categoriasSeleccionadas,
+        canales: canalesSeleccionados,
+      };
+
       localStorage.setItem('coffeprice_alertas', JSON.stringify(config));
       setAlertasActivas(config);
-      new Notification('¡Alertas activadas! ☕', {
-        body: categoriasSeleccionadas.length > 0
-          ? `Recibirás noticias de: ${categoriasSeleccionadas.join(', ')}`
-          : 'Recibirás todas las noticias del café',
-        icon: '/favicon.ico',
-      });
+
+      if (canalesSeleccionados.push) {
+        new Notification('Alertas activadas', {
+          body: categoriasSeleccionadas.length > 0
+            ? `Recibiras noticias de: ${categoriasSeleccionadas.join(', ')}`
+            : 'Recibiras todas las noticias del cafe',
+          icon: '/favicon.ico',
+        });
+      }
+
       setPaso('exito');
-    } else {
-      setPaso('denegado');
+    } catch (error) {
+      console.error('Error al activar alertas:', error);
+      setPaso('exito');
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -112,7 +127,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       console.error('Error al desactivar alertas:', error);
     } finally {
       localStorage.removeItem('coffeprice_alertas');
-      setAlertasActivas({ activas: false, categorias: [] });
+      setAlertasActivas({ activas: false, categorias: [], canales: { push: true, email: false } });
       onClose();
     }
   };
@@ -122,37 +137,53 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="bg-[#3D1F0F] px-6 pt-6 pb-8">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-xl leading-none">✕</button>
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
           <div className="text-4xl mb-3">🔔</div>
           <h3 className="text-white text-xl font-bold">Alertas de noticias</h3>
-          <p className="text-gray-400 text-sm mt-1">Entérate al instante cuando haya novedades del café</p>
+          <p className="text-gray-400 text-sm mt-1">Enterate al instante cuando haya novedades del cafe</p>
         </div>
         <div className="px-6 py-6">
           {paso === 'seleccion' && (
             <>
-              <p className="text-[#2C1A0E] text-sm font-semibold mb-4">¿Sobre qué quieres recibir alertas?</p>
+              <p className="text-[#2C1A0E] text-sm font-semibold mb-4">Sobre que quieres recibir alertas?</p>
               <div className="space-y-2 mb-5">
-                {categorias.map((cat) => {
-                  const activa = categoriasSeleccionadas.includes(cat.value);
+                {categorias.map((categoria) => {
+                  const activa = categoriasSeleccionadas.includes(categoria.value);
                   return (
-                    <button key={cat.value} onClick={() => toggleCategoria(cat.value)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${activa ? 'border-[#C8A96E] bg-[#FFF8EF]' : 'border-gray-100 bg-gray-50 hover:border-[#D4B898]'}`}>
-                      <span className="text-xl">{categoriaEmoji[cat.value]}</span>
+                    <button
+                      key={categoria.value}
+                      onClick={() => toggleCategoria(categoria.value)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${activa ? 'border-[#C8A96E] bg-[#FFF8EF]' : 'border-gray-100 bg-gray-50 hover:border-[#D4B898]'}`}
+                    >
+                      <span className="text-xl">{categoriaEmoji[categoria.value]}</span>
                       <div className="flex-1">
-                        <p className={`text-xs font-bold ${activa ? 'text-[#3D1F0F]' : 'text-gray-600'}`}>{cat.label}</p>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${activa ? 'bg-[#C8A96E] border-[#C8A96E]' : 'border-gray-300'}`}>
-                        {activa && <span className="text-white text-xs font-bold">✓</span>}
+                        <p className={`text-xs font-bold ${activa ? 'text-[#3D1F0F]' : 'text-gray-600'}`}>{categoria.label}</p>
                       </div>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-gray-400 text-xs mb-4 text-center">
-                {categoriasSeleccionadas.length === 0 ? 'Sin selección recibirás todas las alertas' : `${categoriasSeleccionadas.length} categoría${categoriasSeleccionadas.length > 1 ? 's' : ''} seleccionada${categoriasSeleccionadas.length > 1 ? 's' : ''}`}
-              </p>
-              <button onClick={activarNotificaciones} className="w-full bg-[#3D1F0F] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#5a2e18] transition-colors">
-                🔔 Activar notificaciones
+              <div className="space-y-2 mb-4">
+                {[
+                  { key: 'push', label: 'Notificacion push', desc: 'En el navegador cuando estes en la app' },
+                  { key: 'email', label: 'Correo electronico', desc: 'Te enviaremos un correo con la noticia' },
+                ].map((canal) => (
+                  <label key={canal.key} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${canalesSeleccionados[canal.key] ? 'border-[#C8A96E] bg-[#FFF8E7]' : 'border-gray-200 bg-gray-50'}`}>
+                    <div>
+                      <p className="text-sm font-semibold text-[#2C1A0E]">{canal.label}</p>
+                      <p className="text-xs text-gray-400">{canal.desc}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={canalesSeleccionados[canal.key]}
+                      onChange={(e) => setCanalesSeleccionados({ ...canalesSeleccionados, [canal.key]: e.target.checked })}
+                      className="w-4 h-4 accent-[#C8A96E]"
+                    />
+                  </label>
+                ))}
+              </div>
+              <button onClick={activarNotificaciones} disabled={cargando} className="w-full bg-[#3D1F0F] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#5a2e18] transition-colors disabled:opacity-60">
+                {cargando ? 'Activando...' : 'Activar notificaciones'}
               </button>
               {alertasActivas.activas && (
                 <button onClick={desactivar} className="w-full mt-2 text-red-400 text-xs py-2 hover:text-red-600 transition-colors">
@@ -164,8 +195,8 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
           {paso === 'exito' && (
             <div className="text-center py-4">
               <div className="text-5xl mb-4">✅</div>
-              <h4 className="text-[#2C1A0E] font-bold text-lg mb-2">¡Alertas activadas!</h4>
-              <p className="text-gray-500 text-sm mb-6">Te avisaremos cuando haya noticias importantes del café.</p>
+              <h4 className="text-[#2C1A0E] font-bold text-lg mb-2">Alertas activadas</h4>
+              <p className="text-gray-500 text-sm mb-2">Te avisaremos cuando haya noticias importantes del cafe.</p>
               <button onClick={onClose} className="w-full bg-[#C8A96E] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#B8994E] transition-colors">
                 Perfecto, cerrar
               </button>
@@ -196,9 +227,9 @@ export default function Noticias() {
   const [alertasActivas, setAlertasActivas] = useState(() => {
     try {
       const guardado = localStorage.getItem('coffeprice_alertas');
-      return guardado ? JSON.parse(guardado) : { activas: false, categorias: [] };
+      return guardado ? JSON.parse(guardado) : { activas: false, categorias: [], canales: { push: true, email: false } };
     } catch {
-      return { activas: false, categorias: [] };
+      return { activas: false, categorias: [], canales: { push: true, email: false } };
     }
   });
 
@@ -206,9 +237,7 @@ export default function Noticias() {
     setCargando(true);
     try {
       const params = new URLSearchParams();
-      if (categoriaActiva !== 'todas') {
-        params.set('categoria', categoriaActiva);
-      }
+      if (categoriaActiva !== 'todas') params.set('categoria', categoriaActiva);
       params.set('_ts', Date.now().toString());
       const { data } = await axios.get(`${API_URL}/api/noticias?${params.toString()}`);
       setNoticias(data);
@@ -219,7 +248,6 @@ export default function Noticias() {
     }
   }, [categoriaActiva]);
 
-  // Cargar alerta del backend si está logueado
   useEffect(() => {
     const cargarAlertaBackend = async () => {
       const usuarioId = localStorage.getItem('usuarioId');
@@ -236,7 +264,9 @@ export default function Noticias() {
             canales: data.canales || { push: true, email: false },
           });
         }
-      } catch { /* silencioso */ }
+      } catch {
+        // silencioso
+      }
     };
     cargarAlertaBackend();
   }, []);
@@ -247,59 +277,40 @@ export default function Noticias() {
 
   const destacada = noticias[0];
   const secundarias = noticias.slice(1);
-  
+
   const formatearFechaNoticia = (noticia, corta = false) => {
     const fecha = noticia.publishedAt || noticia.createdAt;
-    return new Date(fecha).toLocaleDateString(
-      'es-CO',
-      corta
-        ? { day: '2-digit', month: 'short' }
-        : { day: '2-digit', month: 'short', year: 'numeric' }
-    );
+    return new Date(fecha).toLocaleDateString('es-CO', corta ? { day: '2-digit', month: 'short' } : { day: '2-digit', month: 'short', year: 'numeric' });
   };
-  
-  const etiquetaImagen = (noticia) =>
-    noticia.tipoImagen === 'source' ? 'Imagen de la fuente' : 'Imagen de apoyo';
+
+  const etiquetaImagen = (noticia) => noticia.tipoImagen === 'source' ? 'Imagen de la fuente' : 'Imagen de apoyo';
 
   const contenido = (
     <div className="w-full bg-[#F5ECD7] py-12 md:py-16 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 md:px-7">
-
-        {/* Encabezado */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al día con el campo</p>
-            <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-2">Noticias del café</h2>
-            <p className="text-gray-500 text-sm mt-2">Lo más relevante del sector cafetero colombiano e internacional.</p>
+            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al dia con el campo</p>
+            <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-2">Noticias del cafe</h2>
+            <p className="text-gray-500 text-sm mt-2">Lo mas relevante del sector cafetero colombiano e internacional.</p>
           </div>
         </div>
 
-        {/* Categorías */}
         <div className="flex gap-2 flex-wrap mb-8">
-          {CATEGORIAS.map((cat, i) => (
-            <button key={i} onClick={() => setCategoriaActiva(cat.value)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${categoriaActiva === cat.value
-                  ? 'bg-[#3D1F0F] text-white'
-                  : 'bg-white text-[#3D1F0F] border border-[#D4B898] hover:bg-[#3D1F0F] hover:text-white'
-                }`}>
-              {cat.label}
+          {CATEGORIAS.map((categoria) => (
+            <button
+              key={categoria.value}
+              onClick={() => setCategoriaActiva(categoria.value)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${categoriaActiva === categoria.value ? 'bg-[#3D1F0F] text-white' : 'bg-white text-[#3D1F0F] border border-[#D4B898] hover:bg-[#3D1F0F] hover:text-white'}`}
+            >
+              {categoria.label}
             </button>
           ))}
         </div>
 
-        {/* Cargando */}
-        {cargando && (
-          <div className="text-center py-16 text-gray-400 text-sm">Cargando noticias...</div>
-        )}
+        {cargando && <div className="text-center py-16 text-gray-400 text-sm">Cargando noticias...</div>}
+        {!cargando && noticias.length === 0 && <div className="text-center py-16 text-gray-400 text-sm">No hay noticias en esta categoria por el momento.</div>}
 
-        {/* Sin resultados */}
-        {!cargando && noticias.length === 0 && (
-          <div className="text-center py-16 text-gray-400 text-sm">
-            No hay noticias en esta categoría por el momento.
-          </div>
-        )}
-
-        {/* Grid noticias */}
         {!cargando && noticias.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {destacada && (
@@ -314,9 +325,7 @@ export default function Noticias() {
                     <span className="bg-[#C8A96E] text-[#3D1F0F] text-xs font-bold px-3 py-1 rounded-full">
                       {categoriaEmoji[destacada.categoria]} {destacada.categoria}
                     </span>
-                    <h3 className="text-white text-xl md:text-2xl font-bold mt-4 leading-snug group-hover:text-[#C8A96E] transition-colors">
-                      {destacada.titulo}
-                    </h3>
+                    <h3 className="text-white text-xl md:text-2xl font-bold mt-4 leading-snug group-hover:text-[#C8A96E] transition-colors">{destacada.titulo}</h3>
                     <p className="text-gray-400 text-sm mt-3 leading-relaxed">{destacada.resumen}</p>
                   </div>
                   <div className="flex items-center justify-between mt-6">
@@ -324,18 +333,11 @@ export default function Noticias() {
                       <div className="w-7 h-7 bg-[#C8A96E] rounded-full flex items-center justify-center text-xs">☕</div>
                       <span className="text-gray-400 text-xs">{destacada.fuente || 'CoffePrice'}</span>
                     </div>
-                    <span className="text-gray-500 text-xs">
-                      {formatearFechaNoticia(destacada)}
-                    </span>
+                    <span className="text-gray-500 text-xs">{formatearFechaNoticia(destacada)}</span>
                   </div>
                   <span className="text-[11px] text-gray-500 mt-3">{etiquetaImagen(destacada)}</span>
                   {destacada.sourceUrl && (
-                    <a
-                      href={destacada.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex mt-4 text-[#C8A96E] text-xs font-semibold hover:text-white transition-colors"
-                    >
+                    <a href={destacada.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex mt-4 text-[#C8A96E] text-xs font-semibold hover:text-white transition-colors">
                       Ver fuente original
                     </a>
                   )}
@@ -356,55 +358,37 @@ export default function Noticias() {
                   <span className={`text-xs font-semibold px-3 py-1 rounded-full ${categoriaBadgeColors[noticia.categoria] || 'bg-gray-100 text-gray-600'}`}>
                     {categoriaEmoji[noticia.categoria]} {noticia.categoria}
                   </span>
-                  <h3 className="text-[#2C1A0E] font-bold text-sm mt-3 leading-snug group-hover:text-[#C8A96E] transition-colors">
-                    {noticia.titulo}
-                  </h3>
+                  <h3 className="text-[#2C1A0E] font-bold text-sm mt-3 leading-snug group-hover:text-[#C8A96E] transition-colors">{noticia.titulo}</h3>
                   <p className="text-gray-500 text-xs mt-2 leading-relaxed">{noticia.resumen}</p>
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-gray-400 text-xs">{noticia.fuente || 'CoffePrice'}</span>
-                    <span className="text-gray-400 text-xs">
-                      {formatearFechaNoticia(noticia, true)}
-                    </span>
+                    <span className="text-gray-400 text-xs">{formatearFechaNoticia(noticia, true)}</span>
                   </div>
                   <span className="block text-[11px] text-gray-400 mt-2">{etiquetaImagen(noticia)}</span>
-                  {noticia.sourceUrl && (
-                    <a
-                      href={noticia.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex mt-3 text-[#8B6B45] text-[11px] font-semibold hover:text-[#3D1F0F] transition-colors"
-                    >
-                      Leer fuente
-                    </a>
-                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Banner alerta */}
         <div className="mt-8 bg-[#3D1F0F] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="text-3xl">{alertasActivas.activas ? '🔔' : '🔕'}</span>
             <div>
               <p className="text-white font-bold text-sm">
-                {alertasActivas.activas ? '¡Alertas activas!' : 'Recibe las notificaciones en tu dispositivo'}
+                {alertasActivas.activas ? 'Alertas activas' : 'Recibe las notificaciones en tu dispositivo'}
               </p>
               <p className="text-gray-400 text-xs mt-0.5">
                 {alertasActivas.activas
-                  ? `Categorías: ${alertasActivas.categorias.length > 0 ? alertasActivas.categorias.join(', ') : 'Todas'}`
-                  : 'Activa las notificaciones y entérate cuando el precio suba o haya noticias importantes.'}
+                  ? `Categorias: ${alertasActivas.categorias.length > 0 ? alertasActivas.categorias.join(', ') : 'Todas'}`
+                  : 'Activa las notificaciones y enterate cuando haya noticias importantes.'}
               </p>
             </div>
           </div>
-          <button onClick={() => setModalAbierto(true)}
-            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer ${alertasActivas.activas ? 'bg-white text-[#3D1F0F] hover:bg-gray-100' : 'bg-[#C8A96E] text-white hover:bg-[#B8994E]'
-              }`}>
-            {alertasActivas.activas ? '⚙️ Editar alertas' : '🔔 Activar alertas'}
+          <button onClick={() => setModalAbierto(true)} className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer ${alertasActivas.activas ? 'bg-white text-[#3D1F0F] hover:bg-gray-100' : 'bg-[#C8A96E] text-white hover:bg-[#B8994E]'}`}>
+            {alertasActivas.activas ? 'Editar alertas' : 'Activar alertas'}
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -414,9 +398,7 @@ export default function Noticias() {
       {!cargandoAuth && usuario ? (
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="ml-16 flex-1">
-            {contenido}
-          </div>
+          <div className="ml-16 flex-1">{contenido}</div>
         </div>
       ) : !cargandoAuth && !usuario ? (
         <div className="bg-[#2C1A0E]">
@@ -430,14 +412,8 @@ export default function Noticias() {
         </div>
       )}
       {modalAbierto && (
-        <ModalAlertas
-          onClose={() => setModalAbierto(false)}
-          alertasActivas={alertasActivas}
-          setAlertasActivas={setAlertasActivas}
-        />
+        <ModalAlertas onClose={() => setModalAbierto(false)} alertasActivas={alertasActivas} setAlertasActivas={setAlertasActivas} />
       )}
     </>
   );
 }
-
-

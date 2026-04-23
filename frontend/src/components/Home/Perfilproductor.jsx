@@ -42,9 +42,7 @@ export default function PerfilProductor() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
@@ -246,5 +244,4 @@ function InputField({ label, value, onChange, type = 'text', placeholder = '' })
     </div>
   );
 }
-
 
