@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 
@@ -128,8 +128,7 @@ function FilaCafe({ tipo, tiposCafe, setTiposCafe, guardarConfig }) {
 
 function Configuracion() {
   const API_URL = import.meta.env.VITE_API_URL;
-  const { usuario } = useAuth();
-  const token = localStorage.getItem('token');
+  useAuth();
 
   const [stats, setStats] = useState({ usuarios: 0, compradores: 0, productores: 0, alertas: 0, precios: 0, noticias: 0 });
   const [cargando, setCargando] = useState(true);
@@ -147,18 +146,14 @@ function Configuracion() {
   const [nuevoMunicipio, setNuevoMunicipio] = useState('');
   const [tiposCafe, setTiposCafe] = useState([]);
 
-  useEffect(() => {
-    obtenerDatos();
-  }, []);
-
-  const obtenerDatos = async () => {
+  const obtenerDatos = useCallback(async () => {
     setCargando(true);
     try {
       const [usuariosRes, preciosRes, noticiasRes, configRes] = await Promise.all([
-        axios.get(`${API_URL}/api/usuario`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/usuario`, { withCredentials: true }),
         axios.get(`${API_URL}/api/precios`),
         axios.get(`${API_URL}/api/noticias`),
-        axios.get(`${API_URL}/api/configuracion`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/configuracion`, { withCredentials: true }),
       ]);
       const usuarios = usuariosRes.data || [];
       setStats({
@@ -185,14 +180,16 @@ function Configuracion() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [API_URL]);
+
+  useEffect(() => {
+    obtenerDatos();
+  }, [obtenerDatos]);
 
   const guardarConfig = async (datos) => {
     setGuardando(true);
     try {
-      await axios.put(`${API_URL}/api/configuracion`, datos, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/configuracion`, datos, { withCredentials: true });
       mostrarMsg('exito', 'Configuración guardada correctamente');
     } catch {
       mostrarMsg('error', 'Error al guardar la configuración');
@@ -231,7 +228,7 @@ function Configuracion() {
   const handleExportarDatos = async () => {
     try {
       const [usuariosRes, preciosRes] = await Promise.all([
-        axios.get(`${API_URL}/api/usuario`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/usuario`, { withCredentials: true }),
         axios.get(`${API_URL}/api/precios`),
       ]);
       const datos = {
@@ -547,3 +544,5 @@ function Configuracion() {
 }
 
 export default Configuracion;
+
+

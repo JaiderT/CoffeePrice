@@ -7,7 +7,6 @@ import { useAuth } from '../../context/useAuth.js';
 export default function PerfilProductor() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
-  const token = localStorage.getItem('token');
 
   const [modo, setModo] = useState('ver');
   const [datos, setDatos] = useState({ nombre: '', apellido: '', celular: '' });
@@ -43,9 +42,7 @@ export default function PerfilProductor() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
@@ -67,7 +64,7 @@ export default function PerfilProductor() {
       await axios.put(`${API_URL}/api/usuario/password`, {
         passwordactual: passwords.actual,
         passwordnueva: passwords.nueva,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       mostrarMensaje('exito', 'Contraseña actualizada correctamente');
       setPasswords({ actual: '', nueva: '', confirmar: '' });
       setModo('ver');
@@ -247,3 +244,4 @@ function InputField({ label, value, onChange, type = 'text', placeholder = '' })
     </div>
   );
 }
+

@@ -9,22 +9,17 @@ import {
   resendVerification,
 } from "../controllers/AuthController.js";
 import passport from "../config/passport.js";
-import {
-  loginLimiter,
-  registerLimiter,
-  resendVerificationLimiter,
-  verifyLimiter,
-} from "../middlewares/rateLimit.js";
+import { loginLimiter, registerLimiter, verifyLimiter, resendVerificationLimiter } from "../middlewares/rateLimit.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import Usuario from "../models/usuario.js";
 
 const router = express.Router();
 
 // ─── Autenticación normal ─────────────────────────────────────────
-router.post("/login", loginLimiter, login);
-router.post("/register", registerLimiter, register);
-router.post("/verify-email", verifyLimiter, verifyEmailCodigo);
-router.post("/resend-verification", resendVerificationLimiter, resendVerification);
+router.post("/login",               loginLimiter,                 login);
+router.post("/register",            registerLimiter,              register);
+router.post("/verify-email",        verifyLimiter,                verifyEmailCodigo);
+router.post("/resend-verification", resendVerificationLimiter,    resendVerification);
 
 // ─── Obtener usuario actual (desde cookie) ────────────────────────
 router.get("/me", authMiddleware, async (req, res) => {

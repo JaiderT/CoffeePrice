@@ -13,7 +13,8 @@ export const getAlertasByUsuario = async (req, res) => {
       .populate("comprador", "nombreempresa tipo");
     res.json(alertas);
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener alertas", error: error.message });
+    console.error("[Alerta] Error al obtener alertas:", error.message);
+    res.status(500).json({ message: "Error al obtener alertas" });
   }
 };
 
@@ -48,7 +49,8 @@ export const createAlerta = async (req, res) => {
 
     res.status(201).json(alerta);
   } catch (error) {
-    res.status(400).json({ message: "Error al crear alerta", error: error.message });
+    console.error("[Alerta] Error al crear alerta:", error.message);
+    res.status(400).json({ message: "Error al crear alerta" });
   }
 };
 
