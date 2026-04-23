@@ -35,28 +35,15 @@ export default function Login() {
       }
 
       login(data.user);
+
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
-      setTimeout(async () => {
-        if (data.role === "admin") {
-          navigate("/admin/perfil");
-        } else if (data.role === "comprador") {
-          try {
-            const res = await fetch(`${API_URL}/api/comprador/usuario/${data.id}`, {
-              headers: { Authorization: `Bearer ${data.token}` }
-            });
-            if (res.ok) {
-              navigate("/comprador/dashboard");
-            } else {
-              navigate("/completar-perfil");
-            }
-          } catch {
-            navigate("/completar-perfil");
-          }
-        } else {
-          navigate("/precios");
-        }
-      }, 1500);
+      setTimeout(() => {
+        if (data.role === "admin") navigate("/admin/perfil");
+        else if (data.role === "comprador") navigate("/comprador/dashboard");
+        else navigate("/precios");
+      }, 1500)
+
 
     } catch {
       setError("Error al conectar con el servidor");
@@ -87,15 +74,17 @@ export default function Login() {
         </svg>
       </a>
 
-      {/* Contenedor principal */}
+      {/* Contenedor principal - SIN ALTURAS FIJAS */}
       <div className="w-full max-w-6xl bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/10 mx-auto">
         
+        {/* Layout flexible - SIN ALTURAS FIJAS */}
         <div className="flex flex-col lg:flex-row">
           
-          {/* Panel izquierdo */}
+          {/* Panel izquierdo - Hero (visible en desktop) */}
           <div className="lg:w-1/2 bg-linear-to-br from-[#2C1A0E]/90 to-[#3D1F0F]/90 p-6 sm:p-8 md:p-10 lg:p-12 relative overflow-hidden hidden lg:block">
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
+                {/* Logo */}
                 <div className="flex items-center gap-3 mb-8 md:mb-12 group">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-linear-to-br from-[#C8814A] to-[#E8A870] rounded-xl flex items-center justify-center text-xl md:text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                     ☕
@@ -105,6 +94,7 @@ export default function Login() {
                   </span>
                 </div>
 
+                {/* Hero text */}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-tight mb-4 md:mb-6 font-serif">
                   Tu café merece <br />
                   <span className="text-[#E8A870] italic relative inline-block">
@@ -118,6 +108,7 @@ export default function Login() {
                 </p>
               </div>
 
+              {/* Stats */}
               <div className="flex gap-4 md:gap-6 flex-wrap">
                 {[
                   { number: "+240", label: "Compradores", icon: "🏪" },
@@ -134,13 +125,15 @@ export default function Login() {
               </div>
             </div>
 
+            {/* Decoración de fondo */}
             <div className="absolute -top-24 -right-24 w-64 h-64 md:w-80 md:h-80 rounded-full bg-linear-to-br from-[#C8814A]/20 to-transparent blur-2xl" />
             <div className="absolute -bottom-24 -left-24 w-64 h-64 md:w-80 md:h-80 rounded-full bg-linear-to-tr from-[#C8814A]/10 to-transparent blur-2xl" />
           </div>
 
-          {/* Panel derecho - Formulario */}
+          {/* Panel derecho - Formulario (sin altura fija) */}
           <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 md:p-8 lg:p-10">
             
+            {/* Logo móvil */}
             <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 lg:hidden">
               <div className="w-10 h-10 bg-linear-to-br from-[#C8814A] to-[#E8A870] rounded-xl flex items-center justify-center text-xl shadow-lg">
                 ☕
@@ -150,6 +143,7 @@ export default function Login() {
               </span>
             </div>
 
+            {/* Formulario */}
             <form onSubmit={handleSubmit} className="space-y-4">
               
               <div className="text-center mb-4">
@@ -171,6 +165,7 @@ export default function Login() {
                 </button>
               </div>
 
+              {/* Email */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">
                   Correo electrónico
@@ -191,6 +186,7 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Password */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">
                   Contraseña
@@ -227,6 +223,7 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Opciones adicionales */}
               <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 xs:gap-0">
                 <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer group">
                   <input type="checkbox" className="accent-[#C8814A] w-3.5 h-3.5 rounded cursor-pointer" />
@@ -241,6 +238,7 @@ export default function Login() {
                 </button>
               </div>
 
+              {/* Mensajes */}
               {error && (
                 <div className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center gap-2 animate-shake">
                   <span>❌</span> {error}
@@ -252,6 +250,7 @@ export default function Login() {
                 </div>
               )}
 
+              {/* Botón submit */}
               <button
                 data-kaffi="login-submit"
                 type="submit"
@@ -274,6 +273,7 @@ export default function Login() {
                 </span>
               </button>
 
+              {/* Separador */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#E0D8CE]"></div>
@@ -283,6 +283,7 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Botón Google */}
               <button
                 type="button"
                 onClick={() => {
@@ -299,6 +300,7 @@ export default function Login() {
                 <span>Continuar con Google</span>
               </button>
 
+              {/* Registro */}
               <div className="text-center pt-2">
                 <p className="text-xs sm:text-sm text-gray-500">
                   ¿No tienes cuenta?{" "}
@@ -313,6 +315,7 @@ export default function Login() {
               </div>
             </form>
 
+            {/* Copyright */}
             <div className="text-center text-[9px] sm:text-[10px] text-gray-500 mt-6">
               © 2024 CoffePrice - Todos los derechos reservados
             </div>
@@ -320,6 +323,7 @@ export default function Login() {
         </div>
       </div>
 
+      {/* Estilos adicionales */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

@@ -196,7 +196,7 @@ export default function PerfilPublicoComprador() {
 
       <div className="px-4 md:px-8 pb-8 max-w-6xl mx-auto">
         <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
-          <div className="h-36 bg-gradient-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
+          <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
             <div className="absolute bottom-0 left-6 translate-y-1/2">
               <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {iniciales(comprador.nombreempresa)}
