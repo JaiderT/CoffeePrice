@@ -22,11 +22,13 @@ import Clima from './routes/clima.js'
 import resenaPlataformaRoutes from "./routes/resenaPlataforma.js";
 import { publicLimiter } from "./middlewares/rateLimit.js";
 import { iniciarCronNoticias } from './jobs/noticiaCron.js';
+import { iniciarCronPrecioFNC } from './jobs/precioCron.js';
 import Contacto from "./routes/contacto.js";
 import historialPrecioRoutes from "./routes/historialPrecio.js";
 import chatbotRoutes from './routes/chatbot.js';
 import alertaNoticia from './routes/alertaNoticia.js';
 import configuracionRoutes from "./routes/configuracion.js";
+import precioFNCRoutes from "./routes/precioFNC.js";
 
 const app = express();
 
@@ -66,8 +68,6 @@ app.use(session({
 
 app.use(passport.initialize());
 
-// rutas
-
 process.on('unhandledRejection', (reason) => {
     console.error('[UnhandledRejection]', reason);
 });
@@ -78,6 +78,7 @@ app.use('/api/noticias', publicLimiter);
 app.use('/api/comprador', publicLimiter);
 app.use('/api/resenas', publicLimiter);
 app.use('/api/clima', publicLimiter);
+app.use('/api/precio-fnc', publicLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/noticias", noticiaRoutes);
@@ -94,7 +95,8 @@ app.use("/api", Contacto);
 app.use("/api/historial-precios", historialPrecioRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/alertas-noticias', alertaNoticia);
-app.use('/api/configuracion', configuracionRoutes); 
+app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/precio-fnc', precioFNCRoutes);
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);
@@ -110,5 +112,6 @@ app.listen(8081, async () => {
   if (process.env.NODE_ENV !== "test") {
     await iniciarCronNoticias();
     console.log("Noticias automaticas: activas");
+    iniciarCronPrecioFNC();
   }
 });
