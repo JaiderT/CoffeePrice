@@ -45,6 +45,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   );
 
   const categorias = CATEGORIAS.filter(c => c.value !== 'todas');
+  const usuarioId = localStorage.getItem('usuarioId');
 
   const toggleCategoria = (id) => {
     setCategoriasSeleccionadas((prev) =>
@@ -53,13 +54,38 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   };
 
   const activarNotificaciones = async () => {
-    if (!('Notification' in window)) {
-      alert('Tu navegador no soporta notificaciones push.');
-      return;
-    }
-    const permiso = await Notification.requestPermission();
-    if (permiso === 'granted') {
-      const config = { activas: true, categorias: categoriasSeleccionadas };
+    setCargando(true);
+    try {
+      if (canalesSeleccionados.push) {
+        if (!('Notification' in window)) {
+          alert('Tu navegador no soporta notificaciones push.');
+          setCargando(false);
+          return;
+        }
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') {
+          setPaso('denegado');
+          setCargando(false);
+          return;
+        }
+      }
+
+      if (usuarioId) {
+        await fetch(`${API_URL}/api/alertas-noticias`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            categorias: categoriasSeleccionadas,
+            canales: canalesSeleccionados,
+            activa: true,
+          }),
+        });
+      }
+
+      const config = { activas: true, categorias: categoriasSeleccionadas, canales: canalesSeleccionados };
       localStorage.setItem('coffeprice_alertas', JSON.stringify(config));
       setAlertasActivas(config);
       new Notification('¡Alertas activadas! ☕', {
@@ -74,10 +100,21 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
     }
   };
 
-  const desactivar = () => {
-    localStorage.removeItem('coffeprice_alertas');
-    setAlertasActivas({ activas: false, categorias: [] });
-    onClose();
+  const desactivar = async () => {
+    try {
+      if (usuarioId) {
+        await fetch(`${API_URL}/api/alertas-noticias`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+      }
+    } catch (error) {
+      console.error('Error al desactivar alertas:', error);
+    } finally {
+      localStorage.removeItem('coffeprice_alertas');
+      setAlertasActivas({ activas: false, categorias: [] });
+      onClose();
+    }
   };
 
   return (
@@ -181,6 +218,28 @@ export default function Noticias() {
       setCargando(false);
     }
   }, [categoriaActiva]);
+
+  // Cargar alerta del backend si está logueado
+  useEffect(() => {
+    const cargarAlertaBackend = async () => {
+      const usuarioId = localStorage.getItem('usuarioId');
+      if (!usuarioId) return;
+      try {
+        const res = await fetch(`${API_URL}/api/alertas-noticias/usuario/${usuarioId}`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (data && data.activa) {
+          setAlertasActivas({
+            activas: true,
+            categorias: data.categorias || [],
+            canales: data.canales || { push: true, email: false },
+          });
+        }
+      } catch { /* silencioso */ }
+    };
+    cargarAlertaBackend();
+  }, []);
 
   useEffect(() => {
     obtenerNoticias();
@@ -380,3 +439,5 @@ export default function Noticias() {
     </>
   );
 }
+
+

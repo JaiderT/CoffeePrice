@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
+/* eslint-disable react-refresh/only-export-components */
 const AlertasContext = createContext();
 
 export function AlertasProvider({ children }) {
@@ -50,9 +51,14 @@ export function AlertasProvider({ children }) {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-    verificarAlertas();
+    const timeout = setTimeout(() => {
+      verificarAlertas();
+    }, 0);
     const intervalo = setInterval(verificarAlertas, 30000);
-    return () => clearInterval(intervalo);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(intervalo);
+    };
   }, [verificarAlertas]);
 
   return (

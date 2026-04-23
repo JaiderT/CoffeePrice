@@ -94,9 +94,49 @@ const obtenerDatos = useCallback(async () => {
     setPromedio(reseñasRes.data.promedio || 0);
     setPrecios(preciosRes.data);
     try {
-      const histRes = await axios.get(
-        `${API_URL}/api/historial-precios/comprador/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
+        axios.get(`${API_URL}/api/comprador/${id}`),
+        axios.get(`${API_URL}/api/resenas/comprador/${id}`),
+        axios.get(`${API_URL}/api/precios/comprador/${id}`),
+      ]);
+      setComprador(compradorRes.data);
+      setReseñas(reseñasRes.data.reseñas || []);
+      setPromedio(reseñasRes.data.promedio || 0);
+      setPrecios(preciosRes.data);
+      try {
+        const histRes = await axios.get(
+          `${API_URL}/api/historial-precios/comprador/${id}`,
+          { withCredentials: true }
+        );
+        setHistorialPrecios(histRes.data);
+      } catch { /* historial opcional */ }
+    } catch (error) {
+      console.error('Error al obtener datos:', error);
+    } finally {
+      setCargando(false);
+    }
+  }, [id, API_URL]);
+
+  useEffect(() => {
+    obtenerDatos();
+  }, [obtenerDatos]);
+
+  const handleComoLlegar = () => {
+    if (!comprador?.latitud || !comprador?.longitud) {
+      alert('Este comprador aún no ha configurado su ubicación en el mapa.');
+      return;
+    }
+    setModalMapa(true);
+    setBuscandoUbicacion(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMiUbicacion([pos.coords.latitude, pos.coords.longitude]);
+          setBuscandoUbicacion(false);
+        },
+        () => {
+          setBuscandoUbicacion(false);
+        }
       );
       setHistorialPrecios(histRes.data);
     } catch { /* historial opcional */ }
@@ -126,7 +166,6 @@ useEffect(() => {
     }
     setEnviando(true);
     try {
-      const token = localStorage.getItem('token');
       const usuarioId = localStorage.getItem('usuarioId');
       await axios.post(`${API_URL}/api/resenas`, {
         productor: usuarioId,
@@ -134,7 +173,7 @@ useEffect(() => {
         calificacion,
         comentario,
         tags: tagsSeleccionados,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       setMensaje({ tipo: 'exito', texto: '¡Reseña publicada correctamente!' });
       setCalificacion(0);
       setComentario('');
@@ -153,12 +192,11 @@ useEffect(() => {
     if (!precioAlerta) return;
     setEnviandoAlerta(true);
     try {
-      const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/alertas`, {
         comprador: id,
         precioMinimo: Number(precioAlerta),
         canales: { push: true, email: false, whatsapp: false },
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       setAlertaGuardada(true);
       setMensajeAlerta({ tipo: 'exito', texto: '¡Alerta activada! Aparece en tu sección de alertas.' });
     } catch {
@@ -683,3 +721,5 @@ useEffect(() => {
     </>
   );
 }
+
+

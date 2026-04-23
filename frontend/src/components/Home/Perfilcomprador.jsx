@@ -5,7 +5,6 @@ import { useAuth } from '../../context/useAuth.js';
 export default function PerfilComprador() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
-  const token = localStorage.getItem('token');
   const usuarioId = localStorage.getItem('usuarioId');
 
   const [modo, setModo] = useState('ver');
@@ -26,9 +25,7 @@ export default function PerfilComprador() {
     const obtenerComprador = async () => {
       try {
         if (!usuarioId) return;
-        const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, { withCredentials: true });
         setComprador(data);
         setEmpresa({
           nombreempresa: data.nombreempresa || '',
@@ -42,7 +39,7 @@ export default function PerfilComprador() {
       }
     };
     obtenerComprador();
-  }, [API_URL, token, usuarioId, usuario]);
+  }, [API_URL, usuarioId, usuario]);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -62,9 +59,7 @@ export default function PerfilComprador() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
@@ -79,14 +74,14 @@ export default function PerfilComprador() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, empresa, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, {
+        ...empresa,
+        latitud: ubicacion.lat,
+        longitud: ubicacion.lng,
+      }, { withCredentials: true });
       mostrarMensaje('exito', 'Datos de empresa actualizados');
       setModo('ver');
-      const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get(`${API_URL}/api/comprador/usuario/${usuarioId}`, { withCredentials: true });
       setComprador(data);
       setEmpresa({
         nombreempresa: data.nombreempresa || '',
@@ -113,7 +108,7 @@ export default function PerfilComprador() {
       await axios.put(`${API_URL}/api/usuario/password`, {
         passwordactual: passwords.actual,
         passwordnueva: passwords.nueva,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       mostrarMensaje('exito', 'Contraseña actualizada correctamente');
       setPasswords({ actual: '', nueva: '', confirmar: '' });
       setModo('ver');
@@ -324,3 +319,5 @@ function BotonesForm({ onCancel, loading }) {
     </div>
   );
 }
+
+

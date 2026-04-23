@@ -32,14 +32,13 @@ function Historial() {
   const obtenerHistorial = useCallback(async () => {
     setCargando(true);
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (compradorSeleccionado !== 'todos') params.append('compradorId', compradorSeleccionado);
       if (filtroTipo !== 'todos') params.append('tipocafe', filtroTipo);
 
       const { data } = await axios.get(
         `${API_URL}/api/historial-precios?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       setHistorial(data);
     } catch (error) {
@@ -256,3 +255,5 @@ function Historial() {
 }
 
 export default Historial;
+
+

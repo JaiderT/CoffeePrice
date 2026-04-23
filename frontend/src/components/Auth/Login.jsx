@@ -36,11 +36,11 @@ export default function Login() {
 
       login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
 
-      setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
+      setSuccess(`¡Bienvenido, ${data.user?.nombre || ""}! 👋🏻`);
 
       setTimeout(() => {
-        if (data.role === "admin") navigate("/admin/perfil");
-        else if (data.role === "comprador") navigate("/comprador/dashboard");
+        if (data.user?.rol === "admin") navigate("/admin/perfil");
+        else if (data.user?.rol === "comprador") navigate("/comprador/dashboard");
         else navigate("/precios");
       }, 1500)
 
@@ -218,3 +218,5 @@ export default function Login() {
     </div>
   );
 }
+
+

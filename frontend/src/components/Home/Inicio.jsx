@@ -74,9 +74,8 @@ function Inicio() {
     }
     setEnviando(true);
     try {
-      const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/resenas-plataforma`, nuevaReseña, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
       setMensajeReseña({ tipo: 'exito', texto: 'Gracias. Tu reseña está pendiente de aprobación.' });
       setNuevaReseña({ calificacion: 0, comentario: '', lugar: '' });
@@ -844,3 +843,4 @@ function Inicio() {
 }
 
 export default Inicio;
+

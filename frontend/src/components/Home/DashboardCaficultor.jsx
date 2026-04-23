@@ -74,7 +74,7 @@ export default function DashboardProductor() {
             }))
         );
       }
-    } catch (_) {
+    } catch {
       // silencioso — los datos quedan vacíos
     } finally {
       setCargandoPrecios(false);
@@ -85,7 +85,7 @@ export default function DashboardProductor() {
     try {
       const res = await axios.get(`${API_URL}/api/clima`);
       setClima(res.data);
-    } catch (_) {
+    } catch {
       // Fallback con estructura compatible a clima.actual
       setClima({
         actual: {
@@ -125,16 +125,15 @@ export default function DashboardProductor() {
   const cargarAlerta = useCallback(async () => {
     if (!usuario?.id) { setCargandoAlerta(false); return; }
     try {
-      const token   = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_URL}/api/alertas/usuario/${usuario.id}`, { headers });
+      const config = { withCredentials: true };
+      const res = await axios.get(`${API_URL}/api/alertas/usuario/${usuario.id}`, config);
       const alertas = res.data;
       if (Array.isArray(alertas) && alertas.length > 0) {
         const primera = alertas[0];
         setAlertaActiva(primera);
         setAlertaPrecio(primera.precioMinimo ?? 2000000);
       }
-    } catch (_) {
+    } catch {
       // silencioso
     } finally {
       setCargandoAlerta(false);
@@ -144,9 +143,8 @@ export default function DashboardProductor() {
   const cargarHistorial = useCallback(async () => {
     if (!usuario?.id) { setCargandoHistorial(false); return; }
     try {
-      const token   = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_URL}/api/historial-precios`, { headers });
+      const config = { withCredentials: true };
+      const res = await axios.get(`${API_URL}/api/historial-precios`, config);
       const datos = res.data;
       if (Array.isArray(datos) && datos.length > 0) {
         const porFecha = {};
@@ -168,7 +166,7 @@ export default function DashboardProductor() {
           setHistorial(grafica);
         }
       }
-    } catch (_) {
+    } catch {
       // silencioso
     } finally {
       setCargandoHistorial(false);
@@ -179,7 +177,7 @@ export default function DashboardProductor() {
     try {
       const res = await axios.get(`${API_URL}/api/noticias`);
       setNoticias(res.data.slice(0, 3));
-    } catch (_) {
+    } catch {
       // silencioso
     } finally {
       setCargandoNoticias(false);
@@ -200,14 +198,13 @@ export default function DashboardProductor() {
     if (!usuario?.id) return;
     setGuardandoAlerta(true);
     try {
-      const token   = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+      const config = { withCredentials: true };
 
       if (alertaActiva?._id) {
         await axios.put(
           `${API_URL}/api/alertas/${alertaActiva._id}`,
           { precioMinimo: alertaPrecio },
-          { headers }
+          config
         );
       } else {
         const res = await axios.post(
@@ -218,7 +215,7 @@ export default function DashboardProductor() {
             activa:       true,
             canales:      { whatsapp: true, push: true, sms: false, email: false },
           },
-          { headers }
+          config
         );
         setAlertaActiva(res.data);
       }
@@ -682,3 +679,4 @@ export default function DashboardProductor() {
     </div>
   );
 }
+

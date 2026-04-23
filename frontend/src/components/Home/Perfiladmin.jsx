@@ -14,7 +14,6 @@ const TAGS = [
 export default function PerfilAdmin() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
-  const token = localStorage.getItem('token');
 
   const [pestana, setPestana] = useState('perfil');
   const [modo, setModo] = useState('ver');
@@ -55,34 +54,28 @@ export default function PerfilAdmin() {
   const obtenerUsuarios = useCallback(async () => {
     setCargando(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/usuario`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get(`${API_URL}/api/usuario`, { withCredentials: true });
       setUsuarios(data);
     } catch {
       mostrarMensaje('error', 'Error al obtener usuarios');
     } finally {
       setCargando(false);
     }
-  }, [API_URL, token]);
+  }, [API_URL]);
 
   const obtenerCompradores = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/comprador`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get(`${API_URL}/api/comprador`, { withCredentials: true });
       setCompradores(data);
     } catch {
       mostrarMensaje('error', 'Error al obtener compradores');
     }
-  }, [API_URL, token]);
+  }, [API_URL]);
 
   const obtenerTodasReseñas = useCallback(async () => {
     setCargandoReseñas(true);
     try {
-      const compradoresRes = await axios.get(`${API_URL}/api/comprador`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const compradoresRes = await axios.get(`${API_URL}/api/comprador`, { withCredentials: true });
       const todasReseñas = [];
       for (const comp of compradoresRes.data) {
         const { data } = await axios.get(`${API_URL}/api/resenas/comprador/${comp._id}`);
@@ -96,21 +89,19 @@ export default function PerfilAdmin() {
     } finally {
       setCargandoReseñas(false);
     }
-  }, [API_URL, token]);
+  }, [API_URL]);
 
   const obtenerReseñasPlataforma = useCallback(async () => {
     setCargandoPlataforma(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/resenas-plataforma/todas`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get(`${API_URL}/api/resenas-plataforma/todas`, { withCredentials: true });
       setReseñasPlataforma(data);
     } catch {
       mostrarMensaje('error', 'Error al obtener reseñas de plataforma');
     } finally {
       setCargandoPlataforma(false);
     }
-  }, [API_URL, token]);
+  }, [API_URL]);
 
   const obtenerNoticias = useCallback(async () => {
     setCargandoNoticias(true);
@@ -140,9 +131,7 @@ export default function PerfilAdmin() {
 
   const handleEliminarReseña = async () => {
     try {
-      await axios.delete(`${API_URL}/api/resenas/${modalEliminarReseña}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/resenas/${modalEliminarReseña}`, { withCredentials: true });
       mostrarMensaje('exito', 'Reseña eliminada correctamente');
       setModalEliminarReseña(null);
       obtenerTodasReseñas();
@@ -154,7 +143,7 @@ export default function PerfilAdmin() {
   const handleAprobarPlataforma = async (id) => {
     try {
       await axios.put(`${API_URL}/api/resenas-plataforma/${id}/aprobar`, {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMensaje('exito', 'Reseña aprobada correctamente');
       obtenerReseñasPlataforma();
@@ -165,9 +154,7 @@ export default function PerfilAdmin() {
 
   const handleEliminarPlataforma = async () => {
     try {
-      await axios.delete(`${API_URL}/api/resenas-plataforma/${modalEliminarPlataforma}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/resenas-plataforma/${modalEliminarPlataforma}`, { withCredentials: true });
       mostrarMensaje('exito', 'Reseña eliminada correctamente');
       setModalEliminarPlataforma(null);
       obtenerReseñasPlataforma();
@@ -180,14 +167,10 @@ export default function PerfilAdmin() {
     e.preventDefault();
     try {
       if (noticiaEditar) {
-        await axios.put(`${API_URL}/api/noticias/${noticiaEditar._id}`, formNoticia, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API_URL}/api/noticias/${noticiaEditar._id}`, formNoticia, { withCredentials: true });
         mostrarMensaje('exito', 'Noticia actualizada correctamente');
       } else {
-        await axios.post(`${API_URL}/api/noticias`, formNoticia, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API_URL}/api/noticias`, formNoticia, { withCredentials: true });
         mostrarMensaje('exito', 'Noticia publicada correctamente');
       }
       setMostrarFormNoticia(false);
@@ -201,14 +184,33 @@ export default function PerfilAdmin() {
 
   const handleEliminarNoticia = async () => {
     try {
-      await axios.delete(`${API_URL}/api/noticias/${modalEliminarNoticia}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/noticias/${modalEliminarNoticia}`, { withCredentials: true });
       mostrarMensaje('exito', 'Noticia eliminada correctamente');
       setModalEliminarNoticia(null);
       obtenerNoticias();
     } catch {
       mostrarMensaje('error', 'Error al eliminar noticia');
+    }
+  };
+
+  const handleLimpiarNoticiasDanadas = async () => {
+    const confirmar = window.confirm('Se eliminarán noticias automáticas sospechosas para dejar la presentación más limpia. ¿Desea continuar?');
+    if (!confirmar) return;
+
+    setLimpiandoNoticias(true);
+    try {
+      const { data } = await axios.post(`${API_URL}/api/noticias/limpiar-danadas`, {
+        dryRun: false,
+        soloAutoGeneradas: true,
+        limite: 250,
+      }, { withCredentials: true });
+
+      mostrarMensaje('exito', data?.message || 'Noticias dañadas limpiadas correctamente');
+      obtenerNoticias();
+    } catch {
+      mostrarMensaje('error', 'Error al limpiar noticias dañadas');
+    } finally {
+      setLimpiandoNoticias(false);
     }
   };
 
@@ -229,7 +231,7 @@ export default function PerfilAdmin() {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'activo' },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMensaje('exito', 'Comprador aprobado correctamente');
       obtenerUsuarios();
@@ -243,7 +245,7 @@ export default function PerfilAdmin() {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'rechazado' },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMensaje('exito', 'Comprador rechazado');
       obtenerUsuarios();
@@ -256,9 +258,7 @@ export default function PerfilAdmin() {
   const handleEliminarUsuario = async (id) => {
     if (!window.confirm('¿Eliminar este usuario permanentemente?')) return;
     try {
-      await axios.delete(`${API_URL}/api/usuario/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/usuario/${id}`, { withCredentials: true });
       mostrarMensaje('exito', 'Usuario eliminado correctamente');
       obtenerUsuarios();
     } catch {
@@ -279,9 +279,7 @@ export default function PerfilAdmin() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
@@ -303,7 +301,7 @@ export default function PerfilAdmin() {
       await axios.put(`${API_URL}/api/usuario/password`, {
         passwordactual: passwords.actual,
         passwordnueva: passwords.nueva,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       mostrarMensaje('exito', 'Contraseña actualizada correctamente');
       setPasswords({ actual: '', nueva: '', confirmar: '' });
       setModo('ver');
@@ -961,3 +959,5 @@ export default function PerfilAdmin() {
     </div>
   );
 }
+
+

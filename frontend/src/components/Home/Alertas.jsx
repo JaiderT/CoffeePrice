@@ -5,7 +5,6 @@ import { useAuth } from '../../context/useAuth.js';
 function Alertas() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
-  const token = localStorage.getItem('token');
   const usuarioId = localStorage.getItem('usuarioId');
 
   const [alertas, setAlertas] = useState([]);
@@ -20,22 +19,31 @@ function Alertas() {
     canales: { push: true, email: false, whatsapp: false },
   });
 
-  // ✅ useCallback para obtenerAlertas
   const obtenerAlertas = useCallback(async () => {
     setCargando(true);
     try {
-      const { data } = await axios.get(`${API_URL}/api/alertas/usuario/${usuarioId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get(`${API_URL}/api/alertas/usuario/${usuarioId}`, { withCredentials: true });
       setAlertas(data);
     } catch (error) {
       console.error('Error al obtener alertas:', error.response?.data);
     } finally {
       setCargando(false);
     }
-  }, [API_URL, usuarioId, token]);
+  }, [API_URL, usuarioId]);
 
-  // ✅ useCallback para obtenerCompradores
+  const obtenerAlertaNoticia = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/alertas-noticias/usuario/${usuarioId}`, { withCredentials: true });
+      setAlertaNoticia(data);
+      if (data) {
+        setFormNoticia({
+          categorias: data.categorias || [],
+          canales: data.canales || { push: true, email: false },
+        });
+      }
+    } catch { /* silencioso */ }
+  }, [API_URL, usuarioId]);
+
   const obtenerCompradores = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios`);
@@ -53,11 +61,11 @@ function Alertas() {
     }
   }, [API_URL]);
 
-  // ✅ useEffect con las dependencias correctas
   useEffect(() => {
     obtenerAlertas();
+    obtenerAlertaNoticia();
     obtenerCompradores();
-  }, [obtenerAlertas, obtenerCompradores]);
+  }, [obtenerAlertas, obtenerAlertaNoticia, obtenerCompradores]);
 
   const mostrarMensaje = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -71,7 +79,7 @@ function Alertas() {
         comprador: form.comprador || null,
         precioMinimo: Number(form.precioMinimo),
         canales: form.canales,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      }, { withCredentials: true });
       mostrarMensaje('exito', '¡Alerta creada correctamente!');
       setMostrarForm(false);
       setForm({ comprador: '', precioMinimo: '', canales: { push: true, email: false, whatsapp: false } });
@@ -81,11 +89,45 @@ function Alertas() {
     }
   };
 
+  const handleGuardarAlertaNoticia = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/api/alertas-noticias`, {
+        categorias: formNoticia.categorias,
+        canales: formNoticia.canales,
+        activa: true,
+      }, { withCredentials: true });
+      mostrarMensaje('exito', '¡Alerta de noticias guardada!');
+      setMostrarFormNoticia(false);
+      obtenerAlertaNoticia();
+    } catch {
+      mostrarMensaje('error', 'Error al guardar la alerta de noticias');
+    }
+  };
+
+  const handleToggleNoticia = async () => {
+    try {
+      await axios.put(`${API_URL}/api/alertas-noticias/toggle`, {}, { withCredentials: true });
+      obtenerAlertaNoticia();
+    } catch {
+      mostrarMensaje('error', 'Error al cambiar estado');
+    }
+  };
+
+  const handleEliminarNoticia = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/alertas-noticias`, { withCredentials: true });
+      setAlertaNoticia(null);
+      localStorage.removeItem('coffeprice_alertas');
+      mostrarMensaje('exito', 'Alerta de noticias eliminada');
+    } catch {
+      mostrarMensaje('error', 'Error al eliminar la alerta');
+    }
+  };
+
   const handleToggle = async (id) => {
     try {
-      await axios.put(`${API_URL}/api/alertas/${id}/toggle`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/alertas/${id}/toggle`, {}, { withCredentials: true });
       obtenerAlertas();
     } catch {
       mostrarMensaje('error', 'Error al cambiar estado de la alerta');
@@ -94,9 +136,7 @@ function Alertas() {
 
   const handleEliminar = async () => {
     try {
-      await axios.delete(`${API_URL}/api/alertas/${modalEliminar}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${API_URL}/api/alertas/${modalEliminar}`, { withCredentials: true });
       mostrarMensaje('exito', 'Alerta eliminada correctamente');
       setModalEliminar(null);
       obtenerAlertas();
@@ -352,3 +392,5 @@ function Alertas() {
 }
 
 export default Alertas;
+
+

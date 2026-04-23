@@ -43,13 +43,12 @@ function DashboardComprador() {
   useEffect(() => {
     const obtenerDatos = async () => {
       try {
-        const token = localStorage.getItem('token');
         const usuarioId = usuario?.id;
         if (!usuarioId) { setCargando(false); return; }
 
         const { data } = await axios.get(
           `${API_URL}/api/comprador/usuario/${usuarioId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { withCredentials: true }
         );
         setComprador(data);
         setHorarioForm({
@@ -67,7 +66,7 @@ function DashboardComprador() {
         try {
           const histRes = await axios.get(
             `${API_URL}/api/historial-precios/comprador/${data._id}`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { withCredentials: true }
           );
           setHistorial(histRes.data);
         } catch { /* opcional */ }
@@ -93,10 +92,7 @@ function DashboardComprador() {
   const handleCrearPerfil = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.post(`${API_URL}/api/comprador`, formPerfil, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.post(`${API_URL}/api/comprador`, formPerfil, { withCredentials: true });
       setComprador(data.comprador);
       setSinPerfil(false);
       setHorarioForm({
@@ -113,10 +109,9 @@ function DashboardComprador() {
   const handlePublicar = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/precios`,
         { ...nuevoPrecio, preciocarga: Number(nuevoPrecio.preciocarga), comprador: comprador._id },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMsg('exito', '¡Precio publicado exitosamente!');
       setMostrarFormulario(false);
@@ -130,10 +125,9 @@ function DashboardComprador() {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       await axios.put(`${API_URL}/api/precios/${precioEditar._id}`,
         { preciocarga: precioEditar.preciocarga, tipocafe: precioEditar.tipocafe },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMsg('exito', '¡Precio actualizado exitosamente!');
       setMostrarEditar(false);
@@ -146,9 +140,8 @@ function DashboardComprador() {
 
   const handleEliminar = async () => {
     try {
-      const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/api/precios/${precioEliminar._id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
       mostrarMsg('exito', 'Precio eliminado correctamente');
       setMostrarEliminar(false);
@@ -159,13 +152,52 @@ function DashboardComprador() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleDuplicar = async (item) => {
+    try {
+      await axios.post(`${API_URL}/api/precios`,
+        { preciocarga: item.preciocarga, tipocafe: item.tipocafe, comprador: comprador._id },
+        { withCredentials: true }
+      );
+      mostrarMsg('exito', '¡Precio duplicado correctamente!');
+      await obtenerPrecios(comprador._id);
+    } catch {
+      mostrarMsg('error', 'Error al duplicar el precio');
+    }
+  };
+
+  const handleExportarCSV = () => {
+    const headers = ['Tipo de café', 'Precio/carga', 'Precio/kg', 'Fecha'];
+    const rows = precios.map(p => [
+      p.tipocafe?.replace('_', ' '),
+      p.preciocarga,
+      p.preciokg,
+      new Date(p.createdAt).toLocaleDateString('es-CO')
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `precios_${comprador?.nombreempresa || 'comprador'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    mostrarMsg('exito', '¡CSV exportado correctamente!');
+  };
+
+  const handleCompartirWhatsApp = () => {
+    const precio = precios[0];
+    if (!precio) return;
+    const texto = `☕ CoffePrice — ${comprador?.nombreempresa} paga hoy\n${precio.preciocarga?.toLocaleString()} COP/carga · ⭐ ${Number(promedio).toFixed(1)}\nVer más: ${window.location.origin}/comprador/${comprador?._id}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+  };
+
+>>>>>>> 8242a6e (seguridad por cookies)
   const handleGuardarHorario = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, horarioForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, horarioForm, { withCredentials: true });
       setComprador({ ...comprador, ...horarioForm });
       mostrarMsg('exito', 'Horario actualizado correctamente');
       setMostrarHorario(false);
@@ -710,4 +742,10 @@ function DashboardComprador() {
   );
 }
 
+<<<<<<< HEAD
 export default DashboardComprador;
+=======
+export default DashboardComprador;
+
+
+>>>>>>> 8242a6e (seguridad por cookies)
