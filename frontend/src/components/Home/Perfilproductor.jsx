@@ -42,7 +42,9 @@ export default function PerfilProductor() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
