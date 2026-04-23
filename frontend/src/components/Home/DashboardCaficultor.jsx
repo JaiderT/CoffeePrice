@@ -17,7 +17,6 @@ export default function DashboardProductor() {
   const [cargandoNoticias, setCargandoNoticias]   = useState(true);
   const [cargandoFNC, setCargandoFNC]             = useState(true);
 
-  const [todosPrecios, setTodosPrecios]     = useState([]);
   const [precioMasAlto, setPrecioMasAlto]   = useState(0);
   const [precioFNC, setPrecioFNC]           = useState(null);
   const [fuenteFNC, setFuenteFNC]           = useState(null);
@@ -45,7 +44,6 @@ export default function DashboardProductor() {
     try {
       const res = await axios.get(`${API_URL}/api/precios`);
       const precios = res.data;
-      setTodosPrecios(precios);
       if (precios.length > 0) {
         setPrecioMasAlto(Math.max(...precios.map(p => p.preciocarga)));
         const idsUnicos = new Set(precios.map(p => p.comprador?._id).filter(Boolean));
@@ -62,7 +60,9 @@ export default function DashboardProductor() {
             }))
         );
       }
-    } catch (_) {}
+    } catch {
+      // silencioso
+    }
     finally { setCargandoPrecios(false); }
   }, [API_URL]);
 
@@ -84,7 +84,7 @@ export default function DashboardProductor() {
     try {
       const res = await axios.get(`${API_URL}/api/clima`);
       setClima(res.data);
-    } catch (_) {
+    } catch {
       setClima({
         actual: { temperatura: 24, humedad: 68, lluvia: 0, descripcion: 'Parcialmente nublado · Bueno para secado', icono: '⛅' },
         pronostico: [],
@@ -114,22 +114,22 @@ export default function DashboardProductor() {
   const cargarAlerta = useCallback(async () => {
     if (!usuario?.id) { setCargandoAlerta(false); return; }
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/alertas/usuario/${usuario.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API_URL}/api/alertas/usuario/${usuario.id}`, { withCredentials: true });
       const alertas = res.data;
       if (Array.isArray(alertas) && alertas.length > 0) {
         setAlertaActiva(alertas[0]);
         setAlertaPrecio(alertas[0].precioMinimo ?? 2000000);
       }
-    } catch (_) {}
+    } catch {
+      // silencioso
+    }
     finally { setCargandoAlerta(false); }
   }, [API_URL, usuario?.id]);
 
   const cargarHistorial = useCallback(async () => {
     if (!usuario?.id) { setCargandoHistorial(false); return; }
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/historial-precios`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API_URL}/api/historial-precios`, { withCredentials: true });
       const datos = res.data;
       if (Array.isArray(datos) && datos.length > 0) {
         const porFecha = {};
@@ -147,7 +147,9 @@ export default function DashboardProductor() {
           setHistorial(grafica);
         }
       }
-    } catch (_) {}
+    } catch {
+      // silencioso
+    }
     finally { setCargandoHistorial(false); }
   }, [API_URL, usuario?.id]);
 
@@ -155,7 +157,9 @@ export default function DashboardProductor() {
     try {
       const res = await axios.get(`${API_URL}/api/noticias`);
       setNoticias(res.data.slice(0, 3));
-    } catch (_) {}
+    } catch {
+      // silencioso
+    }
     finally { setCargandoNoticias(false); }
   }, [API_URL]);
 
@@ -172,15 +176,14 @@ export default function DashboardProductor() {
     if (!usuario?.id) return;
     setGuardandoAlerta(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+      const config = { withCredentials: true };
       if (alertaActiva?._id) {
-        await axios.put(`${API_URL}/api/alertas/${alertaActiva._id}`, { precioMinimo: alertaPrecio }, { headers });
+        await axios.put(`${API_URL}/api/alertas/${alertaActiva._id}`, { precioMinimo: alertaPrecio }, config);
       } else {
         const res = await axios.post(`${API_URL}/api/alertas`, {
           usuario: usuario.id, precioMinimo: alertaPrecio, activa: true,
           canales: { whatsapp: true, push: true, sms: false, email: false },
-        }, { headers });
+        }, config);
         setAlertaActiva(res.data);
       }
       mostrarMsg('exito', '¡Alerta guardada correctamente!');
@@ -602,4 +605,3 @@ export default function DashboardProductor() {
     </div>
   );
 }
-

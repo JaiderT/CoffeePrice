@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -21,14 +21,14 @@ function DashboardComprador() {
   const [formPerfil, setFormPerfil] = useState({ nombreempresa: '', direccion: '', telefono: '', horarioApertura: '07:00', horarioCierre: '17:00' });
   const [mensaje, setMensaje] = useState(null);
   const [sinPerfil, setSinPerfil] = useState(false);
-  const [reseñas, setReseñas] = useState([]);
+  const [resenas, setResenas] = useState([]);
   const [promedio, setPromedio] = useState(0);
   const [noticias, setNoticias] = useState([]);
   const [historial, setHistorial] = useState([]);
   const [todosPrecios, setTodosPrecios] = useState([]);
   const [pestana, setPestana] = useState('dashboard');
 
-  // ✅ useCallback para evitar recreación innecesaria
+  // âœ… useCallback para evitar recreaciÃ³n innecesaria
   const obtenerPrecios = useCallback(async (compradorId) => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
@@ -57,10 +57,10 @@ function DashboardComprador() {
         });
         await obtenerPrecios(data._id);
 
-        // Reseñas
-        const reseñasRes = await axios.get(`${API_URL}/api/resenas/comprador/${data._id}`);
-        setReseñas(reseñasRes.data.reseñas || []);
-        setPromedio(reseñasRes.data.promedio || 0);
+        // ReseÃ±as
+        const resenasRes = await axios.get(`${API_URL}/api/resenas/comprador/${data._id}`);
+        setResenas(resenasRes.data["reseñas"] || resenasRes.data.resenas || []);
+        setPromedio(resenasRes.data.promedio || 0);
 
         // Historial de precios
         try {
@@ -100,7 +100,7 @@ function DashboardComprador() {
         horarioCierre: data.comprador.horarioCierre || '17:00',
       });
       await obtenerPrecios(data.comprador._id);
-      mostrarMsg('exito', '¡Perfil creado correctamente!');
+      mostrarMsg('exito', 'Â¡Perfil creado correctamente!');
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al crear el perfil');
     }
@@ -113,7 +113,7 @@ function DashboardComprador() {
         { ...nuevoPrecio, preciocarga: Number(nuevoPrecio.preciocarga), comprador: comprador._id },
         { withCredentials: true }
       );
-      mostrarMsg('exito', '¡Precio publicado exitosamente!');
+      mostrarMsg('exito', 'Â¡Precio publicado exitosamente!');
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
       await obtenerPrecios(comprador._id);
@@ -129,7 +129,7 @@ function DashboardComprador() {
         { preciocarga: precioEditar.preciocarga, tipocafe: precioEditar.tipocafe },
         { withCredentials: true }
       );
-      mostrarMsg('exito', '¡Precio actualizado exitosamente!');
+      mostrarMsg('exito', 'Â¡Precio actualizado exitosamente!');
       setMostrarEditar(false);
       setPrecioEditar(null);
       await obtenerPrecios(comprador._id);
@@ -152,48 +152,6 @@ function DashboardComprador() {
     }
   };
 
-<<<<<<< HEAD
-=======
-  const handleDuplicar = async (item) => {
-    try {
-      await axios.post(`${API_URL}/api/precios`,
-        { preciocarga: item.preciocarga, tipocafe: item.tipocafe, comprador: comprador._id },
-        { withCredentials: true }
-      );
-      mostrarMsg('exito', '¡Precio duplicado correctamente!');
-      await obtenerPrecios(comprador._id);
-    } catch {
-      mostrarMsg('error', 'Error al duplicar el precio');
-    }
-  };
-
-  const handleExportarCSV = () => {
-    const headers = ['Tipo de café', 'Precio/carga', 'Precio/kg', 'Fecha'];
-    const rows = precios.map(p => [
-      p.tipocafe?.replace('_', ' '),
-      p.preciocarga,
-      p.preciokg,
-      new Date(p.createdAt).toLocaleDateString('es-CO')
-    ]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `precios_${comprador?.nombreempresa || 'comprador'}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    mostrarMsg('exito', '¡CSV exportado correctamente!');
-  };
-
-  const handleCompartirWhatsApp = () => {
-    const precio = precios[0];
-    if (!precio) return;
-    const texto = `☕ CoffePrice — ${comprador?.nombreempresa} paga hoy\n${precio.preciocarga?.toLocaleString()} COP/carga · ⭐ ${Number(promedio).toFixed(1)}\nVer más: ${window.location.origin}/comprador/${comprador?._id}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
-  };
-
->>>>>>> 8242a6e (seguridad por cookies)
   const handleGuardarHorario = async (e) => {
     e.preventDefault();
     try {
@@ -224,13 +182,13 @@ function DashboardComprador() {
     : 0;
   const porEncima = precioActual > promercado;
 
-  // Datos gráfica historial
+  // Datos grÃ¡fica historial
   const datosGrafica = historial.slice(0, 7).reverse().map((h, i) => ({
     dia: i === historial.slice(0, 7).length - 1 ? 'Hoy' : `${i + 1}d`,
     precio: h.preciocarga,
   }));
 
-  const categoriaEmoji = { mercado: '📈', internacional: '🌎', clima: '🌧️', fnc: '🏛️', produccion: '🌱', consejos: '💡', el_pital: '⛰️' };
+  const categoriaEmoji = { mercado: 'ðŸ“ˆ', internacional: 'ðŸŒŽ', clima: 'ðŸŒ§ï¸', fnc: 'ðŸ›ï¸', produccion: 'ðŸŒ±', consejos: 'ðŸ’¡', el_pital: 'â›°ï¸' };
 
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
@@ -248,7 +206,7 @@ function DashboardComprador() {
             </div>
             {mensaje && (
               <div className={`px-4 py-3 rounded-xl mb-4 text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
+                {mensaje.tipo === 'exito' ? 'âœ…' : 'âŒ'} {mensaje.texto}
               </div>
             )}
             <form onSubmit={handleCrearPerfil} className="space-y-4">
@@ -260,14 +218,14 @@ function DashboardComprador() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Dirección</label>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">DirecciÃ³n</label>
                 <input type="text" required value={formPerfil.direccion}
                   onChange={e => setFormPerfil({ ...formPerfil, direccion: e.target.value })}
                   placeholder="Ej: Calle 5 #3-20, El Pital, Huila"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Teléfono</label>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">TelÃ©fono</label>
                 <input type="text" required value={formPerfil.telefono}
                   onChange={e => setFormPerfil({ ...formPerfil, telefono: e.target.value })}
                   placeholder="Ej: 3142233974"
@@ -302,20 +260,20 @@ function DashboardComprador() {
           <h1 className="text-[#2C1A0E] text-2xl font-bold">Panel del Comprador</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Bienvenido, <span className="text-[#C8A96E] font-semibold">{usuario?.nombre} {usuario?.apellido}</span>
-            {comprador && <span className="text-gray-400"> · {comprador.nombreempresa}</span>}
+            {comprador && <span className="text-gray-400"> Â· {comprador.nombreempresa}</span>}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {comprador && (
             <Link to={`/comprador/${comprador._id}`}
               className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#2C1A0E] hover:text-white transition-colors flex items-center gap-1.5">
-              <i className="fa-solid fa-eye"></i> Ver perfil público
+              <i className="fa-solid fa-eye"></i> Ver perfil pÃºblico
             </Link>
           )}
           <button onClick={() => setMostrarHorario(true)}
             className="border border-[#C8A96E] text-[#C8A96E] px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#C8A96E] hover:text-white transition-colors flex items-center gap-1.5">
             <i className="fa-solid fa-clock"></i>
-            {comprador ? `${comprador.horarioApertura || '07:00'} – ${comprador.horarioCierre || '17:00'}` : 'Horario'}
+            {comprador ? `${comprador.horarioApertura || '07:00'} â€“ ${comprador.horarioCierre || '17:00'}` : 'Horario'}
           </button>
           <button onClick={() => setMostrarFormulario(true)}
             className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-1.5">
@@ -327,15 +285,15 @@ function DashboardComprador() {
       {/* Mensaje */}
       {mensaje && !sinPerfil && (
         <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-          {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
+          {mensaje.tipo === 'exito' ? 'âœ…' : 'âŒ'} {mensaje.texto}
         </div>
       )}
 
-      {/* Pestañas */}
+      {/* PestaÃ±as */}
       <div className="px-6 md:px-8 pt-5 flex gap-2 border-b border-[#E0D0B0]">
         {[
-          { key: 'dashboard', label: '📊 Dashboard' },
-          { key: 'precios', label: '💰 Mis precios' },
+          { key: 'dashboard', label: 'ðŸ“Š Dashboard' },
+          { key: 'precios', label: 'ðŸ’° Mis precios' },
         ].map(p => (
           <button key={p.key} onClick={() => setPestana(p.key)}
             className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors -mb-px ${
@@ -348,7 +306,7 @@ function DashboardComprador() {
         ))}
       </div>
 
-      {/* PESTAÑA DASHBOARD */}
+      {/* PESTAÃ‘A DASHBOARD */}
       {pestana === 'dashboard' && (
         <div className="px-6 md:px-8 py-6 space-y-6">
 
@@ -360,30 +318,30 @@ function DashboardComprador() {
               <p className="text-[#D8C7A8] text-xs mt-1">COP/carga</p>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
-              <p className="text-gray-400 text-xs uppercase font-semibold">Reseñas</p>
-              <p className="text-[#2C1A0E] text-2xl font-bold mt-2">⭐ {Number(promedio).toFixed(1)}</p>
-              <p className="text-gray-400 text-xs mt-1">{reseñas.length} reseñas</p>
+              <p className="text-gray-400 text-xs uppercase font-semibold">ReseÃ±as</p>
+              <p className="text-[#2C1A0E] text-2xl font-bold mt-2">â­ {Number(promedio).toFixed(1)}</p>
+              <p className="text-gray-400 text-xs mt-1">{resenas.length} reseÃ±as</p>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
               <p className="text-gray-400 text-xs uppercase font-semibold">Precios publicados</p>
               <p className="text-[#2C1A0E] text-2xl font-bold mt-2">{precios.length}</p>
-              <p className="text-gray-400 text-xs mt-1">tipos de café</p>
+              <p className="text-gray-400 text-xs mt-1">tipos de cafÃ©</p>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
-              <p className="text-gray-400 text-xs uppercase font-semibold">Posición mercado</p>
+              <p className="text-gray-400 text-xs uppercase font-semibold">PosiciÃ³n mercado</p>
               <p className={`text-2xl font-bold mt-2 ${porEncima ? 'text-green-600' : 'text-red-500'}`}>
-                {porEncima ? '▲ Arriba' : '▼ Abajo'}
+                {porEncima ? 'â–² Arriba' : 'â–¼ Abajo'}
               </p>
               <p className="text-gray-400 text-xs mt-1">vs promedio</p>
             </div>
           </div>
 
-          {/* Gráfica + Comparativa */}
+          {/* GrÃ¡fica + Comparativa */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-            {/* Gráfica historial */}
+            {/* GrÃ¡fica historial */}
             <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <p className="text-[#2C1A0E] font-bold text-sm mb-4">📈 Evolución de mis precios</p>
+              <p className="text-[#2C1A0E] font-bold text-sm mb-4">ðŸ“ˆ EvoluciÃ³n de mis precios</p>
               {datosGrafica.length > 1 ? (
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -398,14 +356,14 @@ function DashboardComprador() {
                 </div>
               ) : (
                 <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
-                  Publica más precios para ver la evolución
+                  Publica mÃ¡s precios para ver la evoluciÃ³n
                 </div>
               )}
             </div>
 
             {/* Comparativa mercado */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <p className="text-[#2C1A0E] font-bold text-sm mb-4">📊 Vs. mercado hoy</p>
+              <p className="text-[#2C1A0E] font-bold text-sm mb-4">ðŸ“Š Vs. mercado hoy</p>
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-xs mb-1">
@@ -441,37 +399,37 @@ function DashboardComprador() {
                 porEncima ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
               }`}>
                 {porEncima
-                  ? '▲ Tu precio está por encima del promedio'
-                  : '▼ Tu precio está por debajo del promedio'}
+                  ? 'â–² Tu precio estÃ¡ por encima del promedio'
+                  : 'â–¼ Tu precio estÃ¡ por debajo del promedio'}
               </div>
             </div>
           </div>
 
-          {/* Reseñas + Noticias */}
+          {/* ReseÃ±as + Noticias */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            {/* Reseñas recientes */}
+            {/* ReseÃ±as recientes */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[#2C1A0E] font-bold text-sm">⭐ Reseñas recientes</p>
+                <p className="text-[#2C1A0E] font-bold text-sm">â­ ReseÃ±as recientes</p>
                 {comprador && (
-                  <Link to="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas →</Link>
+                  <Link to="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas â†’</Link>
                 )}
               </div>
-              {reseñas.length === 0 ? (
+              {resenas.length === 0 ? (
                 <div className="text-center py-6">
                   <i className="fa-solid fa-star text-gray-200 text-3xl mb-2"></i>
-                  <p className="text-gray-400 text-sm">Aún no hay reseñas</p>
+                  <p className="text-gray-400 text-sm">AÃºn no hay reseÃ±as</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {reseñas.slice(0, 3).map((r, i) => (
-                    <div key={i} className={`pb-3 ${i < Math.min(reseñas.length, 3) - 1 ? 'border-b border-[#E7D9BF]' : ''}`}>
+                  {resenas.slice(0, 3).map((r, i) => (
+                    <div key={i} className={`pb-3 ${i < Math.min(resenas.length, 3) - 1 ? 'border-b border-[#E7D9BF]' : ''}`}>
                       <div className="flex justify-between items-start mb-1">
                         <p className="text-sm font-semibold text-[#2C1A0E]">
                           {r.productor?.nombre} {r.productor?.apellido}
                         </p>
-                        <span className="text-[#C8A96E] text-xs">{'★'.repeat(Math.round(r.calificacion))}</span>
+                        <span className="text-[#C8A96E] text-xs">{'â˜…'.repeat(Math.round(r.calificacion))}</span>
                       </div>
                       {r.comentario && <p className="text-xs text-gray-500 italic">"{r.comentario}"</p>}
                     </div>
@@ -483,8 +441,8 @@ function DashboardComprador() {
             {/* Noticias recientes */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[#2C1A0E] font-bold text-sm">📰 Últimas noticias</p>
-                <a href="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas →</a>
+                <p className="text-[#2C1A0E] font-bold text-sm">ðŸ“° Ãšltimas noticias</p>
+                <a href="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas â†’</a>
               </div>
               {noticias.length === 0 ? (
                 <div className="text-center py-6">
@@ -511,7 +469,7 @@ function DashboardComprador() {
         </div>
       )}
 
-      {/* PESTAÑA MIS PRECIOS */}
+      {/* PESTAÃ‘A MIS PRECIOS */}
       {pestana === 'precios' && (
         <div className="px-6 md:px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -520,7 +478,7 @@ function DashboardComprador() {
               <p className="text-[#2C1A0E] text-3xl font-bold mt-1">{precios.length}</p>
             </div>
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <p className="text-gray-400 text-xs uppercase font-semibold">Último precio</p>
+              <p className="text-gray-400 text-xs uppercase font-semibold">Ãšltimo precio</p>
               <p className="text-[#C8A96E] text-3xl font-bold mt-1">
                 {precios[0]?.preciocarga?.toLocaleString() || '---'}
               </p>
@@ -534,7 +492,7 @@ function DashboardComprador() {
           </div>
 
           <div className="grid grid-cols-5 gap-4 px-4 py-3 bg-[#2C1A0E] rounded-xl text-xs text-gray-400 font-semibold uppercase mb-3">
-            <div>Tipo de café</div>
+            <div>Tipo de cafÃ©</div>
             <div>Precio/carga</div>
             <div>Precio/kg</div>
             <div>Fecha</div>
@@ -544,7 +502,7 @@ function DashboardComprador() {
           {cargando ? (
             <div className="text-center py-12 text-gray-400">Cargando...</div>
           ) : precios.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">No hay precios publicados aún</div>
+            <div className="text-center py-12 text-gray-400">No hay precios publicados aÃºn</div>
           ) : (
             precios.map((item, i) => (
               <div key={i} className="grid grid-cols-5 gap-4 px-4 py-4 bg-white rounded-xl mb-3 items-center hover:shadow-md transition-shadow border border-[#E7D9BF]">
@@ -591,7 +549,7 @@ function DashboardComprador() {
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[#2C1A0E] font-bold text-lg">Publicar precio del día</h3>
+              <h3 className="text-[#2C1A0E] font-bold text-lg">Publicar precio del dÃ­a</h3>
               <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">
                 <i className="fa-solid fa-xmark text-lg"></i>
               </button>
@@ -604,13 +562,13 @@ function DashboardComprador() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div className="mb-6">
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de café</label>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de cafÃ©</label>
                 <select value={nuevoPrecio.tipocafe}
                   onChange={(e) => setNuevoPrecio({ ...nuevoPrecio, tipocafe: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="pergamino_seco">Pergamino seco</option>
-                  <option value="especial">Café especial</option>
-                  <option value="organico">Orgánico</option>
+                  <option value="especial">CafÃ© especial</option>
+                  <option value="organico">OrgÃ¡nico</option>
                   <option value="verde">Verde</option>
                 </select>
               </div>
@@ -647,13 +605,13 @@ function DashboardComprador() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <div className="mb-6">
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de café</label>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de cafÃ©</label>
                 <select value={precioEditar.tipocafe}
                   onChange={(e) => setPrecioEditar({ ...precioEditar, tipocafe: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="pergamino_seco">Pergamino seco</option>
-                  <option value="especial">Café especial</option>
-                  <option value="organico">Orgánico</option>
+                  <option value="especial">CafÃ© especial</option>
+                  <option value="organico">OrgÃ¡nico</option>
                   <option value="verde">Verde</option>
                 </select>
               </div>
@@ -679,10 +637,10 @@ function DashboardComprador() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-500 text-2xl"></i>
             </div>
-            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar precio?</h3>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">Â¿Eliminar precio?</h3>
             <p className="text-gray-400 text-sm mb-1">Vas a eliminar el precio de</p>
             <p className="text-[#2C1A0E] font-bold text-base mb-1">{precioEliminar.preciocarga?.toLocaleString()} COP/carga</p>
-            <p className="text-gray-400 text-xs mb-6">Esta acción no se puede deshacer.</p>
+            <p className="text-gray-400 text-xs mb-6">Esta acciÃ³n no se puede deshacer.</p>
             <div className="flex gap-3">
               <button onClick={() => { setMostrarEliminar(false); setPrecioEliminar(null); }}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -721,7 +679,7 @@ function DashboardComprador() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
               </div>
               <p className="text-xs text-gray-400 mb-4 text-center">
-                Horario actual: {horarioForm.horarioApertura} – {horarioForm.horarioCierre}
+                Horario actual: {horarioForm.horarioApertura} â€“ {horarioForm.horarioCierre}
               </p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setMostrarHorario(false)}
@@ -742,10 +700,4 @@ function DashboardComprador() {
   );
 }
 
-<<<<<<< HEAD
 export default DashboardComprador;
-=======
-export default DashboardComprador;
-
-
->>>>>>> 8242a6e (seguridad por cookies)

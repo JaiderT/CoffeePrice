@@ -59,9 +59,7 @@ export default function PerfilComprador() {
   }
   setLoading(true);
   try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
     actualizarUsuario(datos);
     mostrarMensaje('exito', 'Datos actualizados correctamente');
     setModo('ver');
@@ -78,8 +76,6 @@ export default function PerfilComprador() {
     try {
       await axios.put(`${API_URL}/api/comprador/${comprador._id}`, {
         ...empresa,
-        latitud: ubicacion.lat,
-        longitud: ubicacion.lng,
       }, { withCredentials: true });
       mostrarMensaje('exito', 'Datos de empresa actualizados');
       setModo('ver');
@@ -321,5 +317,4 @@ function BotonesForm({ onCancel, loading }) {
     </div>
   );
 }
-
 
