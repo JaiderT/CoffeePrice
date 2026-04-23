@@ -1,0 +1,21 @@
+[33mc705466[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mTrabajandoProyecto[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #101 from JaiderT/bacnkendddd
+[33m7831f8e[m[33m ([m[1;31morigin/bacnkendddd[m[33m)[m Merge branch 'main' into bacnkendddd
+[33mc14f669[m login.jsx, comprador controllers y models
+ backend/controllers/comprador.js       | 26 [32m++++++++++++++++[m[31m--[m
+ backend/models/comprador.js            |  1 [32m+[m
+ frontend/src/components/Auth/Login.jsx | 50 [32m++++++++++++++++[m[31m------------------[m
+ 3 files changed, 47 insertions(+), 30 deletions(-)
+[33mb383aee[m Merge pull request #100 from JaiderT/TrabajandoProyecto
+[33mbb48b4c[m[33m ([m[1;31morigin/TrabajandoProyecto[m[33m)[m Arreglado
+ backend/routes/authRoutes.js                       |  10 [32m+[m[31m-[m
+ frontend/src/components/Auth/CompletarPerfil.jsx   | 160 [32m+++[m[31m----[m
+ frontend/src/components/Home/Alertas.jsx           | 260 [32m++++[m[31m------[m
+ .../src/components/Home/DashboardCaficultor.jsx    |  34 [32m+[m[31m-[m
+ .../src/components/Home/DashboardComprador.jsx     | 170 [32m+++[m[31m----[m
+ frontend/src/components/Home/Noticias.jsx          | 230 [32m++++[m[31m-----[m
+ .../src/components/Home/PerfilPublicoComprador.jsx | 530 [32m+++++[m[31m----------------[m
+ frontend/src/components/Home/Perfiladmin.jsx       |  27 [32m+[m[31m-[m
+ frontend/src/components/Home/Perfilcomprador.jsx   |   7 [32m+[m[31m-[m
+ frontend/src/components/Home/Perfilproductor.jsx   |   5 [32m+[m[31m-[m
+ frontend/src/context/AuthProvider.jsx              |  79 [32m++[m[31m-[m
+ 11 files changed, 507 insertions(+), 1005 deletions(-)

@@ -59,7 +59,7 @@ function DashboardComprador() {
 
         // ReseÃ±as
         const resenasRes = await axios.get(`${API_URL}/api/resenas/comprador/${data._id}`);
-        setResenas(resenasRes.data["reseñas"] || resenasRes.data.resenas || []);
+        setResenas(resenasRes.data.reseñas || []);
         setPromedio(resenasRes.data.promedio || 0);
 
         // Historial de precios
