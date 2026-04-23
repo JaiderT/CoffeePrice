@@ -11,6 +11,8 @@ function Precios() {
   const [precios, setPrecios] = useState([]);
   const [clima, setClima] = useState(null);
   const [prediccion, setPrediccion] = useState(null);
+  const [precioFNC, setPrecioFNC] = useState(null);
+  const [fuenteFNC, setFuenteFNC] = useState(null);
 
   const [cargando, setCargando] = useState(true);
   const [cargandoClima, setCargandoClima] = useState(true);
@@ -57,9 +59,22 @@ function Precios() {
       }
     };
 
+    const obtenerPrecioFNC = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/precio-fnc`);
+        if (data?.precio) {
+          setPrecioFNC(data.precio);
+          setFuenteFNC(data.fuente);
+        }
+      } catch (error) {
+        console.error('Error al obtener precio FNC:', error);
+      }
+    };
+
     obtenerPrecios();
     obtenerClima();
     obtenerPrediccion();
+    obtenerPrecioFNC();
   }, [API_URL]);
 
   const filtros = ['todos', 'pergamino_seco', 'especial', 'organico', 'verde'];
@@ -74,10 +89,9 @@ function Precios() {
 
   const mejorPrecio = precios[0]?.preciocarga || 0;
   const mejorComprador = precios[0]?.comprador?.nombreempresa || 'Sin registros';
-  const precioPromedio =
-    precios.length > 0
-      ? Math.round(precios.reduce((acc, p) => acc + p.preciocarga, 0) / precios.length)
-      : 0;
+
+  // Compradores únicos registrados
+  const compradoresUnicos = new Set(precios.map(p => p.comprador?._id).filter(Boolean)).size;
 
   const diferencia =
     precios.length > 1
@@ -140,9 +154,9 @@ function Precios() {
 
                 <div className="rounded-2xl bg-[#DDBA83] px-4 py-3 text-[#2F241C]">
                   <p className="text-[11px] uppercase tracking-[0.12em] text-[#6A4321]">
-                    Compradores reportados
+                    Compradores registrados
                   </p>
-                  <p className="mt-1 text-2xl font-black">{precios.length}</p>
+                  <p className="mt-1 text-2xl font-black">{compradoresUnicos}</p>
                 </div>
               </div>
             </div>
@@ -150,21 +164,26 @@ function Precios() {
         </section>
 
         <section data-kaffi="precios-resumen" className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
+          {/* Precio FNC — reemplaza precio promedio */}
           <article className="group relative overflow-hidden rounded-[28px] bg-[#F8F1E6] p-5 shadow-[0_12px_30px_rgba(96,73,47,0.10)] ring-1 ring-[#E8D8BF]/80 transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(96,73,47,0.14)]">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
-              Así está el precio hoy
+              Precio FNC hoy
             </p>
 
             <p className="mt-3 text-3xl font-black text-[#2F241C]">
-              ${precioPromedio.toLocaleString()}
+              {precioFNC ? `$${precioFNC.toLocaleString()}` : '···'}
             </p>
 
             <p className="mt-3 text-sm font-semibold text-[#5F452C]">
-              Hoy el mercado está variado
+              Precio de referencia Federación
             </p>
 
             <p className="mt-1 text-sm text-[#6D5E53]">
-              Hay una diferencia de ${diferencia.toLocaleString()} entre el valor más alto y el más bajo.
+              {fuenteFNC === 'fnc-directo'
+                ? 'Dato tomado directamente de la FNC.'
+                : fuenteFNC === 'ny-estimado'
+                ? 'Estimado a partir del precio en bolsa de NY.'
+                : 'Actualizando precio...'}
             </p>
           </article>
 
@@ -349,7 +368,7 @@ function Precios() {
                         </p>
                       </div>
 
-                      <div className="min-w-37.5  rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                      <div className="min-w-37.5 rounded-2xl bg-[#EFE4D4] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
                           Paga por kilo
                         </p>
@@ -444,15 +463,15 @@ function Precios() {
 
                 {clima.pronostico?.length > 0 && (
                   <div className="mt-4 flex items-center gap-2">
-                      {clima.pronostico.slice(0, 4).map((dia) => (
-                        <div
-                          key={dia.fecha}
-                          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F9F2E8] text-lg ring-1 ring-[#E3D0B8]"
-                          title={`${formatearDiaCorto(dia.fecha)} - ${dia.descripcion}`}
-                        >
-                          {dia.icono || '🌤️'}
-                        </div>
-                      ))}
+                    {clima.pronostico.slice(0, 4).map((dia) => (
+                      <div
+                        key={dia.fecha}
+                        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F9F2E8] text-lg ring-1 ring-[#E3D0B8]"
+                        title={`${formatearDiaCorto(dia.fecha)} - ${dia.descripcion}`}
+                      >
+                        {dia.icono || '🌤️'}
+                      </div>
+                    ))}
                     <span className="ml-1 text-[11px] text-[#8A735B]">Próximos días</span>
                   </div>
                 )}
