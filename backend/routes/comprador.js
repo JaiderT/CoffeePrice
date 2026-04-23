@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken"; // ← NUEVO
 import CompradorModel from "../models/comprador.js";
+import Usuario from "../models/usuario.js";
 import {
   getcompradores,
   createcomprador,
@@ -15,7 +16,10 @@ const router = express.Router();
 
 // ← NUEVO: middleware opcional que no bloquea si no hay token
 const authOpcional = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    let token = req.cookies?.auth_token;
+    if (!token) {
+        token = req.headers.authorization?.split(' ')[1];
+    }
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -44,18 +48,42 @@ router.get("/mapa", async (req, res) => {
 
 router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agregado
   try {
-    if (req.user) { // ← verifica usuario real, no solo el header
-      const completo = await CompradorModel.findById(req.params.id);
-      if (!completo) return res.status(404).json({ message: 'Comprador no encontrado' });
-      return res.json(completo);
+    const comprador = await CompradorModel.findById(req.params.id);
+    if (!comprador) return res.status(404).json({ message: 'Comprador no encontrado' });
+
+    if (!req.user) {
+      return res.json({
+        _id: comprador._id,
+        nombreempresa: comprador.nombreempresa,
+        direccion: comprador.direccion,
+        telefono: comprador.telefono,
+        horarioApertura: comprador.horarioApertura,
+        horarioCierre: comprador.horarioCierre,
+        latitud: comprador.latitud,
+        longitud: comprador.longitud,
+      });
     }
 
-    const camposPublicos = 'nombreempresa direccion horario';
-    const comprador = await CompradorModel.findById(req.params.id).select(camposPublicos);
-    if (!comprador) return res.status(404).json({ message: 'Comprador no encontrado' });
-    res.json(comprador);
+    const usuarioSolicitante = await Usuario.findById(req.user.id).select("rol");
+    const esAdmin = usuarioSolicitante?.rol === "admin";
+    const esPropietario = comprador.usuario?.toString() === req.user.id;
+
+    if (!esAdmin && !esPropietario) {
+      return res.json({
+        _id: comprador._id,
+        nombreempresa: comprador.nombreempresa,
+        direccion: comprador.direccion,
+        telefono: comprador.telefono,
+        horarioApertura: comprador.horarioApertura,
+        horarioCierre: comprador.horarioCierre,
+        latitud: comprador.latitud,
+        longitud: comprador.longitud,
+      });
+    }
+
+    return res.json(comprador);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener comprador', error: error.message });
+    res.status(500).json({ message: 'Error al obtener comprador' });
   }
 });
 

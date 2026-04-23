@@ -40,17 +40,11 @@ const categoriaEmoji = {
 
 function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   const [paso, setPaso] = useState('seleccion');
-  const [cargando, setCargando] = useState(false);
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState(
     alertasActivas.categorias || []
   );
-  const [canalesSeleccionados, setCanalesSeleccionados] = useState({
-    push: alertasActivas.canales?.push ?? true,
-    email: alertasActivas.canales?.email ?? false,
-  });
 
   const categorias = CATEGORIAS.filter(c => c.value !== 'todas');
-  const token = localStorage.getItem('token');
   const usuarioId = localStorage.getItem('usuarioId');
 
   const toggleCategoria = (id) => {
@@ -76,13 +70,12 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
         }
       }
 
-      if (token && usuarioId) {
+      if (usuarioId) {
         await fetch(`${API_URL}/api/alertas-noticias`, {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             categorias: categoriasSeleccionadas,
@@ -95,32 +88,24 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       const config = { activas: true, categorias: categoriasSeleccionadas, canales: canalesSeleccionados };
       localStorage.setItem('coffeprice_alertas', JSON.stringify(config));
       setAlertasActivas(config);
-
-      if (canalesSeleccionados.push) {
-        new Notification('¡Alertas activadas! ☕', {
-          body: categoriasSeleccionadas.length > 0
-            ? `Recibirás noticias de: ${categoriasSeleccionadas.join(', ')}`
-            : 'Recibirás todas las noticias del café',
-          icon: '/favicon.ico',
-        });
-      }
-
+      new Notification('¡Alertas activadas! ☕', {
+        body: categoriasSeleccionadas.length > 0
+          ? `Recibirás noticias de: ${categoriasSeleccionadas.join(', ')}`
+          : 'Recibirás todas las noticias del café',
+        icon: '/favicon.ico',
+      });
       setPaso('exito');
-    } catch (error) {
-      console.error('Error al activar alertas:', error);
-      setPaso('exito');
-    } finally {
-      setCargando(false);
+    } else {
+      setPaso('denegado');
     }
   };
 
   const desactivar = async () => {
     try {
-      if (token && usuarioId) {
+      if (usuarioId) {
         await fetch(`${API_URL}/api/alertas-noticias`, {
           method: 'DELETE',
           credentials: 'include',
-          headers: { Authorization: `Bearer ${token}` },
         });
       }
     } catch (error) {
@@ -163,37 +148,11 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
                   );
                 })}
               </div>
-
-              <p className="text-[#2C1A0E] text-xs font-semibold uppercase mb-3">Canales de notificación</p>
-              <div className="space-y-2 mb-4">
-                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${canalesSeleccionados.push ? 'border-[#C8A96E] bg-[#FFF8E7]' : 'border-gray-200 bg-gray-50'}`}>
-                  <div>
-                    <p className="text-sm font-semibold text-[#2C1A0E]">🔔 Notificación push</p>
-                    <p className="text-xs text-gray-400">En el navegador cuando estés en la app</p>
-                  </div>
-                  <input type="checkbox" checked={canalesSeleccionados.push}
-                    onChange={e => setCanalesSeleccionados({ ...canalesSeleccionados, push: e.target.checked })}
-                    className="w-4 h-4 accent-[#C8A96E]" />
-                </label>
-                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${canalesSeleccionados.email ? 'border-[#C8A96E] bg-[#FFF8E7]' : 'border-gray-200 bg-gray-50'}`}>
-                  <div>
-                    <p className="text-sm font-semibold text-[#2C1A0E]">✉️ Correo electrónico</p>
-                    <p className="text-xs text-gray-400">Te enviamos un correo cuando haya una nueva noticia</p>
-                  </div>
-                  <input type="checkbox" checked={canalesSeleccionados.email}
-                    onChange={e => setCanalesSeleccionados({ ...canalesSeleccionados, email: e.target.checked })}
-                    className="w-4 h-4 accent-[#C8A96E]" />
-                </label>
-              </div>
-
               <p className="text-gray-400 text-xs mb-4 text-center">
-                {categoriasSeleccionadas.length === 0
-                  ? 'Sin selección recibirás alertas de todas las categorías'
-                  : `${categoriasSeleccionadas.length} categoría${categoriasSeleccionadas.length > 1 ? 's' : ''} seleccionada${categoriasSeleccionadas.length > 1 ? 's' : ''}`}
+                {categoriasSeleccionadas.length === 0 ? 'Sin selección recibirás todas las alertas' : `${categoriasSeleccionadas.length} categoría${categoriasSeleccionadas.length > 1 ? 's' : ''} seleccionada${categoriasSeleccionadas.length > 1 ? 's' : ''}`}
               </p>
-              <button onClick={activarNotificaciones} disabled={cargando}
-                className="w-full bg-[#3D1F0F] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#5a2e18] transition-colors disabled:opacity-60">
-                {cargando ? 'Activando...' : '🔔 Activar notificaciones'}
+              <button onClick={activarNotificaciones} className="w-full bg-[#3D1F0F] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#5a2e18] transition-colors">
+                🔔 Activar notificaciones
               </button>
               {alertasActivas.activas && (
                 <button onClick={desactivar} className="w-full mt-2 text-red-400 text-xs py-2 hover:text-red-600 transition-colors">
@@ -206,10 +165,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
             <div className="text-center py-4">
               <div className="text-5xl mb-4">✅</div>
               <h4 className="text-[#2C1A0E] font-bold text-lg mb-2">¡Alertas activadas!</h4>
-              <p className="text-gray-500 text-sm mb-2">Te avisaremos cuando haya noticias importantes del café.</p>
-              {canalesSeleccionados.email && (
-                <p className="text-[#C8A96E] text-xs mb-4">✉️ También recibirás un correo electrónico</p>
-              )}
+              <p className="text-gray-500 text-sm mb-6">Te avisaremos cuando haya noticias importantes del café.</p>
               <button onClick={onClose} className="w-full bg-[#C8A96E] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#B8994E] transition-colors">
                 Perfecto, cerrar
               </button>
@@ -250,7 +206,9 @@ export default function Noticias() {
     setCargando(true);
     try {
       const params = new URLSearchParams();
-      if (categoriaActiva !== 'todas') params.set('categoria', categoriaActiva);
+      if (categoriaActiva !== 'todas') {
+        params.set('categoria', categoriaActiva);
+      }
       params.set('_ts', Date.now().toString());
       const { data } = await axios.get(`${API_URL}/api/noticias?${params.toString()}`);
       setNoticias(data);
@@ -264,13 +222,11 @@ export default function Noticias() {
   // Cargar alerta del backend si está logueado
   useEffect(() => {
     const cargarAlertaBackend = async () => {
-      const token = localStorage.getItem('token');
       const usuarioId = localStorage.getItem('usuarioId');
-      if (!token || !usuarioId) return;
+      if (!usuarioId) return;
       try {
         const res = await fetch(`${API_URL}/api/alertas-noticias/usuario/${usuarioId}`, {
           credentials: 'include',
-          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (data && data.activa) {
@@ -291,7 +247,7 @@ export default function Noticias() {
 
   const destacada = noticias[0];
   const secundarias = noticias.slice(1);
-
+  
   const formatearFechaNoticia = (noticia, corta = false) => {
     const fecha = noticia.publishedAt || noticia.createdAt;
     return new Date(fecha).toLocaleDateString(
@@ -301,7 +257,7 @@ export default function Noticias() {
         : { day: '2-digit', month: 'short', year: 'numeric' }
     );
   };
-
+  
   const etiquetaImagen = (noticia) =>
     noticia.tipoImagen === 'source' ? 'Imagen de la fuente' : 'Imagen de apoyo';
 
@@ -309,6 +265,7 @@ export default function Noticias() {
     <div className="w-full bg-[#F5ECD7] py-12 md:py-16 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 md:px-7">
 
+        {/* Encabezado */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al día con el campo</p>
@@ -317,28 +274,32 @@ export default function Noticias() {
           </div>
         </div>
 
+        {/* Categorías */}
         <div className="flex gap-2 flex-wrap mb-8">
           {CATEGORIAS.map((cat, i) => (
             <button key={i} onClick={() => setCategoriaActiva(cat.value)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${categoriaActiva === cat.value
-                ? 'bg-[#3D1F0F] text-white'
-                : 'bg-white text-[#3D1F0F] border border-[#D4B898] hover:bg-[#3D1F0F] hover:text-white'
-              }`}>
+                  ? 'bg-[#3D1F0F] text-white'
+                  : 'bg-white text-[#3D1F0F] border border-[#D4B898] hover:bg-[#3D1F0F] hover:text-white'
+                }`}>
               {cat.label}
             </button>
           ))}
         </div>
 
+        {/* Cargando */}
         {cargando && (
           <div className="text-center py-16 text-gray-400 text-sm">Cargando noticias...</div>
         )}
 
+        {/* Sin resultados */}
         {!cargando && noticias.length === 0 && (
           <div className="text-center py-16 text-gray-400 text-sm">
             No hay noticias en esta categoría por el momento.
           </div>
         )}
 
+        {/* Grid noticias */}
         {!cargando && noticias.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {destacada && (
@@ -363,12 +324,18 @@ export default function Noticias() {
                       <div className="w-7 h-7 bg-[#C8A96E] rounded-full flex items-center justify-center text-xs">☕</div>
                       <span className="text-gray-400 text-xs">{destacada.fuente || 'CoffePrice'}</span>
                     </div>
-                    <span className="text-gray-500 text-xs">{formatearFechaNoticia(destacada)}</span>
+                    <span className="text-gray-500 text-xs">
+                      {formatearFechaNoticia(destacada)}
+                    </span>
                   </div>
                   <span className="text-[11px] text-gray-500 mt-3">{etiquetaImagen(destacada)}</span>
                   {destacada.sourceUrl && (
-                    <a href={destacada.sourceUrl} target="_blank" rel="noreferrer"
-                      className="inline-flex mt-4 text-[#C8A96E] text-xs font-semibold hover:text-white transition-colors">
+                    <a
+                      href={destacada.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex mt-4 text-[#C8A96E] text-xs font-semibold hover:text-white transition-colors"
+                    >
                       Ver fuente original
                     </a>
                   )}
@@ -395,12 +362,18 @@ export default function Noticias() {
                   <p className="text-gray-500 text-xs mt-2 leading-relaxed">{noticia.resumen}</p>
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-gray-400 text-xs">{noticia.fuente || 'CoffePrice'}</span>
-                    <span className="text-gray-400 text-xs">{formatearFechaNoticia(noticia, true)}</span>
+                    <span className="text-gray-400 text-xs">
+                      {formatearFechaNoticia(noticia, true)}
+                    </span>
                   </div>
                   <span className="block text-[11px] text-gray-400 mt-2">{etiquetaImagen(noticia)}</span>
                   {noticia.sourceUrl && (
-                    <a href={noticia.sourceUrl} target="_blank" rel="noreferrer"
-                      className="inline-flex mt-3 text-[#8B6B45] text-[11px] font-semibold hover:text-[#3D1F0F] transition-colors">
+                    <a
+                      href={noticia.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex mt-3 text-[#8B6B45] text-[11px] font-semibold hover:text-[#3D1F0F] transition-colors"
+                    >
                       Leer fuente
                     </a>
                   )}
@@ -421,12 +394,13 @@ export default function Noticias() {
               <p className="text-gray-400 text-xs mt-0.5">
                 {alertasActivas.activas
                   ? `Categorías: ${alertasActivas.categorias.length > 0 ? alertasActivas.categorias.join(', ') : 'Todas'}`
-                  : 'Activa las notificaciones y entérate cuando haya noticias importantes.'}
+                  : 'Activa las notificaciones y entérate cuando el precio suba o haya noticias importantes.'}
               </p>
             </div>
           </div>
           <button onClick={() => setModalAbierto(true)}
-            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer ${alertasActivas.activas ? 'bg-white text-[#3D1F0F] hover:bg-gray-100' : 'bg-[#C8A96E] text-white hover:bg-[#B8994E]'}`}>
+            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer ${alertasActivas.activas ? 'bg-white text-[#3D1F0F] hover:bg-gray-100' : 'bg-[#C8A96E] text-white hover:bg-[#B8994E]'
+              }`}>
             {alertasActivas.activas ? '⚙️ Editar alertas' : '🔔 Activar alertas'}
           </button>
         </div>
@@ -465,3 +439,5 @@ export default function Noticias() {
     </>
   );
 }
+
+

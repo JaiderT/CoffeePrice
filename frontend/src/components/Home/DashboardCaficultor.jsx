@@ -503,11 +503,13 @@ export default function DashboardProductor() {
           {/* ═══ Columna derecha (1/3) ═══ */}
           <div className="space-y-4">
 
-            {/* Mapa compradores */}
+            {/* Mapa compradores — no depende de API, se muestra de inmediato */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[#2C1A0E] font-bold text-sm">📍 Compradores cerca</p>
-                <Link to="/mapa" className="text-xs text-[#C8A96E] hover:underline">Ver mapa completo →</Link>
+                <Link to="/mapa" className="text-xs text-[#C8A96E] hover:underline">
+                  Ver mapa completo →
+                </Link>
               </div>
               <div className="w-full h-36 rounded-xl bg-[#E8F0E0] relative overflow-hidden mb-3 border border-[#D4E4C4]">
                 <div className="absolute inset-0" style={{
@@ -517,8 +519,10 @@ export default function DashboardProductor() {
                     rgba(255,255,255,0.4) 20px, rgba(255,255,255,0.4) 21px)`
                 }} />
                 {[
-                  { top: '20%', left: '30%' }, { top: '40%', left: '65%' },
-                  { top: '60%', left: '20%' }, { top: '70%', left: '75%' },
+                  { top: '20%', left: '30%' },
+                  { top: '40%', left: '65%' },
+                  { top: '60%', left: '20%' },
+                  { top: '70%', left: '75%' },
                 ].map((pos, i) => (
                   <div key={i}
                     className="absolute w-5 h-5 bg-[#C8A96E] rounded-full border-2 border-white shadow flex items-center justify-center"
@@ -526,8 +530,10 @@ export default function DashboardProductor() {
                     <div className="w-2 h-2 bg-white rounded-full" />
                   </div>
                 ))}
-                <div className="absolute w-5 h-5 bg-green-600 rounded-full border-2 border-white shadow"
-                  style={{ top: '48%', left: '47%', transform: 'translate(-50%,-50%)' }} />
+                <div
+                  className="absolute w-5 h-5 bg-green-600 rounded-full border-2 border-white shadow"
+                  style={{ top: '48%', left: '47%', transform: 'translate(-50%,-50%)' }}
+                />
                 <div className="absolute bottom-2 left-2 flex gap-2">
                   <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/80 px-2 py-0.5 rounded-full">
                     <span className="w-2 h-2 bg-[#C8A96E] rounded-full inline-block" />Compradores
@@ -570,7 +576,7 @@ export default function DashboardProductor() {
               </div>
             )}
 
-            {/* Calculadora rápida */}
+            {/* Calculadora rápida — no depende de API */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora rápida</p>
               <p className="text-gray-400 text-xs mb-4">¿Cuánto recibirías si vendes hoy?</p>
@@ -581,7 +587,9 @@ export default function DashboardProductor() {
                 className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#FDFAF5] mb-4"
               />
               <div className="bg-[#2C1A0E] rounded-xl p-4 flex items-center justify-between">
-                <p className="text-[#D8C7A8] text-xs leading-tight">Con el mejor<br />precio</p>
+                <p className="text-[#D8C7A8] text-xs leading-tight">
+                  Con el mejor<br />precio
+                </p>
                 <p className="text-[#F8F2E8] text-lg font-bold">
                   ${totalVenta > 0 ? totalVenta.toLocaleString('es-CO') : '---'}
                 </p>
@@ -594,3 +602,4 @@ export default function DashboardProductor() {
     </div>
   );
 }
+

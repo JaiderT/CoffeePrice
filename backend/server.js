@@ -32,24 +32,10 @@ import precioFNCRoutes from "./routes/precioFNC.js";
 
 const app = express();
 
-app.disable('x-powered-by');
-
 app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
-
-app.use((req, res, next) => {
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:;"
-  );
-  next();
-});
 
 app.use(express.json());
 app.use(cookieParser());

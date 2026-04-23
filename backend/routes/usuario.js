@@ -39,7 +39,8 @@ router.put("/perfil", authMiddleware, async (req, res) => {
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(usuario);
   } catch (error) {
-    res.status(400).json({ message: "Error al actualizar", error: error.message });
+    console.error("[Usuario] Error al actualizar perfil:", error.message);
+    res.status(400).json({ message: "Error al actualizar" });
   }
 });
 router.put("/password", authMiddleware, async (req, res) => {
@@ -59,7 +60,8 @@ router.put("/password", authMiddleware, async (req, res) => {
     await usuario.save();
     res.json({ message: "Contraseña Actualizada" });
   } catch (error) {
-    res.status(500).json({ message: "Error al cambiar contraseña", error: error.message});
+    console.error("[Usuario] Error al cambiar contraseña:", error.message);
+    res.status(500).json({ message: "Error al cambiar contraseña"});
   }
 });
 router.delete("/perfil", authMiddleware, eliminarMiCuenta);

@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AuthContext } from './AuthContext.js';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function guardarUsuarioLocal(usuario) {
   if (!usuario) return;
-  localStorage.setItem('token', 'session-cookie');
   localStorage.setItem('rol', usuario.rol || '');
   localStorage.setItem('name', usuario.nombre || '');
   localStorage.setItem('apellido', usuario.apellido || '');
@@ -106,7 +105,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -118,12 +117,12 @@ export function AuthProvider({ children }) {
   };
 
   const actualizarUsuario = (nuevosDatos) => {
-    setUsuario((prev) => {
-      if (!prev) return prev;
-      const usuarioActualizado = { ...prev, ...nuevosDatos };
-      guardarUsuarioLocal(usuarioActualizado);
-      return usuarioActualizado;
-    });
+    const usuarioActualizado = { ...usuario, ...nuevosDatos };
+    localStorage.setItem('name', usuarioActualizado.nombre);
+    localStorage.setItem('apellido', usuarioActualizado.apellido);
+    if (nuevosDatos.celular) localStorage.setItem('celular', nuevosDatos.celular);
+    if (nuevosDatos.email) localStorage.setItem('email', nuevosDatos.email);
+    setUsuario(usuarioActualizado);
   };
 
   return (
