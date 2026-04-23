@@ -25,7 +25,6 @@ const menuAdmin = [
 ];
 
 const menuComprador = [
-  { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
   { icon: 'fa-solid fa-gauge', label: 'Dashboard', path: '/comprador/dashboard' },
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
   { icon: 'fa-solid fa-map-location-dot', label: 'Mapa', path: '/mapa' },
