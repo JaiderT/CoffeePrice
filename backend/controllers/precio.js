@@ -39,16 +39,27 @@ const verificarAlertas = async (compradorId, preciocarga) => {
 };
 
 export const getprecios = async (req, res) => {
-    try {
-        const { tipocafe } = req.query;
-        const filtro = tipocafe ? { tipocafe } : {};
-        const precios = await PrecioModel.find(filtro)
-            .populate("comprador", "nombreempresa direccion")
-            .sort({ preciocarga: -1 });
-        res.json(precios);
-    } catch (error) {
-        res.status(500).json({ message: "Error al obtener precios", error: error.message });
-    }
+  try {
+    const { tipocafe } = req.query;
+    const filtro = tipocafe ? { tipocafe } : {};
+
+    const precios = await PrecioModel.find(filtro)
+      .populate("comprador", "nombreempresa direccion")
+      .sort({ preciocarga: -1 });
+
+    // Un solo precio por comprador — el más alto
+    const vistos = new Set();
+    const preciosPorComprador = precios.filter(p => {
+      const key = p.comprador?._id?.toString();
+      if (!key || vistos.has(key)) return false;
+      vistos.add(key);
+      return true;
+    });
+
+    res.json(preciosPorComprador);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener precios", error: error.message });
+  }
 };
 
 export const getpreciosBycomprador = async (req, res) => {
