@@ -78,7 +78,11 @@ export default function VerifyEmail() {
       }
       if (data.pendiente) { setPendiente(true); return; }
       login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
-      navigate("/precios", { replace: true });
+      if (data.role === "comprador") {
+        navigate("/completar-perfil", { replace: true });
+      } else {
+        navigate("/precios", { replace: true });
+      }
     } catch {
       setError("Error al conectar con el servidor.");
     } finally {
