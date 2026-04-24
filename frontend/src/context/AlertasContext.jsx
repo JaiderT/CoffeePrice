@@ -1,20 +1,22 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from './useAuth.js';
 
 /* eslint-disable react-refresh/only-export-components */
 const AlertasContext = createContext();
 
 export function AlertasProvider({ children }) {
   const API_URL = import.meta.env.VITE_API_URL;
+  const { usuario } = useAuth();
   const [alertasDisparadas, setAlertasDisparadas] = useState([]);
   const [mostrarBanner, setMostrarBanner] = useState(false);
 
   const verificarAlertas = useCallback(async () => {
-    const usuarioId = localStorage.getItem('usuarioId');
-    if (!usuarioId) return;
+    if (!usuario?.id) return;
     try {
       const { data } = await axios.get(
-        `${API_URL}/api/alertas/verificar/${usuarioId}`
+        `${API_URL}/api/alertas/verificar/${usuario.id}`,
+        { withCredentials: true }
       );
       if (data.length > 0) {
         setAlertasDisparadas(data);
@@ -29,11 +31,11 @@ export function AlertasProvider({ children }) {
         }
       }
     } catch { /* silencioso */ }
-  }, [API_URL]);
+  }, [API_URL, usuario?.id]);
 
   const confirmarAlerta = async (alerta) => {
     try {
-      await axios.delete(`${API_URL}/api/alertas/${alerta._id}`);
+      await axios.delete(`${API_URL}/api/alertas/${alerta._id}`, { withCredentials: true });
     } catch { /* silencioso */ }
     const nuevas = alertasDisparadas.filter(a => a._id !== alerta._id);
     setAlertasDisparadas(nuevas);
@@ -46,8 +48,7 @@ export function AlertasProvider({ children }) {
   };
 
   useEffect(() => {
-    const usuarioId = localStorage.getItem('usuarioId');
-    if (!usuarioId) return;
+    if (!usuario?.id) return;
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
@@ -59,7 +60,7 @@ export function AlertasProvider({ children }) {
       clearTimeout(timeout);
       clearInterval(intervalo);
     };
-  }, [verificarAlertas]);
+  }, [verificarAlertas, usuario?.id]);
 
   return (
     <AlertasContext.Provider value={{ alertasDisparadas, mostrarBanner, cerrarBanner }}>

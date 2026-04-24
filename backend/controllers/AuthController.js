@@ -37,7 +37,8 @@ function fijarCookieAuth(res, token, maxAge = 7 * 24 * 60 * 60 * 1000) {
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: '/',
     maxAge,
   });
 }
@@ -316,18 +317,22 @@ export const login = async (req, res) => {
 export const googleCallback = (req, res) => {
   try {
     if (req.user.estado === "rechazado") {
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=cuenta_rechazada`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=cuenta_rechazada`
+      );
     }
-
-    const token = generarToken(req.user, "1d");
-    fijarCookieAuth(res, token, 24 * 60 * 60 * 1000);
-
+    // Sin argumentos de tiempo — usa JWT_EXPIRES_IN del .env (mismo que login normal)
+    const token = generarToken(req.user);
+    fijarCookieAuth(res, token);
     if (req.user.estado === "pendiente") {
-      return res.redirect(`${process.env.FRONTEND_URL}/completar-perfil`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/completar-perfil`
+      );
     }
-
     res.redirect(`${process.env.FRONTEND_URL}/auth/google`);
   } catch (error) {
-    res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/login?error=google_auth_failed`
+    );
   }
 };

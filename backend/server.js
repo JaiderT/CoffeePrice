@@ -33,7 +33,18 @@ import precioFNCRoutes from "./routes/precioFNC.js";
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    const frontendUrl = process.env.FRONTEND_URL;
+    if (!origin || origin === frontendUrl) {
+      callback(null, true);
+      return;
+    }
+    if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('CORS origin not allowed'));
+  },
   credentials: true,
 }));
 
@@ -44,18 +55,38 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  // Sin store — usa sesión en memoria del proceso
+  // Solo se usa para guardar rolPendiente en el flujo de Google OAuth
   cookie: {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure: process.env.NODE_ENV === 'production',
+    path: '/',
     maxAge: 1000 * 60 * 60 * 24,
   },
 }));
+
 
 app.use(passport.initialize());
 
 process.on('unhandledRejection', (reason) => {
     console.error('[UnhandledRejection]', reason);
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Backend CoffePrice activo',
+    api: '/api',
+    available: [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/me',
+      '/api/noticias',
+      '/api/precios',
+      '/api/predicciones',
+    ],
+  });
 });
 
 app.use('/api/precios', publicLimiter);

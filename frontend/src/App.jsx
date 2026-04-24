@@ -109,8 +109,11 @@ function App() {
           </PrivateRoute>
         } />
         <Route path="/mapa" element={
+          <PrivateRoute roles={['comprador', 'productor', 'admin']}>
             <LayoutComprador><MapaCompradores /></LayoutComprador>
+          </PrivateRoute>
         } />
+
 
         {/* ── PERFIL PÚBLICO ── debe ir después de /comprador/dashboard y /comprador/perfil ── */}
         <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />

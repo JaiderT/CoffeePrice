@@ -177,6 +177,10 @@ async function buscarEnNewsAPI(query, fromDate) {
     const res = await fetch(url);
 
     if (!res.ok) {
+        if (res.status === 429) {
+            console.warn('[FuentesNoticias] NewsAPI rate limited, skipping.');
+            return [];
+        }
         const detalle = await res.text();
         throw new Error(`NewsAPI ${res.status}: ${detalle}`);
     }
