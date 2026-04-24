@@ -12,16 +12,36 @@ const compradorSchema = new mongoose.Schema(
             trim: true,
             unique: true,
         },
+        tipoempresa: {
+            type: String,
+            enum: ["cooperativa", "trilladora", "independiente", "exportadora", "otro"],
+            default: "independiente",
+        },
         direccion: {
             type: String,
             required: [true, "direccion necesaria"],
             trim: true,
+        },
+        municipio: {
+            type: String,
+            trim: true,
+            default: "El Pital",
         },
         telefono: {
             type: String,
             trim: true,
             default: null,
         },
+        descripcion: {
+            type: String,
+            trim: true,
+            default: null,
+            maxlength: 300,
+        },
+        servicios: [{
+            type: String,
+            trim: true,
+        }],
         horario: {
             type: String,
             trim: true,
