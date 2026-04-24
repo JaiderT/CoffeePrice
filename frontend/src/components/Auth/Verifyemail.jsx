@@ -7,7 +7,7 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
   const API_URL = import.meta.env.VITE_API_URL;
-  const { login } = useAuth();
+  const { login, usuario } = useAuth();
 
   const email = location.state?.email || "";
 
@@ -17,6 +17,9 @@ export default function VerifyEmail() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
   const [pendiente, setPendiente] = useState(false);
+  const [verificado, setVerificado] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [listo, setListo] = useState(false);
 
   const inputsRef = useRef([]);
 
@@ -29,6 +32,32 @@ export default function VerifyEmail() {
     const timer = setTimeout(() => setResendCooldown(v => v - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendCooldown]);
+
+  // Countdown visual
+  useEffect(() => {
+    if (!verificado) return;
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(v => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [verificado, countdown]);
+
+  // Navegar cuando el usuario ya esté en el contexto
+  useEffect(() => {
+    if (!listo || !verificado) return;
+    if (!usuario) return;
+
+    const timer = setTimeout(() => {
+      if (usuario.rol === "productor") {
+        navigate("/precios", { replace: true });
+      } else if (usuario.rol === "admin") {
+        navigate("/admin/perfil", { replace: true });
+      } else {
+        navigate("/precios", { replace: true });
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [listo, verificado, usuario, navigate]);
 
   function handleChange(index, value) {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -77,12 +106,23 @@ export default function VerifyEmail() {
         return;
       }
       if (data.pendiente) { setPendiente(true); return; }
-      login(data.token, data.role, data.name, data.apellido, data.id, data.celular, data.email);
+      login({
+        id: data.id,
+        rol: data.role,
+        nombre: data.name,
+        apellido: data.apellido,
+        celular: data.celular,
+        email: data.email,
+      });
       if (data.role === "comprador") {
         navigate("/completar-perfil", { replace: true });
       } else {
         navigate("/precios", { replace: true });
       }
+
+      setVerificado(true);
+      setListo(true);
+
     } catch {
       setError("Error al conectar con el servidor.");
     } finally {
@@ -134,14 +174,16 @@ export default function VerifyEmail() {
       </div>
 
       {/* Flecha atrás */}
-      <button
-        onClick={() => navigate("/register")}
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 group transition-all duration-300 hover:scale-110"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-6 sm:h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+      {!verificado && (
+        <button
+          onClick={() => navigate("/register")}
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 group transition-all duration-300 hover:scale-110"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-6 sm:h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
 
       {/* Contenedor principal */}
       <div className="w-full max-w-6xl bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/10 mx-auto">
@@ -202,8 +244,33 @@ export default function VerifyEmail() {
               <span className="text-2xl font-black text-[#3B1F0A] font-serif">Coffe<span className="text-[#C8814A]">Price</span></span>
             </div>
 
-            {/* ── COMPRADOR PENDIENTE ── */}
-            {pendiente ? (
+            {/* ── CUENTA VERIFICADA EXITOSAMENTE ── */}
+            {verificado ? (
+              <div className="flex flex-col items-center justify-center text-center py-10 px-4 animate-fade-in">
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6 animate-bounce-once">
+                  ✅
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-2 font-serif">
+                  ¡Cuenta verificada!
+                </h2>
+                <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-xs">
+                  Tu cuenta está lista. En un momento te llevamos a tu panel.
+                </p>
+
+                {/* Barra de progreso */}
+                <div className="w-full max-w-xs bg-gray-100 rounded-full h-1.5 overflow-hidden mb-3">
+                  <div
+                    className="h-full bg-[#C8814A] rounded-full transition-all duration-1000 ease-linear"
+                    style={{ width: `${((3 - countdown) / 3) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400">
+                  Redirigiendo en <span className="font-semibold text-[#C8814A]">{countdown}s</span>...
+                </p>
+              </div>
+
+            ) : pendiente ? (
+              /* ── COMPRADOR PENDIENTE ── */
               <div className="text-center py-8 px-4">
                 <div className="w-20 h-20 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-5xl mx-auto mb-6">⏳</div>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-3 font-serif">¡Correo verificado!</h2>
@@ -332,7 +399,18 @@ export default function VerifyEmail() {
           10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
           20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceOnce {
+          0%, 100% { transform: scale(1); }
+          40% { transform: scale(1.2); }
+          60% { transform: scale(0.95); }
+        }
         .animate-shake { animation: shake 0.5s ease-in-out; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        .animate-bounce-once { animation: bounceOnce 0.6s ease-out; }
         .animation-delay-1000 { animation-delay: 1s; }
         .animation-delay-500 { animation-delay: 0.5s; }
         @media (min-width: 480px) { .xs\\:flex-row { flex-direction: row; } }

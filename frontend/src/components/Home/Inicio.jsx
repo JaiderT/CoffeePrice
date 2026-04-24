@@ -294,7 +294,7 @@ function Inicio() {
                     </div>
                     <div className="rounded-2xl bg-[#EAF2E1] px-3 py-2 sm:text-right">
                       <p className="text-[11px] uppercase tracking-[0.12em] text-[#5D7040]">Señal de hoy</p>
-                      <p className="mt-1 text-sm font-bold text-[#41592A]">Conviene comparar</p>
+                      <p className="mt-1 text-sm font-bold text-[#41592A]">Conviene comprar</p>
                     </div>
                   </div>
 
@@ -302,30 +302,85 @@ function Inicio() {
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A735B]">
                       Mejores pagos del día
                     </p>
-                    <div className="mt-3 space-y-3">
+
+                    <div className="mt-3 relative">
                       {cargando ? (
                         <p className="py-3 text-sm text-[#7B6A5C]">Cargando precios...</p>
+                      ) : usuario ? (
+                        /* ── Usuario logueado: muestra todo normalmente ── */
+                        <div className="space-y-3">
+                          {precios.slice(0, 4).map((item, i) => (
+                            <div key={i} className="rounded-2xl bg-white/85 px-4 py-4 shadow-[0_6px_14px_rgba(96,73,47,0.05)]">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex min-w-0 items-start gap-3">
+                                  <span className="mt-0.5 shrink-0 text-lg">{medallas[i]}</span>
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-[#2F241C]">
+                                      {item.comprador?.nombreempresa}
+                                    </p>
+                                    <p className="mt-1 truncate text-xs text-[#8B7A69]">
+                                      {item.comprador?.direccion || 'Dirección disponible en precios'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className="shrink-0 text-sm font-black text-[#2F241C]">
+                                  ${item.preciocarga?.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       ) : (
-                        precios.slice(0, 4).map((item, i) => (
-                          <div key={i} className="rounded-2xl bg-white/85 px-4 py-4 shadow-[0_6px_14px_rgba(96,73,47,0.05)]">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex min-w-0 items-start gap-3">
-                                <span className="mt-0.5 shrink-0 text-lg">{medallas[i]}</span>
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-bold text-[#2F241C]">
-                                    {item.comprador?.nombreempresa}
-                                  </p>
-                                  <p className="mt-1 truncate text-xs text-[#8B7A69]">
-                                    {item.comprador?.direccion || 'Dirección disponible en precios'}
-                                  </p>
+                        /* ── Sin sesión: todas las filas tapadas ── */
+                        <div className="relative">
+                          {/* Filas borrosas decorativas */}
+                          <div className="space-y-3 blur-sm pointer-events-none select-none">
+                            {precios.slice(0, 4).map((item, i) => (
+                              <div key={i} className="rounded-2xl bg-white/85 px-4 py-4">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex min-w-0 items-start gap-3">
+                                    <span className="mt-0.5 shrink-0 text-lg">{medallas[i]}</span>
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-bold text-[#2F241C]">
+                                        {item.comprador?.nombreempresa}
+                                      </p>
+                                      <p className="mt-1 truncate text-xs text-[#8B7A69]">
+                                        {item.comprador?.direccion || '—'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span className="shrink-0 text-sm font-black text-[#2F241C]">
+                                    ${item.preciocarga?.toLocaleString()}
+                                  </span>
                                 </div>
                               </div>
-                              <span className="shrink-0 text-sm font-black text-[#2F241C]">
-                                ${item.preciocarga?.toLocaleString()}
-                              </span>
+                            ))}
+                          </div>
+
+                          {/* Overlay con CTA */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#2F241C]/65 px-4 text-center">
+                            <p className="text-sm font-bold text-white">
+                              Ver todos los compradores
+                            </p>
+                            <p className="text-xs text-[#E8D8C5]">
+                              Inicia sesión para ver la lista completa
+                            </p>
+                            <div className="mt-1 flex gap-2">
+                              <Link
+                                to="/login"
+                                className="rounded-xl bg-[#E1BE86] px-4 py-2 text-xs font-semibold text-[#2E2118] transition hover:bg-[#E9C996]"
+                              >
+                                Iniciar sesión
+                              </Link>
+                              <Link
+                                to="/register"
+                                className="rounded-xl border border-white/30 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
+                              >
+                                Registrarme
+                              </Link>
                             </div>
                           </div>
-                        ))
+                        </div>
                       )}
                     </div>
                   </div>
@@ -843,4 +898,3 @@ function Inicio() {
 }
 
 export default Inicio;
-
