@@ -4,6 +4,18 @@ import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import MapaCompradores from "./MapaCompradores.jsx";
 
+const esPorKg = (tipo) => ['pasilla', 'cacao', 'limon'].includes(tipo);
+
+const LABEL_TIPO = {
+  pergamino_seco: '☕ Pergamino seco',
+  verde_mojado: '🌿 Café verde / mojado',
+  especial: '✨ Café especial',
+  organico: '🌱 Café orgánico',
+  pasilla: '🟤 Pasilla',
+  cacao: '🍫 Cacao',
+  limon: '🍋 Limón',
+};
+
 function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
@@ -77,7 +89,7 @@ function Precios() {
     obtenerPrecioFNC();
   }, [API_URL]);
 
-  const filtros = ['todos', 'pergamino_seco', 'especial', 'organico', 'verde'];
+  const filtros = ['todos', 'pergamino_seco', 'verde_mojado', 'especial', 'organico', 'pasilla', 'cacao', 'limon'];
 
   const preciosFiltrados = precios
     .filter((p) => filtro === 'todos' || p.tipocafe === filtro)
@@ -90,7 +102,6 @@ function Precios() {
   const mejorPrecio = precios[0]?.preciocarga || 0;
   const mejorComprador = precios[0]?.comprador?.nombreempresa || 'Sin registros';
 
-  // Compradores únicos registrados
   const compradoresUnicos = new Set(precios.map(p => p.comprador?._id).filter(Boolean)).size;
 
   const diferencia =
@@ -164,20 +175,16 @@ function Precios() {
         </section>
 
         <section data-kaffi="precios-resumen" className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr]">
-          {/* Precio FNC — reemplaza precio promedio */}
           <article className="group relative overflow-hidden rounded-[28px] bg-[#F8F1E6] p-5 shadow-[0_12px_30px_rgba(96,73,47,0.10)] ring-1 ring-[#E8D8BF]/80 transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(96,73,47,0.14)]">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
               Precio FNC hoy
             </p>
-
             <p className="mt-3 text-3xl font-black text-[#2F241C]">
               {precioFNC ? `$${precioFNC.toLocaleString()}` : '···'}
             </p>
-
             <p className="mt-3 text-sm font-semibold text-[#5F452C]">
               Precio de referencia FNC.
             </p>
-
             <p className="mt-1 text-sm text-[#6D5E53]">
               {fuenteFNC === 'fnc-directo'
                 ? 'Dato tomado directamente de la FNC.'
@@ -191,15 +198,12 @@ function Precios() {
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D4C2A5]">
               El mejor pago de hoy en nuestra plataforma
             </p>
-
             <p className="mt-3 text-3xl font-black">
               ${mejorPrecio.toLocaleString()}
             </p>
-
             <p className="mt-3 text-sm font-semibold text-[#F1E3D0]">
               {mejorComprador}
             </p>
-
             <p className="mt-1 text-sm text-[#D9C9AF]">
               En este momento es el comprador que mejor está pagando.
             </p>
@@ -209,7 +213,6 @@ function Precios() {
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7A5428]">
               Precio esperado para mañana
             </p>
-
             {cargandoPrediccion ? (
               <p className="mt-3 text-sm text-[#6A543F]">Cargando predicción...</p>
             ) : prediccion ? (
@@ -217,7 +220,6 @@ function Precios() {
                 <p className="mt-3 text-3xl font-black text-[#2F241C]">
                   ${prediccion.precioestimado.toLocaleString()}
                 </p>
-
                 <p className="mt-1 text-sm text-[#6A543F]">
                   Para el{' '}
                   {normalizarFecha(prediccion.fecha).toLocaleDateString('es-CO', {
@@ -225,7 +227,6 @@ function Precios() {
                     month: 'long',
                   })}
                 </p>
-
                 <p className="mt-3 text-sm font-semibold text-[#5F452C]">
                   {prediccion.tendencia === 'sube'
                     ? 'Mañana podría pagar mejor'
@@ -233,7 +234,6 @@ function Precios() {
                     ? 'Mañana podría bajar un poco'
                     : 'Mañana seguiría parecido a hoy'}
                 </p>
-
                 <p className="mt-1 text-sm text-[#6A543F]">
                   Seguridad del pronóstico: {prediccion.confianza}%
                 </p>
@@ -276,15 +276,14 @@ function Precios() {
                       : 'bg-[#F5EBDD] text-[#6B5A4D] hover:bg-[#F0E2D0]'
                   }`}
                 >
-                  {f === 'todos'
-                    ? 'Ver todos'
-                    : f === 'pergamino_seco'
-                    ? 'Pergamino seco'
-                    : f === 'especial'
-                    ? 'Especial'
-                    : f === 'organico'
-                    ? 'Orgánico'
-                    : 'Verde'}
+                  {f === 'todos' ? 'Ver todos'
+                    : f === 'pergamino_seco' ? '☕ Pergamino seco'
+                    : f === 'verde_mojado' ? '🌿 Café verde'
+                    : f === 'especial' ? '✨ Especial'
+                    : f === 'organico' ? '🌱 Orgánico'
+                    : f === 'pasilla' ? '🟤 Pasilla'
+                    : f === 'cacao' ? '🍫 Cacao'
+                    : '🍋 Limón'}
                 </button>
               ))}
             </div>
@@ -299,7 +298,6 @@ function Precios() {
                 Revisa quién está pagando mejor hoy y compáralo antes de tomar una decisión.
               </p>
             </div>
-
             <span className="self-start rounded-full bg-[#F7EFE4] px-3 py-1 text-xs font-semibold text-[#6B5A4D] ring-1 ring-[#E3D0B8]">
               {usuario
                 ? `${preciosFiltrados.length} resultados`
@@ -317,103 +315,97 @@ function Precios() {
                 No encontramos compradores con ese filtro
               </p>
               <p className="mt-1 text-sm text-[#7B6A5C]">
-                Prueba con otro nombre o cambia el tipo de café.
+                Prueba con otro nombre o cambia el tipo de producto.
               </p>
             </div>
           ) : (
             <div data-kaffi="precios-lista" className="space-y-3">
-              {preciosVisibles.map((item, i) => (
-                <article
-                  key={i}
-                  className="rounded-[28px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)]"
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-black text-[#2F241C]">
-                          {item.comprador?.nombreempresa || 'Sin nombre'}
-                        </h3>
+              {preciosVisibles.map((item, i) => {
+                const porKg = esPorKg(item.tipocafe);
+                return (
+                  <article
+                    key={i}
+                    className="rounded-[28px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)]"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-black text-[#2F241C]">
+                            {item.comprador?.nombreempresa || 'Sin nombre'}
+                          </h3>
+                          <span className="rounded-full bg-[#E8D8C1] px-3 py-1 text-xs font-semibold text-[#5D4A3D]">
+                            {LABEL_TIPO[item.tipocafe] || item.tipocafe?.replace(/_/g, ' ')}
+                          </span>
+                        </div>
 
-                        <span className="rounded-full bg-[#E8D8C1] px-3 py-1 text-xs font-semibold text-[#5D4A3D]">
-                          {item.tipocafe === 'pergamino_seco'
-                            ? 'Compra pergamino'
-                            : item.tipocafe === 'especial'
-                            ? 'Compra café especial'
-                            : item.tipocafe === 'organico'
-                            ? 'Compra café orgánico'
-                            : 'Compra café verde'}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-sm text-[#746456]">
-                        {item.comprador?.direccion || 'Dirección no disponible'}
-                      </p>
-
-                      <p className="mt-2 text-sm font-semibold text-[#5F452C]">
-                        Actualizó su precio el{' '}
-                        {new Date(item.updatedAt).toLocaleDateString('es-CO', {
-                          day: 'numeric',
-                          month: 'long',
-                        })}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 xl:gap-6">
-                      <div className="min-w-37.5 rounded-2xl bg-[#F3E5D3] px-4 py-3">
-                        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
-                          Paga por carga
+                        <p className="mt-2 text-sm text-[#746456]">
+                          {item.comprador?.direccion || 'Dirección no disponible'}
                         </p>
-                        <p className="mt-1 text-2xl font-black text-[#2F241C]">
-                          ${item.preciocarga?.toLocaleString()}
+
+                        <p className="mt-2 text-sm font-semibold text-[#5F452C]">
+                          Actualizó su precio el{' '}
+                          {new Date(item.updatedAt).toLocaleDateString('es-CO', {
+                            day: 'numeric',
+                            month: 'long',
+                          })}
                         </p>
                       </div>
 
-                      <div className="min-w-37.5 rounded-2xl bg-[#EFE4D4] px-4 py-3">
-                        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
-                          Paga por kilo
-                        </p>
-
-                        {usuario ? (
-                          <p className="mt-1 text-lg font-bold text-[#2F241C]">
-                            ${item.preciokg?.toLocaleString()}
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 xl:gap-6">
+                        <div className="min-w-37.5 rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                          <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
+                            {porKg ? 'Paga por kg' : 'Paga por carga'}
                           </p>
-                        ) : (
+                          <p className="mt-1 text-2xl font-black text-[#2F241C]">
+                            ${item.preciocarga?.toLocaleString()}
+                          </p>
+                        </div>
+
+                        {!porKg && (
+                          <div className="min-w-37.5 rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
+                              Paga por kilo
+                            </p>
+                            {usuario ? (
+                              <p className="mt-1 text-lg font-bold text-[#2F241C]">
+                                ${item.preciokg?.toLocaleString()}
+                              </p>
+                            ) : (
+                              <Link
+                                to="/login"
+                                className="mt-1 inline-block text-sm font-semibold text-[#8A5A2B]"
+                              >
+                                Disponible al iniciar sesión
+                              </Link>
+                            )}
+                          </div>
+                        )}
+
+                        {usuario && (
                           <Link
-                            to="/login"
-                            className="mt-1 inline-block text-sm font-semibold text-[#8A5A2B]"
+                            to={`/comprador/${item.comprador?._id}`}
+                            className="inline-flex w-full items-center justify-center rounded-2xl bg-[#2F241C] px-4 py-3 text-sm font-semibold text-[#F7F1E8] transition hover:bg-[#443126] md:w-auto"
                           >
-                            Disponible al iniciar sesión
+                            Ver detalles
                           </Link>
                         )}
                       </div>
-
-                      {usuario && (
-                        <Link
-                          to={`/comprador/${item.comprador?._id}`}
-                          className="inline-flex w-full items-center justify-center rounded-2xl bg-[#2F241C] px-4 py-3 text-sm font-semibold text-[#F7F1E8] transition hover:bg-[#443126] md:w-auto"
-                        >
-                          Ver detalles
-                        </Link>
-                      )}
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
 
               {!usuario && preciosFiltrados.length > 3 && (
                 <div className="rounded-[28px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_100%)] p-6 text-[#F8F2E8] shadow-[0_16px_36px_rgba(47,36,28,0.18)]">
                   <p className="text-sm font-semibold text-[#DCC9AF]">
                     Estás viendo una muestra del mercado
                   </p>
-
                   <h3 className="mt-2 text-2xl font-black">
                     Inicia sesión para ver todos los compradores
                   </h3>
-
                   <p className="mt-2 text-sm leading-relaxed text-[#E8DCCB]">
                     También podrás consultar el precio por kilo y ver más detalles de cada comprador antes de vender.
                   </p>
-
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Link
                       to="/login"
@@ -421,7 +413,6 @@ function Precios() {
                     >
                       Iniciar sesión
                     </Link>
-
                     <Link
                       to="/register"
                       className="inline-flex items-center justify-center rounded-2xl border border-[#CDB79A] px-4 py-3 text-sm font-semibold text-[#F8F2E8] transition hover:bg-white/5"
@@ -440,7 +431,6 @@ function Precios() {
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
               Cómo está el clima hoy
             </p>
-
             {cargandoClima ? (
               <p className="mt-3 text-sm text-[#6D5E53]">Cargando clima...</p>
             ) : clima?.actual ? (
@@ -458,9 +448,7 @@ function Precios() {
                     </p>
                   </div>
                 </div>
-
                 <p className="mt-3 text-sm text-[#6D5E53]">{obtenerRecomendacionClima()}</p>
-
                 {clima.pronostico?.length > 0 && (
                   <div className="mt-4 flex items-center gap-2">
                     {clima.pronostico.slice(0, 4).map((dia) => (
