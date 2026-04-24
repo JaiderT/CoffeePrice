@@ -175,7 +175,7 @@ function Precios() {
             </p>
 
             <p className="mt-3 text-sm font-semibold text-[#5F452C]">
-              Precio de referencia Federación
+              Precio de referencia FNC.
             </p>
 
             <p className="mt-1 text-sm text-[#6D5E53]">
@@ -189,7 +189,7 @@ function Precios() {
 
           <article className="group relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#2F241C_0%,#3B2C22_100%)] p-5 text-[#F8F2E8] shadow-[0_14px_34px_rgba(47,36,28,0.22)] transition hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(47,36,28,0.28)]">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D4C2A5]">
-              El mejor pago de hoy
+              El mejor pago de hoy en nuestra plataforma
             </p>
 
             <p className="mt-3 text-3xl font-black">
