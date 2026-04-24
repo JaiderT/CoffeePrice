@@ -14,62 +14,45 @@ export default function GoogleAuth() {
       return; 
     }
 
-    const verificarSesion = async () => {
-      try {
-        // 1. Verificar si hay sesión activa con la cookie
-        const meResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
+      const verificarSesion = async () => {
+        try {
+          // Solo necesitamos /me — el backend ya fijó la cookie en el callback
+          const meResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/auth/me`,
+            { credentials: 'include',
+              headers: { 'Content-Type': 'application/json' } }
+          );
+          
+          if (!meResponse.ok) {
+            throw new Error('No hay sesión activa');
           }
-        });
-
-        if (!meResponse.ok) {
-          throw new Error('No hay sesión activa');
+          
+          const userData = await meResponse.json();
+          
+          // login() espera UN OBJETO con las propiedades del usuario
+          login({
+            id: userData._id,
+            rol: userData.rol,
+            nombre: userData.nombre,
+            apellido: userData.apellido,
+            celular: userData.celular,
+            email: userData.email,
+          });
+          
+          // Redirigir según el rol
+          if (userData.rol === "admin") {
+            navigate("/admin/perfil", { replace: true });
+          } else if (userData.rol === "comprador") {
+            navigate("/comprador/dashboard", { replace: true });
+          } else {
+            navigate("/precios", { replace: true });
+          }
+        } catch (err) {
+          console.error("Error verificando sesión:", err);
+          navigate("/login?error=google_auth_failed", { replace: true });
         }
-
-        const userData = await meResponse.json();
-        
-        // 2. Generar token JWT para el frontend
-        const tokenResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/generate-token`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-          // No necesitas body porque el middleware ya tiene el userId del token
-        });
-        
-        if (!tokenResponse.ok) {
-          throw new Error('No se pudo generar el token');
-        }
-        
-        const { token } = await tokenResponse.json();
-        
-        // 3. Iniciar sesión en el contexto
-        login(
-          token, 
-          userData.rol, 
-          userData.nombre, 
-          userData.apellido, 
-          userData._id, 
-          userData.celular, 
-          userData.email
-        );
-        
-        // 4. Redirigir según el rol
-        if (userData.rol === "admin") {
-          navigate("/admin/perfil", { replace: true });
-        } else if (userData.rol === "comprador") {
-          navigate("/comprador/dashboard", { replace: true });
-        } else {
-          navigate("/precios", { replace: true });
-        }
-        
-      } catch (err) {
-        console.error("Error verificando sesión:", err);
-        navigate("/login?error=google_auth_failed", { replace: true });
-      }
-    };
-    
+      };
+          
     verificarSesion();
   }, [params, navigate, login]);
 

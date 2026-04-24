@@ -189,7 +189,7 @@ export default function PerfilPublicoComprador() {
   const contenido = (
     <div className="min-h-screen bg-[#F7F1E3]">
       <div className="px-4 md:px-8 pt-6">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#8B7355] text-sm mb-4 hover:text-[#2C1A0E] transition-colors">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-[#8B7355] text-sm mb-4 hover:text-[#2C1A0E] transition-colors">
           <i className="fa-solid fa-arrow-left text-xs"></i> Volver
         </button>
       </div>

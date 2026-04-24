@@ -24,9 +24,17 @@ router.post("/resend-verification", resendVerificationLimiter,    resendVerifica
 // ─── Obtener usuario actual (desde cookie) ────────────────────────
 router.get("/me", authMiddleware, async (req, res) => {
   try {
-    const user = await Usuario.findById(req.user.id).select("-password -codigoVerificacion -codigoVerificacionExpira");
+    const user = await Usuario.findById(req.user.id)
+      .select("-password -codigoVerificacion -codigoVerificacionExpira");
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    // Verificar el estado de la cuenta antes de dar acceso
+    if (user.estado === "rechazado") {
+      return res.status(403).json({ message: "Cuenta rechazada" });
+    }
+    if (user.estado === "pendiente") {
+      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
     res.json(user);
   } catch (error) {
@@ -79,13 +87,16 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
 
 // ─── Logout (eliminar cookie) ──────────────────────────────────────
 router.post("/logout", (req, res) => {
+  // Una sola llamada con las mismas opciones que fijarCookieAuth
   res.clearCookie("auth_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
   });
   res.json({ message: "Sesión cerrada exitosamente" });
 });
+
 
 // ─── Google OAuth ──────────────────────────────────────────────────
 router.get("/google", (req, res, next) => {

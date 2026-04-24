@@ -24,7 +24,22 @@ function limpiarUsuarioLocal() {
 }
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
+  // CORREGIDO: useState con función inicializadora para precarga instantánea desde localStorage
+  const [usuario, setUsuario] = useState(() => {
+    const rol = localStorage.getItem('rol');
+    const id = localStorage.getItem('usuarioId');
+    // Si no hay rol o id guardados, no hay sesión previa
+    if (!rol || !id) return null;
+    return {
+      id,
+      rol,
+      nombre: localStorage.getItem('name') || '',
+      apellido: localStorage.getItem('apellido') || '',
+      celular: localStorage.getItem('celular') || '',
+      email: localStorage.getItem('email') || '',
+    };
+  });
+  
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -78,17 +93,21 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    limpiarUsuarioLocal();
+    setUsuario(null);
+
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
+      const response = await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
+
+      if (!response.ok) {
+        console.error('Error al cerrar sesion:', await response.text());
+      }
     } catch (error) {
       console.error('Error al cerrar sesion:', error);
     }
-
-    limpiarUsuarioLocal();
-    setUsuario(null);
   };
 
   const actualizarUsuario = (nuevosDatos) => {
