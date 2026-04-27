@@ -4,7 +4,7 @@ import { useAlertasContext } from '../../context/AlertasContext.jsx';
 import { useState } from 'react';
 
 const menuProductor = [
-  { icon: 'fa-solid fa-house', label: 'Dashboard', path: '/dashboard' },
+  { icon: 'fa-solid fa-gauge', label: 'Dashboard', path: '/dashboard' },
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
   { icon: 'fa-solid fa-map-location-dot', label: 'Mapa', path: '/mapa' },
   { icon: 'fa-solid fa-chart-simple', label: 'Predicciones', path: '/predicciones' },
@@ -16,7 +16,7 @@ const menuProductor = [
 ];
 
 const menuAdmin = [
-  { icon: 'fa-solid fa-house', label: 'Inicio', path: '/' },
+  { icon: 'fa-solid fa-gauge', label: 'Dashboard', path: '/admin/dashboard' },
   { icon: 'fa-solid fa-tags', label: 'Precios', path: '/precios' },
   { icon: 'fa-solid fa-chart-simple', label: 'Predicciones', path: '/predicciones' },
   { icon: 'fa-solid fa-newspaper', label: 'Noticias', path: '/noticias' },

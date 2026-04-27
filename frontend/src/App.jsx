@@ -32,6 +32,7 @@ import MapaCompradores from './components/Home/MapaCompradores.jsx';
 // Páginas privadas — Admin
 import PerfilAdmin from "./components/Home/Perfiladmin.jsx";
 import Configuracion from "./components/Home/Configuracion.jsx";
+import DashboardAdmin from './components/Home/DashboardAdmin.jsx';
 
 // Perfil público
 import PerfilPublicoComprador from "./components/Home/PerfilPublicoComprador.jsx";
@@ -128,6 +129,11 @@ function App() {
           <Route path="/configuracion" element={
             <PrivateRoute roles={['admin']}>
               <LayoutPrivado><Configuracion /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/admin/dashboard" element={
+            <PrivateRoute roles={['admin']}>
+              <LayoutPrivado><DashboardAdmin /></LayoutPrivado>
             </PrivateRoute>
           } />
 
