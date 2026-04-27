@@ -12,6 +12,10 @@ function Inicio() {
   const beneficiosRef = useRef(null);
   const { usuario } = useAuth();
 
+  const [precioFNC, setPrecioFNC] = useState(null);
+  const [fuenteFNC, setFuenteFNC] = useState(null);
+  const [cargandoFNC, setCargandoFNC] = useState(true);
+
   const [reseñas, setReseñas] = useState([]);
   const [reseñasVisibles, setReseñasVisibles] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -36,16 +40,22 @@ function Inicio() {
   useEffect(() => {
     const obtenerDatos = async () => {
       try {
-        const [preciosRes, resenasRes] = await Promise.all([
+        const [preciosRes, resenasRes, fncRes] = await Promise.all([
           axios.get(`${API_URL}/api/precios`),
           axios.get(`${API_URL}/api/resenas-plataforma`),
+          axios.get(`${API_URL}/api/precio-fnc`),
         ]);
         setPrecios(preciosRes.data);
         setReseñas(resenasRes.data);
+        if (fncRes.data?.precio) {
+          setPrecioFNC(fncRes.data.precio);
+          setFuenteFNC(fncRes.data.fuente);
+        }
       } catch (error) {
         console.error('Error al obtener datos de inicio:', error);
       } finally {
         setCargando(false);
+        setCargandoFNC(false);
       }
     };
     obtenerDatos();
@@ -96,7 +106,7 @@ function Inicio() {
   const renderEstrellas = (n) =>
     '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
 
-  const medallas = ['🥇', '🥈', '🥉', '🏅'];
+  const medallas = ['🥇', '🥈', '🥉', '🏅', '🏅'];
 
   const reseñasMostrar =
     reseñasVisibles.length > 0
@@ -267,10 +277,6 @@ function Inicio() {
                     <p className="text-xl font-black text-white">+240</p>
                     <p className="mt-1 text-[11px] text-[#D8CBBB]">Compradores registrados</p>
                   </div>
-                  <div className="rounded-2xl bg-white/10 px-4 py-4 backdrop-blur-sm">
-                    <p className="text-xl font-black text-white">12</p>
-                    <p className="mt-1 text-[11px] text-[#D8CBBB]">Municipios activos</p>
-                  </div>
                   <div className="rounded-2xl bg-[#E1BE86] px-4 py-4 text-[#2E2118]">
                     <p className="text-xl font-black">Gratis</p>
                     <p className="mt-1 text-[11px] text-[#6F4E31]">Para caficultores</p>
@@ -283,18 +289,28 @@ function Inicio() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8A735B]">
-                        Así está el mercado hoy
+                        🏛️ Precio FNC hoy
                       </p>
                       <h2 className="mt-2 text-2xl font-black md:text-3xl">
-                        ${precios[0]?.preciocarga?.toLocaleString() || '1.950.000'}
+                        {cargandoFNC
+                          ? '...'
+                          : precioFNC
+                          ? `$${precioFNC.toLocaleString('es-CO')}`
+                          : `$${precios[0]?.preciocarga?.toLocaleString() || '1.950.000'}`}
                       </h2>
                       <p className="mt-1 text-sm text-[#6D5E53]">
-                        Precio destacado por carga en tu zona
+                        Precio de referencia por carga · FNC
                       </p>
                     </div>
                     <div className="rounded-2xl bg-[#EAF2E1] px-3 py-2 sm:text-right">
-                      <p className="text-[11px] uppercase tracking-[0.12em] text-[#5D7040]">Señal de hoy</p>
-                      <p className="mt-1 text-sm font-bold text-[#41592A]">Conviene comprar</p>
+                      <p className="text-[11px] uppercase tracking-[0.12em] text-[#5D7040]">Fuente</p>
+                      <p className="mt-1 text-sm font-bold text-[#41592A]">
+                        {cargandoFNC
+                          ? '...'
+                          : fuenteFNC === 'fnc-directo'
+                          ? 'FNC directa'
+                          : 'Est. mercado NY'}
+                      </p>
                     </div>
                   </div>
 
@@ -331,12 +347,12 @@ function Inicio() {
                           ))}
                         </div>
                       ) : (
-                        /* ── Sin sesión: todas las filas tapadas ── */
-                        <div className="relative">
-                          {/* Filas borrosas decorativas */}
-                          <div className="space-y-3 blur-sm pointer-events-none select-none">
-                            {precios.slice(0, 4).map((item, i) => (
-                              <div key={i} className="rounded-2xl bg-white/85 px-4 py-4">
+                        /* ── Sin sesión: 3 visibles + el resto tapado ── */
+                        <div>
+                          {/* Primeras 3 filas visibles */}
+                          <div className="space-y-3">
+                            {precios.slice(0, 3).map((item, i) => (
+                              <div key={i} className="rounded-2xl bg-white/85 px-4 py-4 shadow-[0_6px_14px_rgba(96,73,47,0.05)]">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="flex min-w-0 items-start gap-3">
                                     <span className="mt-0.5 shrink-0 text-lg">{medallas[i]}</span>
@@ -345,7 +361,7 @@ function Inicio() {
                                         {item.comprador?.nombreempresa}
                                       </p>
                                       <p className="mt-1 truncate text-xs text-[#8B7A69]">
-                                        {item.comprador?.direccion || '—'}
+                                        {item.comprador?.direccion || 'Dirección disponible al iniciar sesión'}
                                       </p>
                                     </div>
                                   </div>
@@ -357,27 +373,54 @@ function Inicio() {
                             ))}
                           </div>
 
-                          {/* Overlay con CTA */}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#2F241C]/65 px-4 text-center">
-                            <p className="text-sm font-bold text-white">
-                              Ver todos los compradores
-                            </p>
-                            <p className="text-xs text-[#E8D8C5]">
-                              Inicia sesión para ver la lista completa
-                            </p>
-                            <div className="mt-1 flex gap-2">
-                              <Link
-                                to="/login"
-                                className="rounded-xl bg-[#E1BE86] px-4 py-2 text-xs font-semibold text-[#2E2118] transition hover:bg-[#E9C996]"
-                              >
-                                Iniciar sesión
-                              </Link>
-                              <Link
-                                to="/register"
-                                className="rounded-xl border border-white/30 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
-                              >
-                                Registrarme
-                              </Link>
+                          {/* Filas tapadas con overlay (a partir de la 4ta) */}
+                          <div className="relative mt-3">
+                            {/* Filas borrosas decorativas */}
+                            <div className="space-y-3 blur-sm pointer-events-none select-none">
+                              {precios.slice(3, 5).map((item, i) => (
+                                <div key={i} className="rounded-2xl bg-white/85 px-4 py-4">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                      <span className="mt-0.5 shrink-0 text-lg">{medallas[i + 3] ?? '🏅'}</span>
+                                      <div className="min-w-0">
+                                        <p className="truncate text-sm font-bold text-[#2F241C]">
+                                          {item.comprador?.nombreempresa}
+                                        </p>
+                                        <p className="mt-1 truncate text-xs text-[#8B7A69]">
+                                          {item.comprador?.direccion || '—'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <span className="shrink-0 text-sm font-black text-[#2F241C]">
+                                      ${item.preciocarga?.toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Overlay con CTA encima de las filas tapadas */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#2F241C]/65 px-4 text-center">
+                              <p className="text-sm font-bold text-white">
+                                Ver todos los compradores
+                              </p>
+                              <p className="text-xs text-[#E8D8C5]">
+                                Inicia sesión para ver la lista completa
+                              </p>
+                              <div className="mt-1 flex gap-2">
+                                <Link
+                                  to="/login"
+                                  className="rounded-xl bg-[#E1BE86] px-4 py-2 text-xs font-semibold text-[#2E2118] transition hover:bg-[#E9C996]"
+                                >
+                                  Iniciar sesión
+                                </Link>
+                                <Link
+                                  to="/register"
+                                  className="rounded-xl border border-white/30 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
+                                >
+                                  Registrarme
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -680,7 +723,7 @@ function Inicio() {
                   to="/register"
                   className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-[#E1BE86] py-3 text-sm font-semibold text-[#2E2118] transition hover:bg-[#E9C996]"
                 >
-                  Crear mi cuenta gratis 
+                  Crear mi cuenta gratis
                 </Link>
               </div>
             </div>
