@@ -8,7 +8,7 @@ const esPorKg = (tipo) => ['pasilla', 'cacao', 'limon'].includes(tipo);
 
 const LABEL_TIPO = {
   pergamino_seco: '☕ Pergamino seco',
-  verde_mojado: '🌿 Café verde / mojado',
+  verde: '🌿 Café verde / mojado',
   especial: '✨ Café especial',
   organico: '🌱 Café orgánico',
   pasilla: '🟤 Pasilla',
@@ -89,7 +89,7 @@ function Precios() {
     obtenerPrecioFNC();
   }, [API_URL]);
 
-  const filtros = ['todos', 'pergamino_seco', 'verde_mojado', 'especial', 'organico', 'pasilla', 'cacao', 'limon'];
+  const filtros = ['todos', 'pergamino_seco', 'verde', 'especial', 'organico', 'pasilla', 'cacao', 'limon'];
 
   const preciosFiltrados = precios
     .filter((p) => filtro === 'todos' || p.tipocafe === filtro)
@@ -278,7 +278,7 @@ function Precios() {
                 >
                   {f === 'todos' ? 'Ver todos'
                     : f === 'pergamino_seco' ? '☕ Pergamino seco'
-                    : f === 'verde_mojado' ? '🌿 Café verde'
+                    : f === 'verde' ? '🌿 Café verde'
                     : f === 'especial' ? '✨ Especial'
                     : f === 'organico' ? '🌱 Orgánico'
                     : f === 'pasilla' ? '🟤 Pasilla'

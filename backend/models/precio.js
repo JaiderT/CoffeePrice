@@ -4,7 +4,6 @@ const UNIDAD_POR_TIPO = {
   pergamino_seco: 'carga',
   especial: 'carga',
   organico: 'carga',
-  verde_mojado: 'carga',
   pasilla: 'kg',
   cacao: 'kg',
   limon: 'kg',
@@ -20,7 +19,7 @@ const preciosSchema = new mongoose.Schema(
     tipocafe: {
       type: String,
       required: [true, "tipo de producto necesario"],
-      enum: ["pergamino_seco", "especial", "organico", "verde_mojado", "pasilla", "cacao", "limon"],
+      enum: ["pergamino_seco", "especial", "organico", "verde", "pasilla", "cacao", "limon"],
     },
     preciocarga: {
       type: Number,

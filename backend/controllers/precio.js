@@ -108,7 +108,7 @@ export const createprecio = async (req, res) => {
     }
 
     const precioNumerico = Number(preciocarga);
-    const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde_mojado", "pasilla", "cacao", "limon"];
+    const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde", "pasilla", "cacao", "limon"];
 
     if (Number.isNaN(precioNumerico) || precioNumerico <= 0) {
       return res.status(400).json({
@@ -191,7 +191,7 @@ export const updateprecio = async (req, res) => {
     }
 
     if (tipocafe !== undefined) {
-      const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde"];
+      const tiposPermitidos = ["pergamino_seco", "especial", "organico", "verde", "pasilla", "cacao", "limon"];
       if (!tiposPermitidos.includes(tipocafe)) {
         return res.status(400).json({ message: "Tipo de café no válido" });
       }

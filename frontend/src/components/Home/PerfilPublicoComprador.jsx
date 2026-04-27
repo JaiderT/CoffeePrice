@@ -16,7 +16,7 @@ const TAGS = [
 
 const LABELS_PRODUCTO = {
   pergamino_seco: { label: 'Pergamino seco', emoji: '☕', color: 'bg-amber-50 border-amber-200 text-amber-800' },
-  verde_mojado: { label: 'Café verde / mojado', emoji: '🌿', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
+  verde: { label: 'Café verde / mojado', emoji: '🌿', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
   especial: { label: 'Café especial', emoji: '✨', color: 'bg-purple-50 border-purple-200 text-purple-800' },
   organico: { label: 'Café orgánico', emoji: '🌱', color: 'bg-green-50 border-green-200 text-green-800' },
   pasilla: { label: 'Pasilla', emoji: '🟤', color: 'bg-orange-50 border-orange-200 text-orange-800' },
@@ -199,7 +199,7 @@ export default function PerfilPublicoComprador() {
 
         {/* Header */}
         <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
-          <div className="h-36 bg-gradient-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
+          <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
             <div className="absolute bottom-0 left-6 translate-y-1/2">
               <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
                 {iniciales(comprador.nombreempresa)}

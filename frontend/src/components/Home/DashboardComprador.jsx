@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 const TIPOS_PRODUCTO = [
   { value: 'pergamino_seco', label: '☕ Pergamino seco', unidad: 'carga', grupo: 'Café' },
-  { value: 'verde_mojado', label: '🌿 Café verde / mojado', unidad: 'carga', grupo: 'Café' },
+  { value: 'verde', label: '🌿 Café verde / mojado', unidad: 'carga', grupo: 'Café' },
   { value: 'especial', label: '✨ Café especial', unidad: 'carga', grupo: 'Café' },
   { value: 'organico', label: '🌱 Café orgánico', unidad: 'carga', grupo: 'Café' },
   { value: 'pasilla', label: '🟤 Pasilla', unidad: 'kg', grupo: 'Café' },
@@ -16,7 +16,7 @@ const TIPOS_PRODUCTO = [
 
 const BADGE_COLORS = {
   pergamino_seco: 'bg-amber-100 text-amber-700',
-  verde_mojado: 'bg-emerald-100 text-emerald-700',
+  verde: 'bg-emerald-100 text-emerald-700',
   especial: 'bg-purple-100 text-purple-700',
   organico: 'bg-green-100 text-green-700',
   pasilla: 'bg-orange-100 text-orange-700',
