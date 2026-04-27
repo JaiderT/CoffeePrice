@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/useAuth.js';
 import axios from 'axios';
-
 function Inicio() {
   const API_URL = import.meta.env.VITE_API_URL;
   const [precios, setPrecios] = useState([]);
@@ -215,7 +214,6 @@ function Inicio() {
     {
       pregunta: '¿Cómo sé que los precios son reales?',
       respuesta: 'Los precios son publicados directamente por los compradores registrados en la plataforma. Cada publicación tiene fecha y hora para que puedas verificar su vigencia.',
-    },
     {
       pregunta: '¿Qué es la predicción de precios?',
       respuesta: 'Es una estimación basada en el comportamiento reciente del mercado local que te indica si el precio tiene tendencia a subir, bajar o mantenerse. Es una referencia, no una garantía.',
