@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useAlertas } from './hooks/useAlertas.js';
+import { useAuth } from './context/useAuth.js';
 
 // Auth
 import Login from "./components/Auth/Login.jsx";
@@ -45,92 +46,92 @@ import Kaffi from './components/kaffi.jsx';
 
 function App() {
   useAlertas();
+  const { usuario } = useAuth();
 
   return (
     <BrowserRouter>
       <>
         <Routes>
 
-        {/* ── PÚBLICAS ── */}
-        <Route path="/" element={
-          <LayoutPublico>
-            <Inicio />
-          </LayoutPublico>
-        } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/auth/google" element={<GoogleAuth />} />
-        <Route path="/completar-perfil" element={<CompletarPerfil />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-code" element={<VerifyCode />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/contacto" element={<Contacto />} />
-        <Route path="/noticias" element={<Noticias />} />
+          {/* ── PÚBLICAS ── */}
+          <Route path="/" element={
+            usuario?.rol
+              ? <LayoutPrivado><Inicio /></LayoutPrivado>
+              : <LayoutPublico><Inicio /></LayoutPublico>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/google" element={<GoogleAuth />} />
+          <Route path="/completar-perfil" element={<CompletarPerfil />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-code" element={<VerifyCode />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/noticias" element={<Noticias />} />
 
-        {/* ── PRODUCTOR ── */}
-        <Route path="/precios" element={
-          <LayoutPrivado><Precios /></LayoutPrivado>
-        } />
-        <Route path="/predicciones" element={
-          <PrivateRoute roles={['productor', 'admin']}>
-            <LayoutPrivado><Predicciones /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-        <Route path="/perfil" element={
-          <PrivateRoute roles={['productor']}>
-            <LayoutPrivado><PerfilProductor /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-        <Route path="/dashboard" element={
-          <PrivateRoute roles={['productor']}>
-            <LayoutPrivado><DashboardProductor /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-        <Route path="/alertas" element={
-          <PrivateRoute roles={['productor']}>
-            <LayoutPrivado><Alertas /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-        <Route path="/historial" element={
-          <PrivateRoute roles={['productor', 'admin']}>
-            <LayoutPrivado><Historial /></LayoutPrivado>
-          </PrivateRoute>
-        } />
+          {/* ── PRODUCTOR ── */}
+          <Route path="/precios" element={
+            <LayoutPrivado><Precios /></LayoutPrivado>
+          } />
+          <Route path="/predicciones" element={
+            <PrivateRoute roles={['productor', 'admin']}>
+              <LayoutPrivado><Predicciones /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/perfil" element={
+            <PrivateRoute roles={['productor']}>
+              <LayoutPrivado><PerfilProductor /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/dashboard" element={
+            <PrivateRoute roles={['productor']}>
+              <LayoutPrivado><DashboardProductor /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/alertas" element={
+            <PrivateRoute roles={['productor']}>
+              <LayoutPrivado><Alertas /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/historial" element={
+            <PrivateRoute roles={['productor', 'admin']}>
+              <LayoutPrivado><Historial /></LayoutPrivado>
+            </PrivateRoute>
+          } />
 
-        {/* ── COMPRADOR ── */}
-        <Route path="/comprador/dashboard" element={
-          <PrivateRoute roles={['comprador']}>
-            <LayoutComprador><DashboardComprador /></LayoutComprador>
-          </PrivateRoute>
-        } />
-        <Route path="/comprador/perfil" element={
-          <PrivateRoute roles={['comprador']}>
-            <LayoutComprador><PerfilComprador /></LayoutComprador>
-          </PrivateRoute>
-        } />
-        <Route path="/mapa" element={
-          <PrivateRoute roles={['comprador', 'productor', 'admin']}>
-            <LayoutComprador><MapaCompradores /></LayoutComprador>
-          </PrivateRoute>
-        } />
+          {/* ── COMPRADOR ── */}
+          <Route path="/comprador/dashboard" element={
+            <PrivateRoute roles={['comprador']}>
+              <LayoutComprador><DashboardComprador /></LayoutComprador>
+            </PrivateRoute>
+          } />
+          <Route path="/comprador/perfil" element={
+            <PrivateRoute roles={['comprador']}>
+              <LayoutComprador><PerfilComprador /></LayoutComprador>
+            </PrivateRoute>
+          } />
+          <Route path="/mapa" element={
+            <PrivateRoute roles={['comprador', 'productor', 'admin']}>
+              <LayoutComprador><MapaCompradores /></LayoutComprador>
+            </PrivateRoute>
+          } />
 
+          {/* ── PERFIL PÚBLICO ── */}
+          <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
 
-        {/* ── PERFIL PÚBLICO ── debe ir después de /comprador/dashboard y /comprador/perfil ── */}
-        <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
+          {/* ── ADMIN ── */}
+          <Route path="/admin/perfil" element={
+            <PrivateRoute roles={['admin']}>
+              <LayoutPrivado><PerfilAdmin /></LayoutPrivado>
+            </PrivateRoute>
+          } />
+          <Route path="/configuracion" element={
+            <PrivateRoute roles={['admin']}>
+              <LayoutPrivado><Configuracion /></LayoutPrivado>
+            </PrivateRoute>
+          } />
 
-        {/* ── ADMIN ── */}
-        <Route path="/admin/perfil" element={
-          <PrivateRoute roles={['admin']}>
-            <LayoutPrivado><PerfilAdmin /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-        <Route path="/configuracion" element={
-          <PrivateRoute roles={['admin']}>
-            <LayoutPrivado><Configuracion /></LayoutPrivado>
-          </PrivateRoute>
-        } />
-
-        <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
 
         </Routes>
         <Kaffi />

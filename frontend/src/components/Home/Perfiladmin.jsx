@@ -143,9 +143,7 @@ export default function PerfilAdmin() {
 
   const handleAprobarPlataforma = async (id) => {
     try {
-      await axios.put(`${API_URL}/api/resenas-plataforma/${id}/aprobar`, {},
-        { withCredentials: true }
-      );
+      await axios.put(`${API_URL}/api/resenas-plataforma/${id}/aprobar`, {}, { withCredentials: true });
       mostrarMensaje('exito', 'Reseña aprobada correctamente');
       obtenerReseñasPlataforma();
     } catch {
@@ -195,17 +193,13 @@ export default function PerfilAdmin() {
   };
 
   const handleLimpiarNoticiasDanadas = async () => {
-    const confirmar = window.confirm('Se eliminarán noticias automáticas sospechosas para dejar la presentación más limpia. ¿Desea continuar?');
+    const confirmar = window.confirm('Se eliminarán noticias automáticas sospechosas. ¿Desea continuar?');
     if (!confirmar) return;
-
     setLimpiandoNoticias(true);
     try {
       const { data } = await axios.post(`${API_URL}/api/noticias/limpiar-danadas`, {
-        dryRun: false,
-        soloAutoGeneradas: true,
-        limite: 250,
+        dryRun: false, soloAutoGeneradas: true, limite: 250,
       }, { withCredentials: true });
-
       mostrarMensaje('exito', data?.message || 'Noticias dañadas limpiadas correctamente');
       obtenerNoticias();
     } catch {
@@ -231,9 +225,7 @@ export default function PerfilAdmin() {
   const handleAprobarComprador = async (usuarioId) => {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
-        { estado: 'activo' },
-        { withCredentials: true }
-      );
+        { estado: 'activo' }, { withCredentials: true });
       mostrarMensaje('exito', 'Comprador aprobado correctamente');
       obtenerUsuarios();
       obtenerCompradores();
@@ -245,9 +237,7 @@ export default function PerfilAdmin() {
   const handleRechazarComprador = async (usuarioId) => {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
-        { estado: 'rechazado' },
-        { withCredentials: true }
-      );
+        { estado: 'rechazado' }, { withCredentials: true });
       mostrarMensaje('exito', 'Comprador rechazado');
       obtenerUsuarios();
       obtenerCompradores();
@@ -268,28 +258,28 @@ export default function PerfilAdmin() {
   };
 
   const handleGuardarDatos = async (e) => {
-  e.preventDefault();
-  const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
-  if (!soloLetras.test(datos.nombre.trim())) {
-    mostrarMensaje('error', 'El nombre solo puede contener letras');
-    return;
-  }
-  if (!soloLetras.test(datos.apellido.trim())) {
-    mostrarMensaje('error', 'El apellido solo puede contener letras');
-    return;
-  }
-  setLoading(true);
-  try {
-    await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
-    actualizarUsuario(datos);
-    mostrarMensaje('exito', 'Datos actualizados correctamente');
-    setModo('ver');
-  } catch {
-    mostrarMensaje('error', 'Error al actualizar los datos');
-  } finally {
-    setLoading(false);
-  }
-};
+    e.preventDefault();
+    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+    if (!soloLetras.test(datos.nombre.trim())) {
+      mostrarMensaje('error', 'El nombre solo puede contener letras');
+      return;
+    }
+    if (!soloLetras.test(datos.apellido.trim())) {
+      mostrarMensaje('error', 'El apellido solo puede contener letras');
+      return;
+    }
+    setLoading(true);
+    try {
+      await axios.put(`${API_URL}/api/usuario/perfil`, datos, { withCredentials: true });
+      actualizarUsuario(datos);
+      mostrarMensaje('exito', 'Datos actualizados correctamente');
+      setModo('ver');
+    } catch {
+      mostrarMensaje('error', 'Error al actualizar los datos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCambiarPassword = async (e) => {
     e.preventDefault();
@@ -315,17 +305,12 @@ export default function PerfilAdmin() {
 
   const formatearFechaNoticia = (noticia) => {
     const fecha = noticia.publishedAt || noticia.createdAt;
-    return new Date(fecha).toLocaleDateString('es-CO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    return new Date(fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   const estaActivo = (ultimaConexion) => {
     if (!ultimaConexion) return false;
-    const diff = new Date() - new Date(ultimaConexion);
-    return diff < 5 * 60 * 1000;
+    return new Date() - new Date(ultimaConexion) < 5 * 60 * 1000;
   };
 
   const renderEstrellas = (n) => (
@@ -346,6 +331,8 @@ export default function PerfilAdmin() {
 
   const compradoresPendientes = usuarios.filter((u) => u.rol === 'comprador' && u.estado === 'pendiente');
 
+  const getEmpresa = (u) => compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
+
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
@@ -359,12 +346,8 @@ export default function PerfilAdmin() {
             <div>
               <p className="text-white font-bold text-lg">{usuario?.nombre} {usuario?.apellido}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="bg-[#C8A96E] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-bold">
-                  ⚙️ Administrador
-                </span>
-                <span className="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full font-semibold">
-                  ● Activo
-                </span>
+                <span className="bg-[#C8A96E] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-bold">⚙️ Administrador</span>
+                <span className="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full font-semibold">● Activo</span>
               </div>
             </div>
           </div>
@@ -410,8 +393,7 @@ export default function PerfilAdmin() {
           </button>
           <button onClick={() => setPestana('noticias')}
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'noticias' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
-            <i className="fa-solid fa-newspaper"></i>
-            Noticias
+            <i className="fa-solid fa-newspaper"></i>Noticias
           </button>
         </div>
 
@@ -430,31 +412,19 @@ export default function PerfilAdmin() {
             <div className="px-8 py-6">
               {modo === 'ver' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Nombre</span>
-                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.nombre}</span>
-                    <div className="h-px bg-gray-100" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Apellido</span>
-                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.apellido}</span>
-                    <div className="h-px bg-gray-100" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Correo electrónico</span>
-                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.email}</span>
-                    <div className="h-px bg-gray-100" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Celular</span>
-                    <span className="text-[#2C1A0E] text-sm font-medium">{usuario?.celular || 'No registrado'}</span>
-                    <div className="h-px bg-gray-100" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-gray-400 uppercase">Rol</span>
-                    <span className="text-[#2C1A0E] text-sm font-medium">Administrador</span>
-                    <div className="h-px bg-gray-100" />
-                  </div>
+                  {[
+                    { label: 'Nombre', valor: usuario?.nombre },
+                    { label: 'Apellido', valor: usuario?.apellido },
+                    { label: 'Correo electrónico', valor: usuario?.email },
+                    { label: 'Celular', valor: usuario?.celular || 'No registrado' },
+                    { label: 'Rol', valor: 'Administrador' },
+                  ].map((c, i) => (
+                    <div key={i} className="flex flex-col gap-1">
+                      <span className="text-xs font-semibold text-gray-400 uppercase">{c.label}</span>
+                      <span className="text-[#2C1A0E] text-sm font-medium">{c.valor}</span>
+                      <div className="h-px bg-gray-100" />
+                    </div>
+                  ))}
                   <button onClick={() => setModo('password')}
                     className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors">
                     <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
@@ -463,22 +433,19 @@ export default function PerfilAdmin() {
               )}
               {modo === 'editar' && (
                 <form onSubmit={handleGuardarDatos} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nombre</label>
-                    <input type="text" value={datos.nombre} onChange={e => setDatos({ ...datos, nombre: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Apellido</label>
-                    <input type="text" value={datos.apellido} onChange={e => setDatos({ ...datos, apellido: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Celular</label>
-                    <input type="text" value={datos.celular} onChange={e => setDatos({ ...datos, celular: e.target.value })}
-                      placeholder="+57 300 000 0000"
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
+                  {[
+                    { label: 'Nombre', key: 'nombre' },
+                    { label: 'Apellido', key: 'apellido' },
+                    { label: 'Celular', key: 'celular', placeholder: '+57 300 000 0000' },
+                  ].map((f, i) => (
+                    <div key={i}>
+                      <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">{f.label}</label>
+                      <input type="text" value={datos[f.key]}
+                        onChange={e => setDatos({ ...datos, [f.key]: e.target.value })}
+                        placeholder={f.placeholder || ''}
+                        className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    </div>
+                  ))}
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setModo('ver')}
                       className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -493,21 +460,18 @@ export default function PerfilAdmin() {
               )}
               {modo === 'password' && (
                 <form onSubmit={handleCambiarPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contraseña actual</label>
-                    <input type="password" value={passwords.actual} onChange={e => setPasswords({ ...passwords, actual: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nueva contraseña</label>
-                    <input type="password" value={passwords.nueva} onChange={e => setPasswords({ ...passwords, nueva: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Confirmar nueva contraseña</label>
-                    <input type="password" value={passwords.confirmar} onChange={e => setPasswords({ ...passwords, confirmar: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                  </div>
+                  {[
+                    { label: 'Contraseña actual', key: 'actual' },
+                    { label: 'Nueva contraseña', key: 'nueva' },
+                    { label: 'Confirmar nueva contraseña', key: 'confirmar' },
+                  ].map((f, i) => (
+                    <div key={i}>
+                      <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">{f.label}</label>
+                      <input type="password" value={passwords[f.key]}
+                        onChange={e => setPasswords({ ...passwords, [f.key]: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    </div>
+                  ))}
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setModo('ver')}
                       className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -537,13 +501,17 @@ export default function PerfilAdmin() {
                 </div>
                 <div className="p-4 space-y-3">
                   {compradoresPendientes.map((u, i) => {
-                    const comp = compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
+                    const comp = getEmpresa(u);
                     return (
                       <div key={i} className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-100 rounded-xl">
                         <div>
                           <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                           <p className="text-gray-400 text-xs">{u.email}</p>
-                          {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
+                          {comp && (
+                            <p className="text-[#C8A96E] text-xs font-semibold mt-1">
+                              🏢 {comp.nombreempresa}
+                            </p>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => handleAprobarComprador(u._id)}
@@ -578,38 +546,47 @@ export default function PerfilAdmin() {
                 <div className="text-center py-8 text-gray-400">Cargando usuarios...</div>
               ) : (
                 <div className="p-4 space-y-2">
-                  {usuariosFiltrados.map((u, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-[#F5ECD7]/50 rounded-xl hover:bg-[#F5ECD7] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#C8A96E] flex items-center justify-center text-white text-xs font-bold">
-                          {u.nombre?.[0]}{u.apellido?.[0]}
+                  {usuariosFiltrados.map((u, i) => {
+                    const comp = getEmpresa(u);
+                    return (
+                      <div key={i} className="flex items-center justify-between p-4 bg-[#F5ECD7]/50 rounded-xl hover:bg-[#F5ECD7] transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-[#C8A96E] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            {u.nombre?.[0]}{u.apellido?.[0]}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
+                            <p className="text-gray-400 text-xs">{u.email}</p>
+                            {u.rol === 'comprador' && comp && (
+                              <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">
+                                🏢 {comp.nombreempresa}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
-                          <p className="text-gray-400 text-xs">{u.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : u.rol === 'comprador' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                          {u.rol}
-                        </span>
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : u.rol === 'comprador' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                            {u.rol}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                            u.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
                             u.estado === 'rechazado' ? 'bg-red-100 text-red-700' :
-                              estaActivo(u.ultimaConexion) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                            estaActivo(u.ultimaConexion) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                           }`}>
-                          {u.estado === 'pendiente' ? '⏳ Pendiente' :
-                            u.estado === 'rechazado' ? '✕ Rechazado' :
+                            {u.estado === 'pendiente' ? '⏳ Pendiente' :
+                              u.estado === 'rechazado' ? '✕ Rechazado' :
                               estaActivo(u.ultimaConexion) ? '● En línea' : '○ Ausente'}
-                        </span>
-                        {u._id !== usuario?.id && (
-                          <button onClick={() => handleEliminarUsuario(u._id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-1">
-                            <i className="fa-solid fa-trash text-xs"></i>
-                          </button>
-                        )}
+                          </span>
+                          {u._id !== usuario?.id && (
+                            <button onClick={() => handleEliminarUsuario(u._id)}
+                              className="text-red-400 hover:text-red-600 transition-colors p-1">
+                              <i className="fa-solid fa-trash text-xs"></i>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -739,22 +716,17 @@ export default function PerfilAdmin() {
             <div className="flex items-center justify-between">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Gestionar noticias</h3>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLimpiarNoticiasDanadas}
-                  disabled={limpiandoNoticias}
-                  className="bg-[#7A4020] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#5f2f15] transition-colors flex items-center gap-2 disabled:opacity-60"
-                >
+                <button onClick={handleLimpiarNoticiasDanadas} disabled={limpiandoNoticias}
+                  className="bg-[#7A4020] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#5f2f15] transition-colors flex items-center gap-2 disabled:opacity-60">
                   <i className="fa-solid fa-broom"></i>
                   {limpiandoNoticias ? 'Limpiando...' : 'Limpiar dañadas'}
                 </button>
-                <button
-                  onClick={() => { setNoticiaEditar(null); setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' }); setMostrarFormNoticia(true); }}
+                <button onClick={() => { setNoticiaEditar(null); setFormNoticia({ titulo: '', resumen: '', contenido: '', categoria: 'mercado', fuente: '', imagen: '' }); setMostrarFormNoticia(true); }}
                   className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-2">
                   <i className="fa-solid fa-plus"></i> Nueva noticia
                 </button>
               </div>
             </div>
-
             {cargandoNoticias ? (
               <div className="text-center py-8 text-gray-400">Cargando noticias...</div>
             ) : noticias.length === 0 ? (
@@ -769,25 +741,19 @@ export default function PerfilAdmin() {
                     {n.imagen ? (
                       <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover shrink-0" />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center shrink-0 text-2xl">
-                        📰
-                      </div>
+                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center shrink-0 text-2xl">📰</div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#FFF8E7] text-[#C8A96E] border border-[#C8A96E]/30 font-semibold capitalize">
                           {n.categoria}
                         </span>
-                        <span className="text-gray-400 text-xs">
-                          {formatearFechaNoticia(n)}
-                        </span>
+                        <span className="text-gray-400 text-xs">{formatearFechaNoticia(n)}</span>
                       </div>
                       <p className="text-[#2C1A0E] font-semibold text-sm leading-snug truncate">{n.titulo}</p>
                       <p className="text-gray-400 text-xs mt-1 line-clamp-2">{n.resumen}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className="text-[11px] text-[#8B6B45] font-semibold">
-                          {n.fuente || 'CoffePrice'}
-                        </span>
+                        <span className="text-[11px] text-[#8B6B45] font-semibold">{n.fuente || 'CoffePrice'}</span>
                         {n.tipoImagen && (
                           <span className="text-[10px] uppercase tracking-wide text-gray-400">
                             {n.tipoImagen === 'source' ? 'Imagen de fuente' : 'Imagen de apoyo'}
