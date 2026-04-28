@@ -18,7 +18,7 @@ import solicitudRoutes from "./routes/solicitudRoutes.js";
 import usuarioRoutes from "./routes/usuario.js";
 import compradorRoutes from "./routes/comprador.js";
 import RecuperarPassword from "./routes/recuperar.js";
-import Clima from './routes/clima.js'
+import Clima from './routes/clima.js';
 import resenaPlataformaRoutes from "./routes/resenaPlataforma.js";
 import { publicLimiter } from "./middlewares/rateLimit.js";
 import { iniciarCronNoticias } from './jobs/noticiaCron.js';
@@ -29,6 +29,7 @@ import chatbotRoutes from './routes/chatbot.js';
 import alertaNoticia from './routes/alertaNoticia.js';
 import configuracionRoutes from "./routes/configuracion.js";
 import precioFNCRoutes from "./routes/precioFNC.js";
+import actividadRoutes from "./routes/actividad.js"; // ← NUEVO
 
 const app = express();
 
@@ -55,8 +56,6 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  // Sin store — usa sesión en memoria del proceso
-  // Solo se usa para guardar rolPendiente en el flujo de Google OAuth
   cookie: {
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -65,7 +64,6 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24,
   },
 }));
-
 
 app.use(passport.initialize());
 
@@ -89,6 +87,7 @@ app.get('/', (req, res) => {
   });
 });
 
+// Rate limiters públicos
 app.use('/api/precios', publicLimiter);
 app.use('/api/predicciones', publicLimiter);
 app.use('/api/noticias', publicLimiter);
@@ -96,6 +95,8 @@ app.use('/api/comprador', publicLimiter);
 app.use('/api/resenas', publicLimiter);
 app.use('/api/clima', publicLimiter);
 app.use('/api/precio-fnc', publicLimiter);
+
+// Rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/alertas", alertaRoutes);
 app.use("/api/noticias", noticiaRoutes);
@@ -114,6 +115,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/alertas-noticias', alertaNoticia);
 app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/precio-fnc', precioFNCRoutes);
+app.use('/api/actividad', actividadRoutes); // ← NUEVO
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);

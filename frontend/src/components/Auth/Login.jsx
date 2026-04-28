@@ -39,7 +39,7 @@ export default function Login() {
       setSuccess(`¡Bienvenido, ${data.name}! 👋🏻`);
 
       setTimeout(() => {
-        if (data.role === "admin") navigate("/admin/perfil");
+        if (data.role === "admin") navigate("/admin/dashboard");
         else if (data.role === "comprador") navigate("/comprador/dashboard");
         else navigate("/dashboard");
       }, 1500)

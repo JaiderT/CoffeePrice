@@ -295,10 +295,6 @@ export default function DashboardProductor() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-[#8B7355] text-xl1">Compradores</p>
-                      <p className="text-[#F8F2E8] text-xl1 font-bold mt-0.5">
-                        {totalCompradores > 0 ? totalCompradores : '---'} registrados
-                      </p>
                     </div>
                   </div>
                 </div>
