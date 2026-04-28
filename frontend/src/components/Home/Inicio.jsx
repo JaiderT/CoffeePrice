@@ -2,8 +2,6 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/useAuth.js';
 import axios from 'axios';
-import Navbar from '../Layout/Navbar';
-
 function Inicio() {
   const API_URL = import.meta.env.VITE_API_URL;
   const [precios, setPrecios] = useState([]);
@@ -225,7 +223,6 @@ function Inicio() {
 
   return (
     <div className="w-full bg-[linear-gradient(180deg,#F3E9DA_0%,#F7F2E8_42%,#EEE1CE_100%)]">
-      <Navbar />
 
       {/* ── HERO ── */}
       <section className="px-4 py-6 md:px-8 md:py-8">
