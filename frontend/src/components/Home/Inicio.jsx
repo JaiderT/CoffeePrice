@@ -592,7 +592,6 @@ function Inicio() {
                     </div>
                     {i < pasos.length - 1 && (
                       <div className="hidden sm:flex shrink-0 items-center text-[#D9C9AF]">
-                        <span className="text-lg">→</span>
                       </div>
                     )}
                   </div>
