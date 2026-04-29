@@ -126,22 +126,28 @@ export default function DashboardProductor() {
     finally { setCargandoAlerta(false); }
   }, [API_URL, usuario?.id]);
 
+  // ─── CAMBIO: construye la gráfica desde /api/precios (los precios de los compradores) ───
   const cargarHistorial = useCallback(async () => {
-    if (!usuario?.id) { setCargandoHistorial(false); return; }
     try {
-      const res = await axios.get(`${API_URL}/api/historial-precios`, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/precios`);
       const datos = res.data;
       if (Array.isArray(datos) && datos.length > 0) {
+        // Agrupar por fecha y promediar precios de ese día
         const porFecha = {};
-        datos.forEach(h => {
-          const fecha = new Date(h.createdAt || h.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+        datos.forEach(p => {
+          const raw = p.updatedAt || p.createdAt || p.fecha;
+          const fecha = raw
+            ? new Date(raw).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+            : 'Hoy';
           if (!porFecha[fecha]) porFecha[fecha] = [];
-          porFecha[fecha].push(h.preciocarga);
+          porFecha[fecha].push(p.preciocarga);
         });
-        const grafica = Object.entries(porFecha).slice(-10).map(([label, vals]) => ({
-          label,
-          precio: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length),
-        }));
+        const grafica = Object.entries(porFecha)
+          .slice(-10)
+          .map(([label, vals]) => ({
+            label,
+            precio: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length),
+          }));
         if (grafica.length > 0) {
           grafica[grafica.length - 1].label = 'Hoy';
           setHistorial(grafica);
@@ -149,9 +155,11 @@ export default function DashboardProductor() {
       }
     } catch {
       // silencioso
+    } finally {
+      setCargandoHistorial(false);
     }
-    finally { setCargandoHistorial(false); }
-  }, [API_URL, usuario?.id]);
+  }, [API_URL]);
+  // ─────────────────────────────────────────────────────────────────────────────────────────
 
   const cargarNoticias = useCallback(async () => {
     try {

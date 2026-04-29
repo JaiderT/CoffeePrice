@@ -26,10 +26,13 @@ const BADGE_COLORS = {
 
 const esPorKg = (tipo) => ['pasilla', 'cacao', 'limon'].includes(tipo);
 
+// ✅ Configuración global de axios para siempre enviar cookies
+const api = axios.create({ withCredentials: true });
+
 function DashboardComprador() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
-  const token = localStorage.getItem('token');
+
   const [precios, setPrecios] = useState([]);
   const [comprador, setComprador] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -53,6 +56,7 @@ function DashboardComprador() {
 
   const obtenerPrecios = useCallback(async (compradorId) => {
     try {
+      // ✅ Ruta pública, no necesita credenciales
       const { data } = await axios.get(`${API_URL}/api/precios/comprador/${compradorId}`);
       setPrecios(data);
     } catch (error) {
@@ -63,48 +67,55 @@ function DashboardComprador() {
   }, [API_URL]);
 
   useEffect(() => {
+    // ✅ Esperar a que el contexto tenga el usuario listo
+    if (!usuario?.id) return;
+
     const obtenerDatos = async () => {
       try {
-        const usuarioId = usuario?.id;
-        if (!usuarioId) { setCargando(false); return; }
-        const { data } = await axios.get(
-          `${API_URL}/api/comprador/usuario/${usuarioId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // ✅ Usando 'api' (instancia con withCredentials) en rutas protegidas
+        const { data } = await api.get(`${API_URL}/api/comprador/usuario/${usuario.id}`);
+
         setComprador(data);
         setHorarioForm({
           horarioApertura: data.horarioApertura || '07:00',
           horarioCierre: data.horarioCierre || '17:00',
         });
+
         await obtenerPrecios(data._id);
+
+        // ✅ Ruta pública
         const resenasRes = await axios.get(`${API_URL}/api/resenas/comprador/${data._id}`);
         setResenas(resenasRes.data.reseñas || []);
         setPromedio(resenasRes.data.promedio || 0);
+
         try {
-          const histRes = await axios.get(
-            `${API_URL}/api/historial-precios/comprador/${data._id}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          // ✅ Ruta protegida
+          const histRes = await api.get(`${API_URL}/api/historial-precios/comprador/${data._id}`);
           setHistorial(histRes.data);
         } catch { /* opcional */ }
+
+        // ✅ Rutas públicas
         const mercadoRes = await axios.get(`${API_URL}/api/precios`);
         setTodosPrecios(mercadoRes.data);
+
         const noticiasRes = await axios.get(`${API_URL}/api/noticias`);
         setNoticias(noticiasRes.data.slice(0, 3));
+
       } catch (error) {
         if (error.response?.status === 404) setSinPerfil(true);
+        else console.error('Error al obtener datos:', error.response?.status, error.response?.data);
         setCargando(false);
       }
     };
+
     obtenerDatos();
-  }, [API_URL, usuario?.id, obtenerPrecios, token]);
+  }, [API_URL, usuario?.id, obtenerPrecios]);
 
   const handleCrearPerfil = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(`${API_URL}/api/comprador`, formPerfil, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ Ruta protegida
+      const { data } = await api.post(`${API_URL}/api/comprador`, formPerfil);
       setComprador(data.comprador);
       setSinPerfil(false);
       setHorarioForm({
@@ -121,10 +132,12 @@ function DashboardComprador() {
   const handlePublicar = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/api/precios`,
-        { ...nuevoPrecio, preciocarga: Number(nuevoPrecio.preciocarga), comprador: comprador._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // ✅ Ruta protegida
+      await api.post(`${API_URL}/api/precios`, {
+        ...nuevoPrecio,
+        preciocarga: Number(nuevoPrecio.preciocarga),
+        comprador: comprador._id,
+      });
       mostrarMsg('exito', '¡Precio publicado exitosamente!');
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
@@ -137,10 +150,11 @@ function DashboardComprador() {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_URL}/api/precios/${precioEditar._id}`,
-        { preciocarga: Number(precioEditar.preciocarga), tipocafe: precioEditar.tipocafe },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // ✅ Ruta protegida
+      await api.put(`${API_URL}/api/precios/${precioEditar._id}`, {
+        preciocarga: Number(precioEditar.preciocarga),
+        tipocafe: precioEditar.tipocafe,
+      });
       mostrarMsg('exito', '¡Precio actualizado exitosamente!');
       setMostrarEditar(false);
       setPrecioEditar(null);
@@ -152,9 +166,8 @@ function DashboardComprador() {
 
   const handleEliminar = async () => {
     try {
-      await axios.delete(`${API_URL}/api/precios/${precioEliminar._id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // ✅ Ruta protegida
+      await api.delete(`${API_URL}/api/precios/${precioEliminar._id}`);
       mostrarMsg('exito', 'Precio eliminado correctamente');
       setMostrarEliminar(false);
       setPrecioEliminar(null);
@@ -167,9 +180,8 @@ function DashboardComprador() {
   const handleGuardarHorario = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_URL}/api/comprador/${comprador._id}`, horarioForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ Ruta protegida
+      await api.put(`${API_URL}/api/comprador/${comprador._id}`, horarioForm);
       setComprador({ ...comprador, ...horarioForm });
       mostrarMsg('exito', 'Horario actualizado correctamente');
       setMostrarHorario(false);
