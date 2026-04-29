@@ -13,7 +13,11 @@ export const getNoticias = async (req, res) => {
         res.set('Expires', '0');
         res.set('Surrogate-Control', 'no-store');
 
-        await asegurarNoticiasRecientes();
+        try {
+            await asegurarNoticiasRecientes();
+        } catch (refreshError) {
+            console.error('[Noticias] No se pudo refrescar automaticamente:', refreshError.message);
+        }
 
         const noticias = await Noticia.find(filtro).sort({ publishedAt: -1, createdAt: -1 });
         res.json(noticias);

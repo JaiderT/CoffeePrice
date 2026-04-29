@@ -50,8 +50,10 @@ export function AuthProvider({ children }) {
         });
 
         if (!response.ok) {
-          limpiarUsuarioLocal();
-          setUsuario(null);
+          if (response.status === 401) {
+            limpiarUsuarioLocal();
+            setUsuario(null);
+          }
           return;
         }
 
@@ -67,9 +69,8 @@ export function AuthProvider({ children }) {
 
         guardarUsuarioLocal(usuarioSesion);
         setUsuario(usuarioSesion);
-      } catch {
-        limpiarUsuarioLocal();
-        setUsuario(null);
+      } catch (error) {
+        console.warn('No se pudo validar la sesion con el backend. Se conserva la sesion local temporalmente.', error);
       } finally {
         setCargando(false);
       }

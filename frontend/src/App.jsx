@@ -14,6 +14,7 @@ import VerifyEmail from './components/Auth/Verifyemail.jsx';
 // Páginas públicas
 import Inicio from "./components/Home/Inicio.jsx";
 import Noticias from "./components/Home/Noticias.jsx";
+import NoticiaDetalle from "./components/Home/NoticiaDetalle.jsx";
 import Contacto from './components/Home/Contacto.jsx';
 
 // Páginas privadas — Productor
@@ -69,6 +70,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/noticias" element={<Noticias />} />
+          <Route path="/noticias/:id" element={<NoticiaDetalle />} />
 
           {/* ── PRODUCTOR ── */}
           <Route path="/precios" element={

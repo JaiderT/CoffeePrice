@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import Navbar from '../Layout/Navbar.jsx';
@@ -341,6 +342,9 @@ export default function Noticias() {
                       Ver fuente original
                     </a>
                   )}
+                  <Link to={`/noticias/${destacada._id}`} className="inline-flex mt-3 text-white text-sm font-semibold hover:text-[#C8A96E] transition-colors">
+                    Ver resumen
+                  </Link>
                 </div>
               </div>
             )}
@@ -365,6 +369,9 @@ export default function Noticias() {
                     <span className="text-gray-400 text-xs">{formatearFechaNoticia(noticia, true)}</span>
                   </div>
                   <span className="block text-[11px] text-gray-400 mt-2">{etiquetaImagen(noticia)}</span>
+                  <Link to={`/noticias/${noticia._id}`} className="inline-flex mt-4 text-[#3D1F0F] text-sm font-semibold hover:text-[#C8A96E] transition-colors">
+                    Ver resumen
+                  </Link>
                 </div>
               </div>
             ))}
