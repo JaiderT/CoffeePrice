@@ -31,11 +31,14 @@ export const createcomprador = async (req, res) => {
             return res.status(400).json({ message: "El nombre de la empresa solo puede contener letras" });
         }
 
-        // Verificar si ya existe una empresa con ese nombre
-        const empresaExistente = await CompradorModel.findOne({
-            nombreempresa: { $regex: new RegExp(`^${nombreempresa.trim()}$`, 'i') }
+        // Verificar duplicados ignorando números al final
+        const nombreBase = nombreempresa.trim().replace(/\d+$/, '').trim().toLowerCase();
+        const todasEmpresas = await CompradorModel.find({}, 'nombreempresa');
+        const duplicado = todasEmpresas.some(c => {
+            const nombreExistente = c.nombreempresa.replace(/\d+$/, '').trim().toLowerCase();
+            return nombreExistente === nombreBase;
         });
-        if (empresaExistente) {
+        if (duplicado) {
             return res.status(400).json({ message: "Ya existe una empresa registrada con ese nombre" });
         }
 
@@ -98,11 +101,14 @@ export const updatecomprador = async (req, res) => {
             if (!soloLetras.test(nombreempresa.trim())) {
                 return res.status(400).json({ message: "El nombre de la empresa solo puede contener letras" });
             }
-            const empresaExistente = await CompradorModel.findOne({
-                nombreempresa: { $regex: new RegExp(`^${nombreempresa.trim()}$`, 'i') },
-                _id: { $ne: compradorExistente._id }
+            // Verificar duplicados ignorando números al final
+            const nombreBase = nombreempresa.trim().replace(/\d+$/, '').trim().toLowerCase();
+            const todasEmpresas = await CompradorModel.find({ _id: { $ne: compradorExistente._id } }, 'nombreempresa');
+            const duplicado = todasEmpresas.some(c => {
+                const nombreExistente = c.nombreempresa.replace(/\d+$/, '').trim().toLowerCase();
+                return nombreExistente === nombreBase;
             });
-            if (empresaExistente) {
+            if (duplicado) {
                 return res.status(400).json({ message: "Ya existe una empresa registrada con ese nombre" });
             }
             compradorExistente.nombreempresa = nombreempresa.trim();
