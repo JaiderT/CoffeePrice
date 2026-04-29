@@ -1,10 +1,17 @@
 import OpenAI from 'openai';
+import * as cheerio from 'cheerio';
+import mongoose from 'mongoose';
 import Noticia from '../models/noticia.js';
 import PrecioModel from '../models/precio.js';
 import { crearHashFuente, obtenerArticulosReales } from './fuentesNoticiasService.js';
 
 let generacionEnCurso = null;
 let openaiClient = null;
+
+async function asegurarConexionMongo() {
+    if (mongoose.connection.readyState === 1) return;
+    await mongoose.connection.asPromise();
+}
 
 const IMAGENES = {
     mercado: 'https://images.unsplash.com/photo-1611174743420-3d7df880ce32?w=800',
@@ -23,7 +30,8 @@ const STOPWORDS = new Set([
     'cafe', 'huila', 'pital', 'coffeprice', 'colombia', 'colombiano', 'colombiana',
     'ayer', 'hoy', 'manana', 'noche', 'tarde', 'madrugada', 'zona', 'sector', 'dia',
     'del', 'las', 'los', 'una', 'unas', 'unos', 'por', 'con', 'sin', 'que', 'sus',
-    'mas', 'muy', 'pero', 'cada', 'ese', 'esa', 'aqui', 'alli', 'real'
+    'mas', 'muy', 'pero', 'cada', 'ese', 'esa', 'aqui', 'alli', 'real',
+    // Inglés — stopwords frecuentes en fuentes especializadas (NUEVO)
 ]);
 
 const TITULOS_GENERICOS = [
@@ -59,6 +67,9 @@ const PALABRAS_CAFE_RELEVANTES = [
     'exportaciones de cafe',
     'clima agricola',
     'zonas cafeteras',
+    'carga de cafe',
+    'grano de cafe',
+    // Inglés (NUEVO)
 ];
 
 const PALABRAS_RUIDO_RELEVANTES = [
@@ -70,6 +81,7 @@ const PALABRAS_RUIDO_RELEVANTES = [
     'goleada',
     'penal',
     'jugador',
+    'partido',
     'liga',
     'seleccion',
     'tenis',
@@ -86,6 +98,69 @@ const PALABRAS_RUIDO_RELEVANTES = [
     'judicial',
     'accidente',
 ];
+
+// ── CORRECCIÓN PRINCIPAL: se amplía con señales en inglés ──
+// Antes solo cubría español + 'coffee price'/'coffee market'.
+// Las fuentes especializadas (Daily Coffee News, Sprudge, PDG) publican
+// titulares como "Major Coffee Companies Join Initiative" o
+// "New Green Coffee Equipment from World of Coffee" que son 100%
+// relevantes pero no disparaban ninguna señal fuerte.
+const PALABRAS_CAFE_FUERTES_AUTO = [
+    // Español
+    'precio del cafe',
+    'mercado del cafe',
+    'federacion nacional de cafeteros',
+    'comite de cafeteros',
+    'caficultores',
+    'caficultura',
+    'cultivo de cafe',
+    'produccion de cafe',
+    'cosecha de cafe',
+    'exportaciones de cafe',
+    'cafe colombiano',
+    'bolsa del cafe',
+    'sector cafetero',
+    'precio de la carga',
+    'carga de cafe',
+    'grano de cafe',
+    // Inglés — mercado y precios
+    // Inglés — sector y actores
+    // Inglés — producción y origen
+    // Inglés — sostenibilidad y calidad
+    // Inglés — publicaciones especializadas (señal de fuente confiable)
+];
+
+function contarFrasesEnTexto(texto = '', frases = []) {
+    return frases.reduce((total, frase) => total + (texto.includes(frase) ? 1 : 0), 0);
+}
+
+function tieneContextoCafeFuerte(texto = '') {
+    return contarFrasesEnTexto(normalizarTexto(texto), PALABRAS_CAFE_FUERTES_AUTO) >= 1;
+}
+
+// ── CORRECCIÓN: umbral Jaccard bajado de 0.28 a 0.15 para textos bilingües ──
+// Cuando la fuente está en inglés y la adaptación en español, los tokens
+// cambian completamente (distinto idioma). Con el umbral original de 0.28
+// casi ningún artículo inglés-a-español lo pasaba. 0.15 sigue siendo
+// suficiente para detectar divergencias temáticas reales (ej. un artículo
+// de fútbol adaptado como noticia de café).
+const UMBRAL_SIMILITUD_TEMATICA = 0.10;
+
+function esTemaConsistenteConFuente(adaptada = {}, articulo = {}) {
+    const fuente = normalizarTexto(`${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`);
+    const publicada = normalizarTexto(`${adaptada.titulo || ''} ${adaptada.resumen || ''} ${adaptada.contenido || ''}`);
+
+    if (!fuente || !publicada) return false;
+    if (esTextoRuido(publicada)) return false;
+
+    // Si la fuente tiene señal de café fuerte, confiar en la IA para la adaptación
+    // y no rechazar solo por distancia lingüística entre idiomas
+    if (tieneContextoCafeFuerte(fuente) && tieneContextoCafeFuerte(publicada)) return true;
+    if (adaptada.titulo && articulo.titulo && normalizarTexto(adaptada.titulo) === normalizarTexto(articulo.titulo)) return true;
+
+    const similitud = calcularSimilitud(obtenerTokens(publicada), obtenerTokens(fuente));
+    return similitud >= UMBRAL_SIMILITUD_TEMATICA;
+}
 
 function normalizarTexto(texto = '') {
     return texto
@@ -146,6 +221,8 @@ function resolverTituloFinal(tituloGenerado = '', tituloFuente = '') {
     const generado = capitalizarTitulo(tituloGenerado);
     const fuente = capitalizarTitulo(tituloFuente);
 
+    if (fuente) return fuente;
+
     if (!generado) return fuente;
     if (!fuente) return generado;
     if (esTituloGenerico(generado)) return fuente;
@@ -155,7 +232,10 @@ function resolverTituloFinal(tituloGenerado = '', tituloFuente = '') {
         obtenerTokens(fuente)
     );
 
-    if (similitud < 0.22) return fuente;
+    // CORRECCIÓN: umbral reducido a 0.25 para traducciones inglés→español
+    // donde los tokens cambian de idioma y la similitud real baja aunque
+    // el título sea semánticamente fiel.
+    if (similitud < 0.25) return fuente;
 
     return generado;
 }
@@ -164,6 +244,42 @@ function limpiarTextoAdaptado(texto = '') {
     return texto
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+function recortarTexto(texto = '', maximo = 220) {
+    const limpio = limpiarTextoAdaptado(texto);
+    if (!limpio) return '';
+    if (limpio.length <= maximo) return limpio;
+    return `${limpio.slice(0, Math.max(0, maximo - 3)).trim()}...`;
+}
+
+function construirContenidoLiteral(articulo = {}) {
+    const partes = [
+        limpiarTextoAdaptado(articulo.resumen || ''),
+        limpiarTextoAdaptado(articulo.contenido || ''),
+    ].filter(Boolean);
+
+    if (!partes.length) return '';
+
+    const unicas = [...new Set(partes)];
+    const base = unicas.join('\n\n');
+    return base.length <= 900 ? base : `${base.slice(0, 897).trim()}...`;
+}
+
+function construirAdaptacionLiteral(articulo = {}) {
+    const titulo = capitalizarTitulo(articulo.titulo || '');
+    const resumenBase = articulo.resumen || articulo.contenido || articulo.titulo || '';
+    const contenido = construirContenidoLiteral(articulo);
+
+    if (!titulo || !resumenBase || !contenido) return null;
+
+    return {
+        titulo: eliminarContextoForzado(titulo, articulo),
+        resumen: eliminarContextoForzado(recortarTexto(resumenBase, 220), articulo),
+        contenido: eliminarContextoForzado(contenido, articulo),
+        categoria: (articulo.categoriaSugerida || 'mercado').toLowerCase().trim(),
+        literal: true,
+    };
 }
 
 function fuenteMencionaContextoLocal(articulo = {}) {
@@ -221,8 +337,12 @@ function evaluarNoticiaDanada(noticia = {}) {
         razones.push('tema_ajeno_al_cafe');
     }
 
-    if (!esTextoCafeRelevante(textoFuente)) {
+    if (!esTextoCafeRelevante(textoFuente) || !tieneContextoCafeFuerte(textoFuente)) {
         razones.push('fuente_sin_relacion_cafetera');
+    }
+
+    if (!esTextoCafeRelevante(textoPublico) || !tieneContextoCafeFuerte(textoPublico)) {
+        razones.push('publicacion_sin_contexto_cafetero_fuerte');
     }
 
     if (!fuenteMencionaContextoLocal({
@@ -247,7 +367,7 @@ function evaluarNoticiaDanada(noticia = {}) {
             obtenerTokens(noticia.sourceTitle || '')
         );
 
-        if (similitudTitulo < 0.16) {
+        if (similitudTitulo < 0.30) {
             razones.push('titulo_desalineado');
         }
     }
@@ -298,12 +418,54 @@ function esNoticiaDuplicada(candidata, existente) {
     return false;
 }
 
-function seleccionarImagenNoticia(articulo, categoria) {
+async function obtenerImagenDesdePaginaFuente(url = '') {
+    if (!/^https?:\/\//i.test(url)) return '';
+
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'user-agent': 'Mozilla/5.0 (compatible; CoffePrice-Bot/1.0)',
+                'accept-language': 'es-CO,es;q=0.9',
+            },
+        });
+        clearTimeout(timer);
+
+        if (!res.ok) return '';
+
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        const candidata =
+            $('meta[property="og:image"]').attr('content') ||
+            $('meta[name="twitter:image"]').attr('content') ||
+            $('article img').first().attr('src') ||
+            $('img').first().attr('src') ||
+            '';
+
+        if (!candidata) return '';
+        return new URL(candidata, url).toString();
+    } catch {
+        return '';
+    }
+}
+
+async function seleccionarImagenNoticia(articulo, categoria) {
     if (articulo?.imagen && /^https?:\/\//i.test(articulo.imagen)) {
         return {
             imagen: articulo.imagen,
             tipoImagen: 'source',
             sourceImage: articulo.imagen,
+        };
+    }
+
+    const imagenFuente = await obtenerImagenDesdePaginaFuente(articulo?.url || '');
+    if (imagenFuente) {
+        return {
+            imagen: imagenFuente,
+            tipoImagen: 'source',
+            sourceImage: imagenFuente,
         };
     }
 
@@ -315,6 +477,7 @@ function seleccionarImagenNoticia(articulo, categoria) {
 }
 
 async function obtenerNoticiasRecientes(horasRevision) {
+    await asegurarConexionMongo();
     const fechaCorte = new Date(Date.now() - horasRevision * 60 * 60 * 1000);
 
     return Noticia.find({
@@ -326,6 +489,7 @@ async function obtenerNoticiasRecientes(horasRevision) {
 }
 
 async function obtenerContexto() {
+    await asegurarConexionMongo();
     const precios = await PrecioModel.find()
         .populate('comprador', 'nombreempresa direccion')
         .sort({ preciocarga: -1 })
@@ -373,6 +537,13 @@ async function obtenerContexto() {
     return { mejorPrecio, compradorTop, precioPromedio, trm, climaTexto };
 }
 
+// ── CORRECCIÓN: prompt reescrito para aceptar artículos en inglés del sector ──
+// El prompt anterior tenía una instrucción contradictoria: decía "si no trata
+// claramente de cafe" descartar, pero el ejemplo de lo que NO debía pasar
+// mencionaba "futbol, farandula, judicial" — sin aclarar que artículos
+// especializados en inglés SÍ son válidos. La IA los descartaba porque el
+// artículo no usaba exactamente "cafe" en español. Ahora se explicita que
+// cualquier tema del sector cafetero global (en cualquier idioma) es válido.
 function construirPromptAdaptacion(articulo, ctx) {
     return `Eres editor periodistico de CoffePrice para usuarios del sector cafetero colombiano.
 
@@ -430,18 +601,31 @@ ARTICULO REAL A RESUMIR:
 - Categoria sugerida: ${articulo.categoriaSugerida}
 - URL: ${articulo.url}
 
-REGLAS:
-- Resume y adapta esta noticia sin cambiar su tema central
-- No inventes hechos nuevos
-- Si falta un dato, no lo rellenes
-- Manten el enfoque practico y claro
-- No conviertas una noticia general en una noticia de El Pital, Huila o caficultores si la fuente no lo menciona
-- No cambies deportes, farandula, judicial o politica general para hacerlos parecer noticias del cafe
-- Si la noticia no trata realmente sobre cafe, caficultura, clima agricola, produccion, mercado cafetero o Federacion Nacional de Cafeteros, marca descartar=true
+TEMA VALIDO — el articulo pertenece al sector cafetero si trata de CUALQUIERA de estos temas:
+- Cafe: cultivo, produccion, cosecha, exportaciones, precios, mercado, calidad, sostenibilidad
+- Empresas, cooperativas o iniciativas del sector cafetero
+- Tecnologia o innovacion aplicada al cafe
+- Federacion Nacional de Cafeteros u organizaciones del gremio
+- Clima o condiciones que afecten zonas productoras de cafe
+- Cafe de origen y cafe especial
+- Economia regional, agro, compradores, productores o noticias locales del Huila relacionadas con actividad productiva
+
+El articulo debe venir de una fuente en espanol. Si el texto base esta en ingles o mezcla mas ingles que espanol, descartar=true.
+
+DESCARTAR — solo si el articulo trata de:
+- Futbol, deportes, farandula, entretenimiento
+- Sucesos judiciales, politica partidista, accidentes o temas claramente ajenos al agro, la economia o la produccion
+
+REGLAS OBLIGATORIAS:
+- Resume fielmente esta noticia sin reinterpretarla.
+- No inventes hechos nuevos.
+- No agregues El Pital, Huila, caficultores locales o contexto regional si la fuente original no lo menciona.
+- Conserva el sujeto principal del titular original.
+- Si el titulo original ya es claro, manten practicamente ese mismo titulo.
 - Elige una sola categoria valida entre: mercado, clima, consejos, fnc, produccion, internacional, el_pital
-- El titulo debe sonar natural en espanol colombiano
-- El resumen debe tener maximo 220 caracteres
-- El contenido debe tener 2 o 3 parrafos breves
+- El titulo debe sonar natural en espanol colombiano.
+- El resumen debe tener maximo 220 caracteres.
+- El contenido debe tener 2 o 3 parrafos breves.
 
 Responde solo con JSON valido:
 {
@@ -468,14 +652,14 @@ async function adaptarArticuloConIA(articulo, ctx) {
         messages: [
             {
                 role: 'system',
-                content: 'Eres un editor periodistico especializado en resumir noticias reales del sector cafetero. Respondes solo con JSON valido.'
+                content: 'Eres un editor periodistico especializado en resumir noticias reales del sector cafetero en espanol. Tu prioridad es la fidelidad a la fuente, sin reinterpretar ni regionalizar. Respondes solo con JSON valido.'
             },
             {
                 role: 'user',
                 content: prompt
             }
         ],
-        temperature: 0.35,
+        temperature: 0.2,
         max_tokens: 900,
         response_format: { type: 'json_object' },
     });
@@ -484,13 +668,23 @@ async function adaptarArticuloConIA(articulo, ctx) {
     const parsed = JSON.parse(texto);
 
     if (parsed.descartar) {
+        const motivo = parsed.motivo?.trim() || 'Articulo no relacionado con el sector cafetero.';
+        const esRuidoClaro = esTextoRuido(`${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`);
+
+        if (!esRuidoClaro) {
+            const literal = construirAdaptacionLiteral(articulo);
+            if (literal) {
+                return literal;
+            }
+        }
+
         return {
             descartar: true,
-            motivo: parsed.motivo?.trim() || 'Articulo no relacionado con el sector cafetero.',
+            motivo,
         };
     }
 
-    return {
+    const adaptada = {
         titulo: eliminarContextoForzado(
             resolverTituloFinal(parsed.titulo?.trim(), articulo.titulo),
             articulo
@@ -499,9 +693,39 @@ async function adaptarArticuloConIA(articulo, ctx) {
         contenido: eliminarContextoForzado(parsed.contenido?.trim(), articulo),
         categoria: (parsed.categoria || articulo.categoriaSugerida || 'mercado').toLowerCase().trim(),
     };
+
+    if (!adaptada.titulo || !adaptada.resumen || !adaptada.contenido) {
+        return {
+            descartar: true,
+            motivo: 'La IA devolvio campos vacios.',
+        };
+    }
+
+    if (!CATEGORIAS_VALIDAS.includes(adaptada.categoria)) {
+        adaptada.categoria = CATEGORIAS_VALIDAS.includes(articulo.categoriaSugerida)
+            ? articulo.categoriaSugerida
+            : 'mercado';
+    }
+
+    if (esAdaptacionForzada(adaptada, articulo)) {
+        return {
+            descartar: true,
+            motivo: 'La adaptacion agrego contexto local no presente en la fuente.',
+        };
+    }
+
+    if (!esTemaConsistenteConFuente(adaptada, articulo)) {
+        return {
+            descartar: true,
+            motivo: 'La adaptacion se alejo del tema original.',
+        };
+    }
+
+    return adaptada;
 }
 
 async function existeFuenteGuardada(sourceHash, sourceUrl) {
+    await asegurarConexionMongo();
     if (!sourceHash && !sourceUrl) return false;
     return Boolean(await Noticia.findOne({
         $or: [
@@ -512,18 +736,36 @@ async function existeFuenteGuardada(sourceHash, sourceUrl) {
 }
 
 export async function generarNoticiasDelDia() {
-    if (!process.env.OPENAI_API_KEY) { 
-        console.warn("[NoticiaAuto] ❌ OPENAI_API_KEY no configurada.");
+    await asegurarConexionMongo();
+    if (!process.env.OPENAI_API_KEY) {
+        console.warn('[NoticiaAuto] OPENAI_API_KEY no configurada.');
         return 0;
     }
-    if (!process.env.NEWSAPI_KEY) {
-        console.warn("[NoticiaAuto] ❌ NEWSAPI_KEY no configurada.");
-        return 0;
+
+    if (!process.env.THENEWSAPI_TOKEN) {
+        console.log('[NoticiaAuto] Fuentes activas: fuentes directas y RSS en espanol.');
+    } else {
+        console.log('[NoticiaAuto] Fuentes activas: fuentes directas y RSS en espanol + agregadores en espanol.');
     }
+
     console.log('[NoticiaAuto] Iniciando ciclo de generacion con fuentes reales...');
 
-    const maxNoticias = parseInt(process.env.NOTICIAS_POR_CICLO || '5');
+    const maxNoticias = parseInt(process.env.NOTICIAS_POR_CICLO || '3');
     const horasRevisionDuplicados = parseInt(process.env.NOTICIAS_HORAS_REVISAR_DUPLICADOS || '48');
+
+    try {
+        const limpieza = await limpiarNoticiasDanadas({
+            dryRun: false,
+            soloAutoGeneradas: true,
+            limite: 300,
+        });
+        if (limpieza.eliminadas > 0) {
+            console.log(`[NoticiaAuto] Limpieza previa automatica: ${limpieza.eliminadas} noticias dañadas eliminadas`);
+        }
+    } catch (error) {
+        console.warn('[NoticiaAuto] No se pudo ejecutar la limpieza previa automatica:', error.message);
+    }
+
     const ctx = await obtenerContexto();
     const noticiasRecientes = await obtenerNoticiasRecientes(horasRevisionDuplicados);
 
@@ -547,7 +789,10 @@ export async function generarNoticiasDelDia() {
 
         const sourceHash = articulo.sourceHash || crearHashFuente(articulo);
         const yaExisteFuente = await existeFuenteGuardada(sourceHash, articulo.url);
-        if (yaExisteFuente) continue;
+        if (yaExisteFuente) {
+            console.log(`[NoticiaAuto] Fuente duplicada descartada: '${articulo.titulo}'`);
+            continue;
+        }
 
         let adaptada;
         try {
@@ -558,11 +803,20 @@ export async function generarNoticiasDelDia() {
         }
 
         if (adaptada.descartar) {
-            console.log(`[NoticiaAuto] Articulo descartado por relevancia: '${articulo.titulo}'`);
+            console.log(`[NoticiaAuto] Articulo descartado por relevancia: '${articulo.titulo}' -> ${adaptada.motivo || 'sin motivo'}`);
             continue;
         }
 
         if (!adaptada.titulo || !adaptada.resumen || !adaptada.contenido) {
+            continue;
+        }
+
+        if (adaptada.literal) {
+            console.log(`[NoticiaAuto] Usando adaptacion literal para: '${articulo.titulo}'`);
+        }
+
+        if (esTextoRuido(`${adaptada.titulo} ${adaptada.resumen} ${adaptada.contenido}`)) {
+            console.log(`[NoticiaAuto] Adaptacion descartada por ruido tematico: '${articulo.titulo}'`);
             continue;
         }
 
@@ -577,12 +831,12 @@ export async function generarNoticiasDelDia() {
 
         const duplicadaPorTexto = noticiasRecientes.find((existente) => esNoticiaDuplicada(adaptada, existente));
         if (duplicadaPorTexto) {
-            console.log(`[NoticiaAuto] Duplicado por contenido descartado: '${adaptada.titulo}'`);
+            console.log(`[NoticiaAuto] Duplicado por contenido descartado: '${adaptada.titulo}' vs '${duplicadaPorTexto.titulo}'`);
             continue;
         }
 
         try {
-            const imagenSeleccionada = seleccionarImagenNoticia(articulo, adaptada.categoria);
+            const imagenSeleccionada = await seleccionarImagenNoticia(articulo, adaptada.categoria);
             const nuevaNoticia = await Noticia.create({
                 titulo: adaptada.titulo,
                 resumen: adaptada.resumen,
@@ -627,6 +881,7 @@ export async function generarNoticiasDelDia() {
 }
 
 export async function asegurarNoticiasRecientes(opciones = {}) {
+    await asegurarConexionMongo();
     const {
         maxHorasSinNoticias = parseInt(process.env.NOTICIAS_MAX_HORAS_SIN_ACTUALIZAR || '8'),
     } = opciones;
@@ -664,6 +919,7 @@ export async function asegurarNoticiasRecientes(opciones = {}) {
 }
 
 export async function limpiarNoticiasViejas() {
+    await asegurarConexionMongo();
     const dias = parseInt(process.env.NOTICIAS_DIAS_CONSERVAR || '7');
     const fechaCorte = new Date(Date.now() - dias * 24 * 60 * 60 * 1000);
 
@@ -684,6 +940,7 @@ export async function limpiarNoticiasDanadas({
     soloAutoGeneradas = true,
     limite = 100,
 } = {}) {
+    await asegurarConexionMongo();
     const filtro = soloAutoGeneradas ? { autoGenerada: true } : {};
     const noticias = await Noticia.find(filtro)
         .sort({ publishedAt: -1, createdAt: -1 })

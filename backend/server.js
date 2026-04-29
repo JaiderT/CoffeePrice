@@ -5,7 +5,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import session from 'express-session';
 import passport from './config/passport.js';
-import "./db/db.js";
+import mongoose from 'mongoose';
+import { esperarMongoDisponible } from "./db/db.js";
 
 // Rutas
 import authRoutes from "./routes/authRoutes.js";
@@ -71,6 +72,28 @@ process.on('unhandledRejection', (reason) => {
     console.error('[UnhandledRejection]', reason);
 });
 
+process.on('uncaughtException', (error) => {
+    console.error('[UncaughtException]', error);
+});
+
+app.get('/healthz', (req, res) => {
+  const dbStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+
+  const dbState = mongoose.connection.readyState;
+  const ok = dbState === 1;
+
+  res.status(ok ? 200 : 503).json({
+    status: ok ? 'ok' : 'degraded',
+    service: 'backend',
+    db: dbStates[dbState] || `unknown:${dbState}`,
+  });
+});
+
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
@@ -84,6 +107,15 @@ app.get('/', (req, res) => {
       '/api/precios',
       '/api/predicciones',
     ],
+  });
+});
+
+app.use('/api', (req, res, next) => {
+  if (mongoose.connection.readyState === 1) return next();
+
+  return res.status(503).json({
+    message: 'Base de datos no disponible temporalmente. Intenta nuevamente en unos segundos.',
+    db: 'disconnected',
   });
 });
 
@@ -126,11 +158,22 @@ app.use((err, req, res, next) => {
     res.status(statusCode).json({ message });
 });
 
-app.listen(8081, async () => {
-  console.log("Servidor corriendo en http://localhost:8081");
-  if (process.env.NODE_ENV !== "test") {
-    await iniciarCronNoticias();
-    console.log("Noticias automaticas: activas");
-    iniciarCronPrecioFNC();
-  }
+const PORT = process.env.PORT || 8081;
+
+async function iniciarServidor() {
+  await esperarMongoDisponible();
+
+  app.listen(PORT, async () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    if (process.env.NODE_ENV !== "test") {
+      await iniciarCronNoticias();
+      console.log("Noticias automaticas: activas");
+      iniciarCronPrecioFNC();
+    }
+  });
+}
+
+iniciarServidor().catch((error) => {
+  console.error('[Startup] No se pudo iniciar el servidor:', error.message);
+  process.exit(1);
 });

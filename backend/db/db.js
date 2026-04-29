@@ -11,12 +11,21 @@ const options = {
   heartbeatFrequencyMS: 10000,      // Frecuencia del heartbeat
 };
 
-mongoose.connect(uri, options)
+export const mongoConnectionPromise = mongoose.connect(uri, options)
   .then(() => console.log("Conectado a MongoDB Atlas"))
   .catch(err => {
     console.error("Error al conectar a MongoDB", err.message);
     process.exit(1); // Falla rapido en lugar de correr sin DB
   });
+
+export async function esperarMongoDisponible() {
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
+  await mongoConnectionPromise;
+  if (mongoose.connection.readyState !== 1) {
+    await mongoose.connection.asPromise();
+  }
+  return mongoose.connection;
+}
 
 mongoose.connection.on("disconnected", () => {
   console.warn("[DB] Desconectado de MongoDB. Reconectando...");
@@ -24,6 +33,10 @@ mongoose.connection.on("disconnected", () => {
 
 mongoose.connection.on("reconnected", () => {
   console.log("[DB] Reconectado a MongoDB.");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("[DB] Error de MongoDB:", err.message);
 });
 
 export default mongoose.connection;
