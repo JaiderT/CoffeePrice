@@ -22,6 +22,7 @@ function construirSesionUsuario(usuario) {
     email: usuario.email,
     rol: usuario.rol,
     celular: usuario.celular,
+    estado: usuario.estado,
   };
 }
 
@@ -283,12 +284,6 @@ export const login = async (req, res) => {
       });
     }
 
-    if (user.estado === "suspendido") {
-      return res.status(403).json({
-        message: "Tu cuenta está suspendida. Contacta al administrador para reactivarla.",
-      });
-    }
-
     if (user.estado === "pendiente") {
       return res.status(403).json({
         message: "Debes verificar tu correo electrónico antes de iniciar sesión.",
@@ -336,11 +331,6 @@ export const googleCallback = (req, res) => {
     if (req.user.estado === "eliminado") {
       return res.redirect(
         `${process.env.FRONTEND_URL}/login?error=cuenta_eliminada`
-      );
-    }
-    if (req.user.estado === "suspendido") {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=cuenta_suspendida`
       );
     }
     const token = generarToken(req.user);

@@ -11,6 +11,7 @@ function guardarUsuarioLocal(usuario) {
   localStorage.setItem('usuarioId', usuario.id || '');
   localStorage.setItem('celular', usuario.celular || '');
   localStorage.setItem('email', usuario.email || '');
+  localStorage.setItem('estado', usuario.estado || '');
 }
 
 function limpiarUsuarioLocal() {
@@ -21,6 +22,7 @@ function limpiarUsuarioLocal() {
   localStorage.removeItem('usuarioId');
   localStorage.removeItem('celular');
   localStorage.removeItem('email');
+  localStorage.removeItem('estado');
 }
 
 export function AuthProvider({ children }) {
@@ -35,6 +37,7 @@ export function AuthProvider({ children }) {
       apellido: localStorage.getItem('apellido') || '',
       celular: localStorage.getItem('celular') || '',
       email: localStorage.getItem('email') || '',
+      estado: localStorage.getItem('estado') || 'activo',
     };
   });
 
@@ -63,6 +66,7 @@ export function AuthProvider({ children }) {
           apellido: data.apellido,
           celular: data.celular,
           email: data.email,
+          estado: data.estado || 'activo',
         };
 
         guardarUsuarioLocal(usuarioSesion);
@@ -79,13 +83,13 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => {
     const usuarioSesion = {
-      // ✅ Soporte para _id (MongoDB) o id
       id: userData.id || userData._id,
       rol: userData.rol,
       nombre: userData.nombre,
       apellido: userData.apellido,
       celular: userData.celular,
       email: userData.email,
+      estado: userData.estado || 'activo',
     };
 
     guardarUsuarioLocal(usuarioSesion);
