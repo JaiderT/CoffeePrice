@@ -64,6 +64,20 @@ const CONSULTAS_NEWSDATA = [
     { categoria: 'mercado', query: 'precio cafe huila carga caficultores' },
 ];
 
+const CONSULTAS_NEWSAPI = [
+    { categoria: 'mercado', query: 'cafe OR cafetero OR caficultores AND Colombia' },
+    { categoria: 'produccion', query: 'cosecha cafe OR produccion cafetera Colombia' },
+    { categoria: 'fnc', query: '"Federacion Nacional de Cafeteros" OR caficultores Colombia' },
+    { categoria: 'el_pital', query: 'Huila cafe OR "El Pital" cafe' },
+];
+
+const CONSULTAS_GNEWS = [
+    { categoria: 'mercado', query: 'precio cafe Colombia mercado cafetero' },
+    { categoria: 'produccion', query: 'produccion cafe Colombia cosecha' },
+    { categoria: 'fnc', query: 'Federacion Nacional de Cafeteros Colombia' },
+    { categoria: 'el_pital', query: 'Huila cafe caficultores' },
+];
+
 // Señales fuertes — todas en español.
 // Se incluyen frases que antes eran "débiles" pero son inequívocamente
 // cafeteras: "cafetero/a", "caficultor", "carga de cafe", "grano de cafe",
@@ -103,6 +117,19 @@ const PALABRAS_CONTEXTO_PERMITIDO = [
     'economia', 'agro', 'agricultura', 'rural', 'campo', 'productores',
     'huila', 'sur del huila', 'el pital', 'caficultores', 'federacion',
     'cooperativa', 'compradores', 'precio', 'carga', 'mercado',
+];
+
+const PALABRAS_CONTEXTO_PRODUCTIVO = [
+    'agro', 'agricultura', 'rural', 'campo', 'productores',
+    'huila', 'sur del huila', 'el pital', 'caficultores', 'federacion',
+    'cooperativa', 'compradores', 'carga', 'grano', 'cosecha',
+    'cultivo', 'fertilizantes', 'produccion', 'recoleccion',
+];
+
+const PALABRAS_CONTEXTO_LOCAL_O_GREMIAL = [
+    'huila', 'sur del huila', 'el pital', 'caficultores',
+    'federacion nacional de cafeteros', 'comite de cafeteros',
+    'federacion', 'cooperativa cafetera',
 ];
 
 const DOMINIOS_PRIORIZADOS = [
@@ -187,6 +214,10 @@ function tieneSenalCafeSuficiente(texto = '') {
 
 function tieneContextoPermitido(texto = '') {
     return contarCoincidencias(texto, PALABRAS_CONTEXTO_PERMITIDO) >= 1;
+}
+
+function tieneContextoProductivo(texto = '') {
+    return contarCoincidencias(texto, PALABRAS_CONTEXTO_PRODUCTIVO) >= 1;
 }
 
 function esDominioPriorizado(dominio = '') {
@@ -278,7 +309,6 @@ function esArticuloUtil(articulo = {}) {
     if (dominioPriorizado) return true;
     if (senalFuerte) return true;
     if (senalSuficiente && contextoPermitido) return true;
-    if (dominioPriorizado && (senalSuficiente || contextoPermitido)) return true;
     return false;
 }
 
@@ -412,6 +442,85 @@ function limpiarHtmlDeRss(texto = '') {
         .replace(/\s+/g, ' ').trim();
 }
 
+function tieneContenidoSuficiente(articulo = {}) {
+    const contenido = limpiarContenidoFuente(articulo.contenido || '');
+    const resumen = limpiarContenidoFuente(articulo.resumen || '');
+
+    if (!contenido) return false;
+    if (contenido.length >= 280) return true;
+    if (contenido.includes('\n\n')) return true;
+    if (contenido !== resumen && contenido.length >= 180) return true;
+    return false;
+}
+
+function extraerContenidoPrincipalDesdeHtml(html = '') {
+    const desdeJsonLd = recolectarEntradasJsonLd(extraerObjetosJsonLd(html))
+        .map((entrada) => limpiarContenidoFuente(entrada.articleBody || entrada.text || ''))
+        .find((texto) => texto.length >= 220);
+
+    if (desdeJsonLd) return desdeJsonLd;
+
+    const $ = cheerio.load(html);
+    const candidatos = [];
+
+    $('article p, main p, .article-body p, .post-content p, .entry-content p, .content p').each((_, nodo) => {
+        const texto = limpiarContenidoFuente($(nodo).text());
+        if (texto.length >= 60 && !TEXTOS_DESCARTADOS.has(normalizarTextoBusqueda(texto))) {
+            candidatos.push(texto);
+        }
+    });
+
+    const unicos = [...new Set(candidatos)];
+    const combinado = unicos.join(' ').trim();
+    return combinado;
+}
+
+async function enriquecerArticuloDesdeUrl(articulo = {}) {
+    if (!articulo?.url || !esUrlHttpValida(articulo.url) || tieneContenidoSuficiente(articulo)) {
+        return articulo;
+    }
+
+    try {
+        const html = await descargarHtml(articulo.url, 10000);
+        const contenidoExtraido = limpiarContenidoFuente(extraerContenidoPrincipalDesdeHtml(html));
+        if (!contenidoExtraido) return articulo;
+
+        const contenido = contenidoExtraido.length <= 1600
+            ? contenidoExtraido
+            : `${contenidoExtraido.slice(0, 1597).trim()}...`;
+
+        return normalizarArticuloDirecto({
+            titulo: articulo.titulo,
+            resumen: articulo.resumen,
+            contenido,
+            url: articulo.url,
+            fuente: articulo.fuente,
+            fechaPublicacion: articulo.fechaPublicacion,
+            imagen: articulo.imagen,
+            categoriaSugerida: articulo.categoriaSugerida,
+        });
+    } catch {
+        return articulo;
+    }
+}
+
+async function enriquecerArticulosConContenido(articulos = [], limite = 6) {
+    const enriquecidos = [];
+    let restantes = limite;
+
+    for (const articulo of articulos) {
+        if (restantes > 0 && !tieneContenidoSuficiente(articulo)) {
+            enriquecidos.push(await enriquecerArticuloDesdeUrl(articulo));
+            restantes -= 1;
+            continue;
+        }
+
+        enriquecidos.push(articulo);
+    }
+
+    return enriquecidos;
+}
+
 function extraerArticulosDesdeRss(xmlText, fc) {
     const $ = cheerio.load(xmlText, { xmlMode: true });
     const articulos = [];
@@ -494,7 +603,8 @@ async function obtenerArticulosFuentesDirectas(fromDate) {
         Promise.all(FUENTES_DIRECTAS.map((fc) => obtenerDesdeFuenteDirecta(fc, fromDate))),
         Promise.all(FUENTES_RSS.map((fc) => obtenerDesdeRss(fc, fromDate))),
     ]);
-    return [...html.flat(), ...rss.flat()];
+    const combinados = [...html.flat(), ...rss.flat()];
+    return enriquecerArticulosConContenido(combinados, 8);
 }
 
 async function buscarEnTheNewsApi(query, fromDate, estado) {
@@ -542,8 +652,95 @@ function mapearNewsdata(raw = {}, categoria) {
     return normalizarArticulo({ title: raw.title, description: raw.description || raw.content || '', content: raw.content || raw.description || '', url: raw.link, publishedAt: raw.pubDate, urlToImage: raw.image_url, source: { name: raw.source_id || 'newsdata.io' } }, categoria);
 }
 
+async function buscarEnNewsApi(query, fromDate, estado) {
+    if (!process.env.NEWSAPI_KEY || estado.newsApiBloqueada) return [];
+    const params = new URLSearchParams({
+        apiKey: process.env.NEWSAPI_KEY,
+        q: query,
+        language: 'es',
+        sortBy: 'publishedAt',
+        pageSize: '5',
+        from: fromDate,
+    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    let res;
+    try { res = await fetch(`https://newsapi.org/v2/everything?${params}`, { signal: controller.signal }); }
+    catch (err) { throw new Error(`NewsAPI fetch error: ${err.message}`); }
+    finally { clearTimeout(timer); }
+    if (!res.ok) {
+        if ([401, 402, 403, 429].includes(res.status)) { estado.newsApiBloqueada = true; console.warn(`[FuentesNoticias] NewsAPI bloqueada (${res.status})`); return []; }
+        throw new Error(`NewsAPI ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.status !== 'ok') return [];
+    const min = new Date(fromDate).getTime();
+    return (Array.isArray(data.articles) ? data.articles : []).filter((a) => {
+        const f = new Date(a.publishedAt).getTime();
+        return !Number.isNaN(f) && f >= min;
+    });
+}
+
+function mapearNewsApi(raw = {}, categoria) {
+    return normalizarArticulo({
+        title: raw.title,
+        description: raw.description || raw.content || '',
+        content: raw.content || raw.description || '',
+        url: raw.url,
+        publishedAt: raw.publishedAt,
+        urlToImage: raw.urlToImage,
+        source: { name: raw.source?.name || 'NewsAPI' },
+    }, categoria);
+}
+
+async function buscarEnGNews(query, fromDate, estado) {
+    if (!process.env.GNEWS_API_KEY || estado.gnewsBloqueada) return [];
+    const params = new URLSearchParams({
+        apikey: process.env.GNEWS_API_KEY,
+        q: query,
+        lang: 'es',
+        country: 'co',
+        max: '5',
+        from: fromDate,
+        sortby: 'publishedAt',
+    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    let res;
+    try { res = await fetch(`https://gnews.io/api/v4/search?${params}`, { signal: controller.signal }); }
+    catch (err) { throw new Error(`GNews fetch error: ${err.message}`); }
+    finally { clearTimeout(timer); }
+    if (!res.ok) {
+        if ([401, 402, 403, 429].includes(res.status)) { estado.gnewsBloqueada = true; console.warn(`[FuentesNoticias] GNews bloqueada (${res.status})`); return []; }
+        throw new Error(`GNews ${res.status}`);
+    }
+    const data = await res.json();
+    const min = new Date(fromDate).getTime();
+    return (Array.isArray(data.articles) ? data.articles : []).filter((a) => {
+        const f = new Date(a.publishedAt).getTime();
+        return !Number.isNaN(f) && f >= min;
+    });
+}
+
+function mapearGNews(raw = {}, categoria) {
+    return normalizarArticulo({
+        title: raw.title,
+        description: raw.description || raw.content || '',
+        content: raw.content || raw.description || '',
+        url: raw.url,
+        publishedAt: raw.publishedAt,
+        urlToImage: raw.image,
+        source: { name: raw.source?.name || 'GNews' },
+    }, categoria);
+}
+
 async function obtenerArticulosAgregador(fromDate, objetivoResultados) {
-    const estado = { theNewsApiBloqueada: false, newsdataBloqueada: false };
+    const estado = {
+        theNewsApiBloqueada: false,
+        newsdataBloqueada: false,
+        newsApiBloqueada: false,
+        gnewsBloqueada: false,
+    };
     const acumulados = [];
 
     for (const consulta of CONSULTAS_THE_NEWS_API) {
@@ -559,6 +756,26 @@ async function obtenerArticulosAgregador(fromDate, objetivoResultados) {
             if (estado.newsdataBloqueada) break;
             try { acumulados.push(...(await buscarEnNewsdata(consulta.query, fromDate, estado)).map((r) => mapearNewsdata(r, consulta.categoria))); }
             catch (e) { console.warn(`[FuentesNoticias] newsdata.io fallo "${consulta.query}": ${e.message}`); }
+            if (deduplicarArticulos(filtrarArticulosValidos(acumulados)).length >= objetivoResultados) break;
+        }
+    }
+
+    if (deduplicarArticulos(filtrarArticulosValidos(acumulados)).length < objetivoResultados && process.env.NEWSAPI_KEY) {
+        console.log('[FuentesNoticias] Intentando NewsAPI como respaldo...');
+        for (const consulta of CONSULTAS_NEWSAPI) {
+            if (estado.newsApiBloqueada) break;
+            try { acumulados.push(...(await buscarEnNewsApi(consulta.query, fromDate, estado)).map((r) => mapearNewsApi(r, consulta.categoria))); }
+            catch (e) { console.warn(`[FuentesNoticias] NewsAPI fallo "${consulta.query}": ${e.message}`); }
+            if (deduplicarArticulos(filtrarArticulosValidos(acumulados)).length >= objetivoResultados) break;
+        }
+    }
+
+    if (deduplicarArticulos(filtrarArticulosValidos(acumulados)).length < objetivoResultados && process.env.GNEWS_API_KEY) {
+        console.log('[FuentesNoticias] Intentando GNews como respaldo...');
+        for (const consulta of CONSULTAS_GNEWS) {
+            if (estado.gnewsBloqueada) break;
+            try { acumulados.push(...(await buscarEnGNews(consulta.query, fromDate, estado)).map((r) => mapearGNews(r, consulta.categoria))); }
+            catch (e) { console.warn(`[FuentesNoticias] GNews fallo "${consulta.query}": ${e.message}`); }
             if (deduplicarArticulos(filtrarArticulosValidos(acumulados)).length >= objetivoResultados) break;
         }
     }

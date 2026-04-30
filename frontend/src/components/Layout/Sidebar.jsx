@@ -114,7 +114,7 @@ function Sidebar() {
 
       {/* Modal cerrar sesión */}
       {usuario && mostrarModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-center justify-center z-[2000]"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
             <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">

@@ -28,6 +28,45 @@ const categoriaEmoji = {
   el_pital: '⛰️',
 };
 
+function dividirEnParrafos(texto = '', maxParrafos = 3) {
+  const original = (texto || '').trim();
+  if (!original) return [];
+
+  const bloques = original
+    .split(/\n\s*\n/)
+    .map((bloque) => bloque.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  if (bloques.length >= 2) {
+    return bloques.slice(0, maxParrafos);
+  }
+
+  const oraciones = original
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map((oracion) => oracion.trim())
+    .filter(Boolean);
+
+  if (!oraciones.length) return [original];
+  if (oraciones.length === 1) return [oraciones[0]];
+
+  const totalParrafos = Math.min(maxParrafos, Math.max(2, oraciones.length >= 6 ? 3 : 2));
+  const parrafos = [];
+  let inicio = 0;
+
+  for (let i = 0; i < totalParrafos; i += 1) {
+    const restantes = oraciones.length - inicio;
+    const gruposRestantes = totalParrafos - i;
+    const tamanoGrupo = Math.ceil(restantes / gruposRestantes);
+    const bloque = oraciones.slice(inicio, inicio + tamanoGrupo).join(' ').trim();
+
+    if (bloque) parrafos.push(bloque);
+    inicio += tamanoGrupo;
+  }
+
+  return parrafos.slice(0, maxParrafos);
+}
+
 export default function NoticiaDetalle() {
   const { id } = useParams();
   const { usuario, cargando: cargandoAuth } = useAuth();
@@ -56,13 +95,7 @@ export default function NoticiaDetalle() {
     };
   }, [id]);
 
-  const parrafos = useMemo(() => (
-    (noticia?.contenido || '')
-      .split(/\n\s*\n/)
-      .map((parte) => parte.trim())
-      .filter(Boolean)
-      .slice(0, 3)
-  ), [noticia]);
+  const parrafos = useMemo(() => dividirEnParrafos(noticia?.contenido || ''), [noticia]);
 
   const formatearFecha = (valor) => new Date(valor).toLocaleDateString('es-CO', {
     day: '2-digit',

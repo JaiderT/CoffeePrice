@@ -2,11 +2,58 @@ import OpenAI from 'openai';
 import * as cheerio from 'cheerio';
 import mongoose from 'mongoose';
 import Noticia from '../models/noticia.js';
+import NoticiaFuenteHistorial from '../models/noticiaFuenteHistorial.js';
 import PrecioModel from '../models/precio.js';
 import { crearHashFuente, obtenerArticulosReales } from './fuentesNoticiasService.js';
 
 let generacionEnCurso = null;
 let openaiClient = null;
+let ultimaRevisionAutomaticaMs = 0;
+
+function obtenerPartesBogota(fecha = new Date()) {
+    const partes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(fecha);
+
+    const mapa = Object.fromEntries(
+        partes
+            .filter((parte) => parte.type !== 'literal')
+            .map((parte) => [parte.type, parte.value])
+    );
+
+    return {
+        year: Number(mapa.year),
+        month: Number(mapa.month),
+        day: Number(mapa.day),
+        hour: Number(mapa.hour),
+        minute: Number(mapa.minute),
+        dateKey: `${mapa.year}-${mapa.month}-${mapa.day}`,
+    };
+}
+
+function obtenerSlotGeneracion(fecha = new Date()) {
+    const { hour } = obtenerPartesBogota(fecha);
+    if (hour >= 18) return 18;
+    if (hour >= 12) return 12;
+    if (hour >= 6) return 6;
+    return 0;
+}
+
+function desplazarFechaLocal(dateKey, diasDelta) {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const baseUtc = new Date(Date.UTC(year, month - 1, day));
+    baseUtc.setUTCDate(baseUtc.getUTCDate() + diasDelta);
+    const yyyy = baseUtc.getUTCFullYear();
+    const mm = String(baseUtc.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(baseUtc.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
 
 async function asegurarConexionMongo() {
     if (mongoose.connection.readyState === 1) return;
@@ -97,6 +144,37 @@ const PALABRAS_RUIDO_RELEVANTES = [
     'policia',
     'judicial',
     'accidente',
+];
+
+const PALABRAS_CONTEXTO_PRODUCTIVO_RELEVANTE = [
+    'agro',
+    'agricultura',
+    'rural',
+    'campo',
+    'productor',
+    'productores',
+    'caficultor',
+    'caficultores',
+    'federacion',
+    'cooperativa',
+    'cosecha',
+    'cultivo',
+    'produccion',
+    'fertilizantes',
+    'huila',
+    'el pital',
+    'carga de cafe',
+    'grano de cafe',
+];
+
+const PALABRAS_CONTEXTO_LOCAL_O_GREMIAL_RELEVANTE = [
+    'huila',
+    'el pital',
+    'sur del huila',
+    'federacion nacional de cafeteros',
+    'comite de cafeteros',
+    'federacion',
+    'cooperativa cafetera',
 ];
 
 // ── CORRECCIÓN PRINCIPAL: se amplía con señales en inglés ──
@@ -246,6 +324,59 @@ function limpiarTextoAdaptado(texto = '') {
         .trim();
 }
 
+function dividirEnOraciones(texto = '') {
+    const limpio = texto
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!limpio) return [];
+
+    return limpio
+        .split(/(?<=[.!?])\s+/)
+        .map((oracion) => oracion.trim())
+        .filter(Boolean);
+}
+
+function agruparEnParrafos(oraciones = [], maxParrafos = 3) {
+    if (!oraciones.length) return [];
+    if (oraciones.length === 1) return oraciones;
+
+    const totalParrafos = Math.min(maxParrafos, Math.max(2, oraciones.length >= 6 ? 3 : 2));
+    const grupos = [];
+    let inicio = 0;
+
+    for (let i = 0; i < totalParrafos; i++) {
+        const restantes = oraciones.length - inicio;
+        const gruposRestantes = totalParrafos - i;
+        const tamanoGrupo = Math.ceil(restantes / gruposRestantes);
+        const bloque = oraciones.slice(inicio, inicio + tamanoGrupo).join(' ').trim();
+
+        if (bloque) grupos.push(bloque);
+        inicio += tamanoGrupo;
+    }
+
+    return grupos;
+}
+
+function normalizarContenidoEnParrafos(texto = '', maxParrafos = 3) {
+    const original = (texto || '').trim();
+    if (!original) return '';
+
+    const bloques = original
+        .split(/\n\s*\n/)
+        .map((bloque) => bloque.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+
+    if (bloques.length >= 2) {
+        return bloques.slice(0, maxParrafos).join('\n\n');
+    }
+
+    const parrafos = agruparEnParrafos(dividirEnOraciones(original), maxParrafos);
+    if (parrafos.length) return parrafos.join('\n\n');
+
+    return limpiarTextoAdaptado(original);
+}
+
 function recortarTexto(texto = '', maximo = 220) {
     const limpio = limpiarTextoAdaptado(texto);
     if (!limpio) return '';
@@ -263,7 +394,8 @@ function construirContenidoLiteral(articulo = {}) {
 
     const unicas = [...new Set(partes)];
     const base = unicas.join('\n\n');
-    return base.length <= 900 ? base : `${base.slice(0, 897).trim()}...`;
+    const recortado = base.length <= 900 ? base : `${base.slice(0, 897).trim()}...`;
+    return normalizarContenidoEnParrafos(recortado);
 }
 
 function construirAdaptacionLiteral(articulo = {}) {
@@ -279,6 +411,52 @@ function construirAdaptacionLiteral(articulo = {}) {
         contenido: eliminarContextoForzado(contenido, articulo),
         categoria: (articulo.categoriaSugerida || 'mercado').toLowerCase().trim(),
         literal: true,
+    };
+}
+
+function inferirCategoriaLocal(articulo = {}) {
+    const texto = normalizarTexto(`${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`);
+    if (texto.includes('el pital') || (texto.includes('huila') && texto.includes('caficult'))) return 'el_pital';
+    if (texto.includes('federacion nacional de cafeteros') || texto.includes('comite de cafeteros')) return 'fnc';
+    if (texto.includes('clima') || texto.includes('lluv') || texto.includes('sequ') || texto.includes('temperatura')) return 'clima';
+    if (texto.includes('cosecha') || texto.includes('produccion') || texto.includes('cultivo') || texto.includes('fertilizantes')) return 'produccion';
+    if (texto.includes('exportaciones') || texto.includes('internacional') || texto.includes('ico')) return 'internacional';
+    return CATEGORIAS_VALIDAS.includes(articulo.categoriaSugerida) ? articulo.categoriaSugerida : 'mercado';
+}
+
+function adaptarArticuloLocalmente(articulo = {}) {
+    const textoFuente = `${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`;
+    if (esTextoRuido(textoFuente)) {
+        return {
+            descartar: true,
+            motivo: 'La fuente pertenece a un tema claramente ruidoso o ajeno.',
+        };
+    }
+
+    const titulo = eliminarContextoForzado(
+        resolverTituloFinal(articulo.titulo?.trim(), articulo.titulo),
+        articulo
+    );
+    const baseResumen = articulo.resumen || articulo.contenido || articulo.titulo || '';
+    const contenidoBase = articulo.contenido || articulo.resumen || articulo.titulo || '';
+    const resumen = eliminarContextoForzado(recortarTexto(baseResumen, 220), articulo);
+    const contenido = eliminarContextoForzado(normalizarContenidoEnParrafos(contenidoBase), articulo);
+    const categoria = inferirCategoriaLocal(articulo);
+
+    if (!titulo || !resumen || !contenido) {
+        return {
+            descartar: true,
+            motivo: 'No hubo suficiente contenido para resumir localmente.',
+        };
+    }
+
+    return {
+        titulo,
+        resumen,
+        contenido,
+        categoria,
+        literal: true,
+        origenAdaptacion: 'local',
     };
 }
 
@@ -328,21 +506,24 @@ function esTextoRuido(texto = '') {
     return contieneFrase(normalizarTexto(texto), PALABRAS_RUIDO_RELEVANTES);
 }
 
+function tieneContextoProductivoRelevante(texto = '') {
+    return contieneFrase(normalizarTexto(texto), PALABRAS_CONTEXTO_PRODUCTIVO_RELEVANTE);
+}
+
+function permiteAdaptacionLiteral(articulo = {}) {
+    const textoFuente = `${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`;
+    return !esTextoRuido(textoFuente);
+}
+
 function evaluarNoticiaDanada(noticia = {}) {
     const razones = [];
     const textoFuente = `${noticia.sourceTitle || ''} ${noticia.fuente || ''} ${noticia.sourceDomain || ''}`;
     const textoPublico = `${noticia.titulo || ''} ${noticia.resumen || ''} ${noticia.contenido || ''}`;
+    const resumenNormalizado = normalizarTexto(noticia.resumen || '');
+    const contenidoNormalizado = normalizarTexto(noticia.contenido || '');
 
     if (esTextoRuido(textoFuente) || esTextoRuido(textoPublico)) {
         razones.push('tema_ajeno_al_cafe');
-    }
-
-    if (!esTextoCafeRelevante(textoFuente) || !tieneContextoCafeFuerte(textoFuente)) {
-        razones.push('fuente_sin_relacion_cafetera');
-    }
-
-    if (!esTextoCafeRelevante(textoPublico) || !tieneContextoCafeFuerte(textoPublico)) {
-        razones.push('publicacion_sin_contexto_cafetero_fuerte');
     }
 
     if (!fuenteMencionaContextoLocal({
@@ -370,6 +551,14 @@ function evaluarNoticiaDanada(noticia = {}) {
         if (similitudTitulo < 0.30) {
             razones.push('titulo_desalineado');
         }
+    }
+
+    if (!contenidoNormalizado || contenidoNormalizado.length < 120) {
+        razones.push('contenido_insuficiente');
+    }
+
+    if (resumenNormalizado && contenidoNormalizado && resumenNormalizado === contenidoNormalizado) {
+        razones.push('contenido_igual_al_resumen');
     }
 
     return [...new Set(razones)];
@@ -486,6 +675,15 @@ async function obtenerNoticiasRecientes(horasRevision) {
         .sort({ createdAt: -1 })
         .limit(80)
         .select('titulo resumen contenido categoria sourceHash sourceUrl createdAt');
+}
+
+async function contarNoticiasAutoGeneradasRecientes(horas = 72) {
+    await asegurarConexionMongo();
+    const fechaCorte = new Date(Date.now() - horas * 60 * 60 * 1000);
+    return Noticia.countDocuments({
+        autoGenerada: true,
+        createdAt: { $gte: fechaCorte },
+    });
 }
 
 async function obtenerContexto() {
@@ -671,7 +869,7 @@ async function adaptarArticuloConIA(articulo, ctx) {
         const motivo = parsed.motivo?.trim() || 'Articulo no relacionado con el sector cafetero.';
         const esRuidoClaro = esTextoRuido(`${articulo.titulo || ''} ${articulo.resumen || ''} ${articulo.contenido || ''}`);
 
-        if (!esRuidoClaro) {
+        if (!esRuidoClaro && permiteAdaptacionLiteral(articulo)) {
             const literal = construirAdaptacionLiteral(articulo);
             if (literal) {
                 return literal;
@@ -690,7 +888,10 @@ async function adaptarArticuloConIA(articulo, ctx) {
             articulo
         ),
         resumen: eliminarContextoForzado(parsed.resumen?.trim(), articulo),
-        contenido: eliminarContextoForzado(parsed.contenido?.trim(), articulo),
+        contenido: eliminarContextoForzado(
+            normalizarContenidoEnParrafos(parsed.contenido?.trim()),
+            articulo
+        ),
         categoria: (parsed.categoria || articulo.categoriaSugerida || 'mercado').toLowerCase().trim(),
     };
 
@@ -735,9 +936,112 @@ async function existeFuenteGuardada(sourceHash, sourceUrl) {
     }).select('_id'));
 }
 
-export async function generarNoticiasDelDia() {
+async function fueFuenteUsadaRecientemente(sourceHash, horasBloqueo = 168) {
     await asegurarConexionMongo();
-    if (!process.env.OPENAI_API_KEY) {
+    if (!sourceHash) return false;
+    const fechaCorte = new Date(Date.now() - horasBloqueo * 60 * 60 * 1000);
+    return Boolean(await NoticiaFuenteHistorial.findOne({
+        sourceHash,
+        lastGeneratedAt: { $gte: fechaCorte },
+        lastOutcome: 'generated',
+    }).select('_id'));
+}
+
+async function registrarFuenteGenerada(sourceHash, articulo = {}) {
+    await asegurarConexionMongo();
+    if (!sourceHash) return;
+    await NoticiaFuenteHistorial.findOneAndUpdate(
+        { sourceHash },
+        {
+            sourceHash,
+            sourceUrl: articulo.url || null,
+            sourceTitle: articulo.titulo || null,
+            lastGeneratedAt: new Date(),
+            lastOutcome: 'generated',
+        },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+    );
+}
+
+async function sembrarHistorialDesdeNoticiasRecientes(horas = 168, limite = 40) {
+    await asegurarConexionMongo();
+    const fechaCorte = new Date(Date.now() - horas * 60 * 60 * 1000);
+    const recientes = await Noticia.find({
+        autoGenerada: true,
+        sourceHash: { $exists: true, $ne: null },
+        createdAt: { $gte: fechaCorte },
+    })
+        .sort({ createdAt: -1 })
+        .limit(limite)
+        .select('sourceHash sourceUrl sourceTitle createdAt');
+
+    for (const noticia of recientes) {
+        await NoticiaFuenteHistorial.findOneAndUpdate(
+            { sourceHash: noticia.sourceHash },
+            {
+                sourceHash: noticia.sourceHash,
+                sourceUrl: noticia.sourceUrl || null,
+                sourceTitle: noticia.sourceTitle || null,
+                lastGeneratedAt: noticia.createdAt || new Date(),
+                lastOutcome: 'generated',
+            },
+            { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+        );
+    }
+}
+
+export async function limpiarNoticiasPorVentana({
+    referencia = new Date(),
+    incluirRespaldoAntiguo = true,
+} = {}) {
+    await asegurarConexionMongo();
+
+    const { dateKey } = obtenerPartesBogota(referencia);
+    const ayer = desplazarFechaLocal(dateKey, -1);
+
+    const filtroPrincipal = {
+        autoGenerada: true,
+        $or: [
+            { generacionFechaLocal: ayer, generacionSlot: { $in: [6, 12, 18] } },
+        ],
+    };
+
+    const resultadoPrincipal = await Noticia.deleteMany(filtroPrincipal);
+    let eliminadas = resultadoPrincipal.deletedCount || 0;
+
+    if (incluirRespaldoAntiguo) {
+        const fechaCorte = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        const respaldo = await Noticia.deleteMany({
+            autoGenerada: true,
+            createdAt: { $lt: fechaCorte },
+        });
+        eliminadas += respaldo.deletedCount || 0;
+    }
+
+    return eliminadas;
+}
+
+export async function limpiarNoticiasMedianoche({
+    referencia = new Date(),
+} = {}) {
+    await asegurarConexionMongo();
+    const { dateKey } = obtenerPartesBogota(referencia);
+    const resultado = await Noticia.deleteMany({
+        autoGenerada: true,
+        generacionFechaLocal: dateKey,
+        generacionSlot: 0,
+    });
+    return resultado.deletedCount || 0;
+}
+
+export async function generarNoticiasDelDia(opciones = {}) {
+    await asegurarConexionMongo();
+    const modoAdaptacion = (process.env.NOTICIAS_MODO_ADAPTACION || 'local').toLowerCase().trim();
+    const referencia = opciones.referencia ? new Date(opciones.referencia) : new Date();
+    const slotGeneracion = opciones.slotGeneracion ?? obtenerSlotGeneracion(referencia);
+    const fechaLocalGeneracion = opciones.fechaLocalGeneracion || obtenerPartesBogota(referencia).dateKey;
+
+    if (modoAdaptacion === 'ia' && !process.env.OPENAI_API_KEY) {
         console.warn('[NoticiaAuto] OPENAI_API_KEY no configurada.');
         return 0;
     }
@@ -752,13 +1056,21 @@ export async function generarNoticiasDelDia() {
 
     const maxNoticias = parseInt(process.env.NOTICIAS_POR_CICLO || '3');
     const horasRevisionDuplicados = parseInt(process.env.NOTICIAS_HORAS_REVISAR_DUPLICADOS || '48');
+    const horasBloqueoRepetidas = parseInt(process.env.NOTICIAS_BLOQUEAR_REPETIDAS_HORAS || '168');
 
     try {
-        const limpieza = await limpiarNoticiasDanadas({
+        await sembrarHistorialDesdeNoticiasRecientes(horasBloqueoRepetidas, 60);
+    } catch (error) {
+        console.warn('[NoticiaAuto] No se pudo sincronizar historial de fuentes:', error.message);
+    }
+
+    try {
+        const limpieza = { eliminadas: 0 };
+        /* const limpieza = await limpiarNoticiasDanadas({
             dryRun: false,
             soloAutoGeneradas: true,
             limite: 300,
-        });
+        }); */
         if (limpieza.eliminadas > 0) {
             console.log(`[NoticiaAuto] Limpieza previa automatica: ${limpieza.eliminadas} noticias dañadas eliminadas`);
         }
@@ -766,7 +1078,7 @@ export async function generarNoticiasDelDia() {
         console.warn('[NoticiaAuto] No se pudo ejecutar la limpieza previa automatica:', error.message);
     }
 
-    const ctx = await obtenerContexto();
+    const ctx = modoAdaptacion === 'ia' ? await obtenerContexto() : null;
     const noticiasRecientes = await obtenerNoticiasRecientes(horasRevisionDuplicados);
 
     let articulos = [];
@@ -794,9 +1106,17 @@ export async function generarNoticiasDelDia() {
             continue;
         }
 
+        const usadaRecientemente = await fueFuenteUsadaRecientemente(sourceHash, horasBloqueoRepetidas);
+        if (usadaRecientemente) {
+            console.log(`[NoticiaAuto] Fuente omitida por rotacion reciente: '${articulo.titulo}'`);
+            continue;
+        }
+
         let adaptada;
         try {
-            adaptada = await adaptarArticuloConIA(articulo, ctx);
+            adaptada = modoAdaptacion === 'ia'
+                ? await adaptarArticuloConIA(articulo, ctx)
+                : adaptarArticuloLocalmente(articulo);
         } catch (error) {
             console.error(`[NoticiaAuto] Error adaptando articulo '${articulo.titulo}':`, error.message);
             continue;
@@ -853,7 +1173,11 @@ export async function generarNoticiasDelDia() {
                 tipoImagen: imagenSeleccionada.tipoImagen,
                 autoGenerada: true,
                 cicloGeneracion: 'fuentes_reales',
+                generacionSlot: slotGeneracion,
+                generacionFechaLocal: fechaLocalGeneracion,
             });
+
+            await registrarFuenteGenerada(sourceHash, articulo);
 
             noticiasRecientes.unshift({
                 titulo: nuevaNoticia.titulo,
@@ -881,12 +1205,23 @@ export async function generarNoticiasDelDia() {
 }
 
 export async function asegurarNoticiasRecientes(opciones = {}) {
+    const intervaloMinimoMs = parseInt(process.env.NOTICIAS_MIN_INTERVALO_REVISION_MS || '300000', 10);
+    const ahora = Date.now();
+
+    if (ahora - ultimaRevisionAutomaticaMs < intervaloMinimoMs) {
+        return false;
+    }
+    ultimaRevisionAutomaticaMs = ahora;
+
     await asegurarConexionMongo();
     const {
         maxHorasSinNoticias = parseInt(process.env.NOTICIAS_MAX_HORAS_SIN_ACTUALIZAR || '8'),
+        minNoticiasActivas = parseInt(process.env.NOTICIAS_MIN_ACTIVAS || '6'),
+        horasVentanaInventario = parseInt(process.env.NOTICIAS_HORAS_INVENTARIO || '72'),
     } = opciones;
 
-    if (!process.env.OPENAI_API_KEY) {
+    const modoAdaptacion = (process.env.NOTICIAS_MODO_ADAPTACION || 'local').toLowerCase().trim();
+    if (modoAdaptacion === 'ia' && !process.env.OPENAI_API_KEY) {
         console.warn('[NoticiaAuto] OPENAI_API_KEY no configurada. Se omite la actualizacion automatica.');
         return false;
     }
@@ -894,14 +1229,20 @@ export async function asegurarNoticiasRecientes(opciones = {}) {
     const ultimaNoticia = await Noticia.findOne({ autoGenerada: true })
         .sort({ createdAt: -1 })
         .select('createdAt titulo');
+    const noticiasActivas = await contarNoticiasAutoGeneradasRecientes(horasVentanaInventario);
 
     const limite = new Date(Date.now() - maxHorasSinNoticias * 60 * 60 * 1000);
-    const necesitaActualizacion = !ultimaNoticia || ultimaNoticia.createdAt < limite;
+    const necesitaActualizacionPorEdad = !ultimaNoticia || ultimaNoticia.createdAt < limite;
+    const necesitaActualizacionPorInventario = noticiasActivas < minNoticiasActivas;
+    const necesitaActualizacion = necesitaActualizacionPorEdad || necesitaActualizacionPorInventario;
 
     if (!necesitaActualizacion) return false;
 
     if (!generacionEnCurso) {
-        console.log('[NoticiaAuto] Noticias desactualizadas. Iniciando refresco automatico...');
+        const motivo = necesitaActualizacionPorInventario
+            ? `inventario bajo (${noticiasActivas}/${minNoticiasActivas})`
+            : 'noticias desactualizadas';
+        console.log(`[NoticiaAuto] Refresco automatico activado por ${motivo}...`);
         generacionEnCurso = generarNoticiasDelDia()
             .catch((error) => {
                 console.error('[NoticiaAuto] Error refrescando noticias:', error.message);

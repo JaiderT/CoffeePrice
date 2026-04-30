@@ -24,21 +24,36 @@ const calcularDistancia = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
+const obtenerTipoVisual = (tipo = '', nombre = '') => {
+  const texto = `${tipo} ${nombre}`.toLowerCase();
+
+  if (texto.includes('coop')) {
+    return { etiqueta: 'Cooperativa', color: '#B7791F', fondo: '#FFF4D6', icono: 'C' };
+  }
+
+  if (texto.includes('trill')) {
+    return { etiqueta: 'Trilladora', color: '#7A4020', fondo: '#F6E3D6', icono: 'T' };
+  }
+
+  return { etiqueta: 'Comprador', color: '#C8814A', fondo: '#F8E7D8', icono: 'C' };
+};
+
 // Ícono comprador animado
-const crearIconoCafe = (isSelected = false, isFavorite = false) => new L.DivIcon({
+const crearIconoCafe = (tipoVisual, isSelected = false, isFavorite = false) => new L.DivIcon({
   className: '',
   html: `<div style="
     width:44px;
     height:44px;
-    background:${isFavorite ? '#E67E22' : '#C8814A'};
+    background:${isFavorite ? '#E67E22' : tipoVisual.color};
     border-radius:50% 50% 50% 0;
     transform:rotate(-45deg);
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.25);
+    border:3px solid #FFF8EE;
+    box-shadow:0 6px 16px rgba(44,26,14,0.20);
     transition:all 0.3s ease;
-    ${isSelected ? 'animation:pulse 1s infinite;' : ''}
+    ${isSelected ? `animation:pulse 1s infinite; box-shadow:0 8px 18px ${tipoVisual.color}55;` : ''}
     cursor:pointer;
   ">
     <span style="font-size:20px;transform:rotate(45deg);">${isFavorite ? '⭐' : '☕'}</span>
@@ -106,9 +121,24 @@ function VolarA({ pos }) {
   return null;
 }
 
+function SincronizarTamanoMapa({ trigger }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const refrescar = () => map.invalidateSize({ animate: false });
+    refrescar();
+    const timer = setTimeout(refrescar, 180);
+
+    return () => clearTimeout(timer);
+  }, [map, trigger]);
+
+  return null;
+}
+
 // Panel de detalles del comprador
 function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, estaEnComparador, onToggleFavorito, esFavorito }) {
   if (!comprador) return null;
+  const tipoVisual = comprador.tipoVisual || obtenerTipoVisual(comprador.tipo, comprador.nombreempresa);
   
   const distancia = miUbicacion ? calcularDistancia(
     miUbicacion[0], miUbicacion[1],
@@ -116,10 +146,16 @@ function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, e
   ).toFixed(1) : null;
 
   return (
-    <div className="absolute top-4 right-4 w-96 bg-white rounded-2xl shadow-2xl z-[1000] overflow-hidden transition-all duration-300 transform translate-x-0">
+    <div className="absolute top-4 right-4 w-96 max-w-[calc(100%-2rem)] bg-white rounded-2xl shadow-2xl z-[450] overflow-hidden transition-all duration-300 transform translate-x-0">
       <div className="bg-gradient-to-r from-[#3B1F0A] to-[#6B3A1F] p-4 text-white">
         <div className="flex justify-between items-start">
           <div className="flex-1">
+            <div
+              className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold mb-2"
+              style={{ backgroundColor: 'rgba(255,248,238,0.18)', color: '#FFF8EE' }}
+            >
+              {tipoVisual.etiqueta}
+            </div>
             <h3 className="font-bold text-lg">{comprador.nombreempresa}</h3>
             <p className="text-xs text-[#C8814A] mt-1">
               {comprador.calificacion || '⭐ 4.8'} · {comprador.tipo || 'Comprador verificado'}
@@ -139,7 +175,12 @@ function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, e
       <div className="p-5 space-y-4">
         <div className="flex items-start gap-3 text-sm">
           <span className="text-xl">📍</span>
-          <span className="text-gray-700">{comprador.direccion}</span>
+          <div>
+            <span className="text-gray-700">{comprador.direccion}</span>
+            {comprador.coordenadasEstimadas && (
+              <p className="text-[11px] text-amber-600 mt-1">Ubicacion aproximada segun direccion y municipio</p>
+            )}
+          </div>
         </div>
         {comprador.telefono && (
           <div className="flex items-center gap-3 text-sm">
@@ -168,13 +209,19 @@ function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, e
         )}
         <div className="border-t pt-4 mt-2">
           <p className="font-bold text-[#3B1F0A] mb-1">Precio de referencia</p>
-          <p className="text-3xl font-bold text-[#C8814A]">${comprador.precioReferencia?.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">por carga de 125kg</p>
+          <p className="text-3xl font-bold" style={{ color: tipoVisual.color }}>
+            {Number.isFinite(comprador.precioReferencia) ? `$${comprador.precioReferencia.toLocaleString()}` : 'Sin precio'}
+          </p>
+          <p className="text-xs text-gray-500">
+            {comprador.tipocafe ? `${comprador.tipocafe.replaceAll('_', ' ')} · ${comprador.unidadPrecio || 'carga'}` : 'Precio pendiente de publicacion'}
+          </p>
         </div>
         <div className="flex gap-2">
           <button 
             onClick={() => {
-              window.open(`https://www.google.com/maps/dir/${miUbicacion?.[0]},${miUbicacion?.[1]}/${comprador.latitud},${comprador.longitud}`, '_blank');
+              const destino = `${comprador.latitud},${comprador.longitud}`;
+              const origen = miUbicacion ? `${miUbicacion[0]},${miUbicacion[1]}/` : '';
+              window.open(`https://www.google.com/maps/dir/${origen}${destino}`, '_blank');
             }}
             className="flex-1 bg-[#C8814A] text-white py-2.5 rounded-xl hover:bg-[#B0703A] transition-colors font-semibold text-sm"
           >
@@ -200,10 +247,10 @@ function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, e
 function PanelComparador({ compradores, onEliminar, onCerrar, onVerEnMapa }) {
   if (compradores.length === 0) return null;
   
-  const mejorPrecio = Math.min(...compradores.map(c => c.precioReferencia || Infinity));
+  const mejorPrecio = Math.max(...compradores.map(c => Number(c.precioReferencia) || 0));
   
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-2xl z-[1000] p-4 transition-all duration-300 transform translate-y-0">
+    <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-2xl z-[450] p-4 transition-all duration-300 transform translate-y-0">
       <div className="flex justify-between items-center mb-3">
         <div>
           <h4 className="font-bold text-[#3B1F0A] text-lg">📊 Comparador de precios</h4>
@@ -219,14 +266,16 @@ function PanelComparador({ compradores, onEliminar, onCerrar, onVerEnMapa }) {
             onClick={() => onVerEnMapa(c)}
             style={{ borderColor: c.precioReferencia === mejorPrecio && compradores.length > 1 ? '#10B981' : '#E5E7EB' }}
           >
-            {c.precioReferencia === mejorPrecio && compradores.length > 1 && (
+            {Number(c.precioReferencia) === mejorPrecio && compradores.length > 1 && mejorPrecio > 0 && (
               <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
                 Mejor precio
               </div>
             )}
             <p className="font-bold text-sm text-[#3B1F0A] mb-1 truncate">{c.nombreempresa}</p>
-            <p className="text-2xl font-bold text-[#C8814A]">${c.precioReferencia?.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mb-2">/carga</p>
+            <p className="text-2xl font-bold text-[#C8814A]">
+              {Number.isFinite(c.precioReferencia) ? `$${c.precioReferencia.toLocaleString()}` : 'Sin precio'}
+            </p>
+            <p className="text-xs text-gray-500 mb-2">/{c.unidadPrecio || 'carga'}</p>
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -265,8 +314,13 @@ export default function MapaCompradores() {
   const [tipoFiltro, setTipoFiltro] = useState('Todos');
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/comprador/mapa`)
-      .then(({ data }) => setCompradores(data))
+    axios.get(`${API_URL}/api/comprador/mapa`, { withCredentials: true })
+      .then(({ data }) => {
+        const normalizados = (data || []).filter((comprador) =>
+          Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud)
+        );
+        setCompradores(normalizados);
+      })
       .catch(() => console.error('Error cargando compradores'))
       .finally(() => setCargando(false));
   }, [API_URL]);
@@ -342,7 +396,8 @@ export default function MapaCompradores() {
 
   const compradoresMostrados = compradoresFiltrados.map(c => ({
     ...c,
-    esFavorito: favoritos.includes(c._id)
+    esFavorito: favoritos.includes(c._id),
+    tipoVisual: obtenerTipoVisual(c.tipo, c.nombreempresa),
   }));
 
   if (cargando) return (
@@ -355,17 +410,17 @@ export default function MapaCompradores() {
   );
 
   return (
-    <div className="bg-[#FBF7F0] rounded-2xl shadow-xl overflow-hidden border border-[#C8814A]/20">
+    <div className="relative z-0 bg-white rounded-2xl shadow-sm overflow-hidden border border-[#E8D8BF]">
       {/* Encabezado */}
-      <div className="bg-gradient-to-r from-[#3B1F0A] to-[#6B3A1F] px-5 py-4">
+      <div className="px-5 py-5 border-b border-[#EFE3D0] bg-[#FCF8F1]">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h2 className="text-white text-xl font-bold">Mapa de Compradores</h2>
-            <p className="text-[#C8814A] text-xs flex items-center gap-1 mt-1">
+            <h2 className="text-[#2C1A0E] text-xl font-bold">Mapa de Compradores</h2>
+            <p className="text-[#7A4020] text-xs flex items-center gap-1 mt-1">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               Precios actualizados · El Pital, Huila
             </p>
-            <p className="text-white/60 text-xs mt-1">
+            <p className="text-gray-500 text-xs mt-1">
               📍 {compradoresFiltrados.length} compradores activos
               {favoritos.length > 0 && ` · ⭐ ${favoritos.length} favoritos`}
             </p>
@@ -373,14 +428,14 @@ export default function MapaCompradores() {
           <div className="flex gap-2">
             <button 
               onClick={() => setVista(vista === 'mapa' ? 'lista' : 'mapa')}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl transition-all text-sm font-semibold"
+              className="flex items-center gap-2 border border-[#C8A96E]/40 text-[#7A4020] px-4 py-2 rounded-xl transition-all text-sm font-semibold hover:bg-[#F5ECD7]"
             >
               {vista === 'mapa' ? '📋 Ver listado' : '🗺️ Ver mapa'}
             </button>
             <button 
               onClick={obtenerMiUbicacion} 
               disabled={buscandoUbicacion}
-              className="flex items-center gap-2 bg-[#C8814A]/20 hover:bg-[#C8814A]/30 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 text-sm font-semibold"
+              className="flex items-center gap-2 bg-[#2C1A0E] hover:bg-[#3D1F0F] text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 text-sm font-semibold"
             >
               🎯 {buscandoUbicacion ? 'Buscando...' : 'Mi ubicación'}
             </button>
@@ -389,8 +444,8 @@ export default function MapaCompradores() {
 
         {/* Controles de filtro */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-white/10 rounded-lg p-3">
-            <div className="flex justify-between text-white/70 text-xs mb-2">
+          <div className="bg-white rounded-xl p-3 border border-[#E8D8BF]">
+            <div className="flex justify-between text-gray-500 text-xs mb-2">
               <span>Radio de búsqueda</span>
               <span className="text-[#C8814A] font-bold">{radioKm} km</span>
             </div>
@@ -400,9 +455,9 @@ export default function MapaCompradores() {
               max="30" 
               value={radioKm} 
               onChange={(e) => setRadioKm(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#C8814A]"
+              className="w-full h-1.5 bg-[#F2E6D3] rounded-lg appearance-none cursor-pointer accent-[#C8814A]"
             />
-            <label className="flex items-center gap-2 mt-2 text-white/70 text-xs cursor-pointer">
+            <label className="flex items-center gap-2 mt-2 text-gray-500 text-xs cursor-pointer">
               <input 
                 type="checkbox" 
                 checked={filtrarPorDistancia} 
@@ -413,7 +468,7 @@ export default function MapaCompradores() {
             </label>
           </div>
           
-          <div className="bg-white/10 rounded-lg p-3">
+          <div className="bg-white rounded-xl p-3 border border-[#E8D8BF]">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">🔍</span>
               <input 
@@ -421,7 +476,7 @@ export default function MapaCompradores() {
                 value={busqueda} 
                 onChange={e => setBusqueda(e.target.value)}
                 placeholder="Buscar comprador..."
-                className="w-full bg-white/20 rounded-lg pl-9 pr-3 py-2 text-white text-sm placeholder:text-white/50 outline-none focus:bg-white/30 transition-all"
+                className="w-full bg-[#FCF8F1] rounded-lg pl-9 pr-3 py-2 text-[#3B1F0A] text-sm placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-[#C8A96E]/35 transition-all"
               />
             </div>
           </div>
@@ -455,22 +510,24 @@ export default function MapaCompradores() {
       {/* Contenido principal */}
       <div className="p-4">
         {vista === 'mapa' ? (
-          <div className="rounded-xl overflow-hidden shadow-md border-2 border-[#C8814A]/30 bg-[#88b850] relative" style={{ height: '500px' }}>
+          <div className="relative z-0 rounded-xl overflow-hidden border border-[#E8D8BF] bg-[#FCF8F1]" style={{ height: '500px' }}>
             <MapContainer 
+              key={`mapa-${vista}`}
+              className="z-0"
               center={CENTRO_PITAL} 
               zoom={ZOOM_INICIAL}
               minZoom={13}
               maxZoom={18}
               zoomControl={true}
-              style={{ height: '100%', width: '100%' }}
+              style={{ height: '100%', width: '100%', zIndex: 0 }}
               scrollWheelZoom={true}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                subdomains="abcd"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               
+              <SincronizarTamanoMapa trigger={`${vista}-${compradoresMostrados.length}-${radioKm}`} />
               <RestrictMapBounds />
               {volarA && <VolarA pos={volarA} />}
 
@@ -500,7 +557,7 @@ export default function MapaCompradores() {
                 <Marker 
                   key={c._id} 
                   position={[c.latitud, c.longitud]} 
-                  icon={crearIconoCafe(seleccionado?._id === c._id, c.esFavorito)}
+                  icon={crearIconoCafe(c.tipoVisual, seleccionado?._id === c._id, c.esFavorito)}
                   eventHandlers={{
                     click: () => {
                       setSeleccionado(c);
@@ -510,6 +567,12 @@ export default function MapaCompradores() {
                 >
                   <Popup>
                     <div className="min-w-[200px]">
+                      <div
+                        className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold mb-2"
+                        style={{ backgroundColor: c.tipoVisual.fondo, color: c.tipoVisual.color }}
+                      >
+                        {c.tipoVisual.etiqueta}
+                      </div>
                       <div className="flex justify-between items-start">
                         <p className="font-bold text-[#3B1F0A]">☕ {c.nombreempresa}</p>
                         <button 
@@ -523,7 +586,12 @@ export default function MapaCompradores() {
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">{c.direccion}</p>
-                      <p className="text-sm font-bold text-[#C8814A] mt-1">${c.precioReferencia?.toLocaleString()}</p>
+                      {c.coordenadasEstimadas && (
+                        <p className="text-[10px] text-amber-600 mt-1">Ubicacion aproximada</p>
+                      )}
+                      <p className="text-sm font-bold mt-1" style={{ color: c.tipoVisual.color }}>
+                        {Number.isFinite(c.precioReferencia) ? `$${c.precioReferencia.toLocaleString()}` : 'Sin precio'}
+                      </p>
                       {miUbicacion && (
                         <p className="text-xs text-gray-500 mt-1">
                           📏 a {calcularDistancia(miUbicacion[0], miUbicacion[1], c.latitud, c.longitud).toFixed(1)} km
@@ -536,10 +604,12 @@ export default function MapaCompradores() {
             </MapContainer>
 
             {/* Leyenda */}
-            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-md border border-[#C8814A]/20 z-[1000]">
+            <div className="pointer-events-none absolute bottom-3 left-3 bg-white/92 backdrop-blur-sm rounded-xl p-2.5 shadow-sm border border-[#E8D8BF] z-[450]">
               <p className="font-bold text-[#3B1F0A] text-[10px] uppercase tracking-wide mb-1">Referencias</p>
               <div className="flex flex-col gap-1 text-xs">
                 <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#C8814A]"></span><span>Comprador</span></div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#B7791F]"></span><span>Cooperativa</span></div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#7A4020]"></span><span>Trilladora</span></div>
                 <div className="flex items-center gap-2"><span className="text-[#E67E22]">⭐</span><span>Favorito</span></div>
                 <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#1a4a6b]"></span><span>Tu ubicación</span></div>
                 <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#C8814A] opacity-30 border border-[#C8814A]"></span><span>Radio {radioKm} km</span></div>
@@ -580,6 +650,12 @@ export default function MapaCompradores() {
                   >
                     <div className="text-3xl">☕</div>
                     <div className="flex-1">
+                      <div
+                        className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold mb-2"
+                        style={{ backgroundColor: c.tipoVisual.fondo, color: c.tipoVisual.color }}
+                      >
+                        {c.tipoVisual.etiqueta}
+                      </div>
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-[#3B1F0A]">{c.nombreempresa}</p>
                         <button 
@@ -593,7 +669,12 @@ export default function MapaCompradores() {
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mt-1 truncate">{c.direccion}</p>
-                      <p className="text-sm font-bold text-[#C8814A] mt-1">${c.precioReferencia?.toLocaleString()}</p>
+                      {c.coordenadasEstimadas && (
+                        <p className="text-[10px] text-amber-600 mt-1">Ubicacion aproximada</p>
+                      )}
+                      <p className="text-sm font-bold mt-1" style={{ color: c.tipoVisual.color }}>
+                        {Number.isFinite(c.precioReferencia) ? `$${c.precioReferencia.toLocaleString()}` : 'Sin precio'}
+                      </p>
                       {miUbicacion && (
                         <p className="text-[10px] text-gray-400 mt-1">
                           📏 a {calcularDistancia(miUbicacion[0], miUbicacion[1], c.latitud, c.longitud).toFixed(1)} km

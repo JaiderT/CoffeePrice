@@ -76,6 +76,16 @@ const noticiaSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        generacionSlot: {
+            type: Number,
+            enum: [0, 6, 12, 18],
+            default: null,
+        },
+        generacionFechaLocal: {
+            type: String,
+            trim: true,
+            default: null,
+        },
     },
 
     { timestamps: true }
@@ -83,6 +93,7 @@ const noticiaSchema = new mongoose.Schema(
 // Indice para busqueda rapida
 noticiaSchema.index({ createdAt: -1 });
 noticiaSchema.index({ categoria: 1, createdAt: -1 });
+noticiaSchema.index({ autoGenerada: 1, generacionFechaLocal: 1, generacionSlot: 1 });
 noticiaSchema.index({ sourceHash: 1 }, { unique: true, sparse: true });
 noticiaSchema.index({ sourceUrl: 1 }, { sparse: true });
 

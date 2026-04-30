@@ -4,12 +4,20 @@ import axios from 'axios';
 
 // Cache compartida — leída por precioFNC.js
 export let cachePrecioFNC = { precio: null, timestamp: 0, fuente: null };
+let actualizacionPrecioFNCPromise = null;
 
 // ── Fuente 1: Scraping real de la FNC con Puppeteer ─────────────────
 async function scrapearFNC() {
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-zygote',
+      '--disable-extensions',
+    ],
   });
   try {
     const page = await browser.newPage();
@@ -59,6 +67,11 @@ async function precioDesdeNY() {
 
 // ── Función principal de actualización ──────────────────────────────
 export async function actualizarPrecioFNC() {
+  if (actualizacionPrecioFNCPromise) {
+    return actualizacionPrecioFNCPromise;
+  }
+
+  actualizacionPrecioFNCPromise = (async () => {
   console.log('[precioCron] Actualizando precio FNC...');
 
   // Intentar scraping real
@@ -81,6 +94,17 @@ export async function actualizarPrecioFNC() {
   } catch (e) {
     console.warn('[precioCron] Yahoo Finance también falló:', e.message);
   }
+  })();
+
+  try {
+    await actualizacionPrecioFNCPromise;
+  } finally {
+    actualizacionPrecioFNCPromise = null;
+  }
+}
+
+export function hayActualizacionPrecioFNCEnCurso() {
+  return Boolean(actualizacionPrecioFNCPromise);
 }
 
 // ── Iniciar cron ─────────────────────────────────────────────────────
