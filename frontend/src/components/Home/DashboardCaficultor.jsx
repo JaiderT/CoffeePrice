@@ -1,12 +1,115 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from '../../context/useAuth.js';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix íconos Leaflet en Vite
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+const CENTRO_PITAL = [2.266205, -75.805401];
+
+// Icono comprador para mini mapa
+const crearIconoMini = (color = '#C8814A') => new L.DivIcon({
+  className: '',
+  html: `<div style="
+    width:32px;height:32px;
+    background:${color};
+    border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #FFF8EE;
+    box-shadow:0 4px 10px rgba(44,26,14,0.25);
+  ">
+    <span style="font-size:14px;transform:rotate(45deg);">☕</span>
+  </div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -28],
+});
+
+// Componente para sincronizar tamaño
+function SincronizarMapa() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => map.invalidateSize({ animate: false }), 200);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
+
+// Mini mapa de compradores para el dashboard
+function MiniMapaCompradores({ compradores, onVerMapa }) {
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[#2C1A0E] font-bold text-sm">📍 Compradores cerca</p>
+        <button
+          onClick={onVerMapa}
+          className="text-xs text-[#C8A96E] hover:underline"
+        >
+          Ver mapa completo 
+        </button>
+      </div>
+
+      {/* Mini mapa real con Leaflet */}
+      <div className="w-full rounded-xl overflow-hidden mb-3 border border-[#D4E4C4]" style={{ height: 144, position: 'relative', zIndex: 0 }}>
+        <MapContainer
+          center={CENTRO_PITAL}
+          zoom={14}
+          zoomControl={false}
+          scrollWheelZoom={false}
+          doubleClickZoom={true}
+          dragging={true}
+          attributionControl={false}
+          style={{ height: '100%', width: '100%', zIndex: 0 }}
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <SincronizarMapa />
+          {compradores.slice(0, 8).map((c, i) => {
+            const colores = ['#C8814A', '#B7791F', '#7A4020', '#C8A96E'];
+            return (
+              <Marker
+                key={c._id || i}
+                position={[c.latitud, c.longitud]}
+                icon={crearIconoMini(colores[i % colores.length])}
+              >
+                <Popup>
+                  <div className="text-xs">
+                    <p className="font-bold text-[#3B1F0A]">{c.nombreempresa}</p>
+                    {c.precioReferencia > 0 && (
+                      <p className="text-[#C8814A] font-semibold">${c.precioReferencia.toLocaleString()}</p>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+
+        {/* Overlay leyenda */}
+        <div className="absolute bottom-2 left-2 z-[400] flex gap-2 pointer-events-none">
+          <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/85 px-2 py-0.5 rounded-full">
+            <span className="w-2 h-2 bg-[#C8A96E] rounded-full inline-block" />Compradores
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardProductor() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
+  const navigate = useNavigate();
 
   const [mensaje, setMensaje] = useState(null);
 
@@ -16,12 +119,14 @@ export default function DashboardProductor() {
   const [cargandoHistorial, setCargandoHistorial] = useState(true);
   const [cargandoNoticias, setCargandoNoticias]   = useState(true);
   const [cargandoFNC, setCargandoFNC]             = useState(true);
+  const [cargandoCompradores, setCargandoCompradores] = useState(true);
 
   const [precioMasAlto, setPrecioMasAlto]   = useState(0);
   const [precioFNC, setPrecioFNC]           = useState(null);
   const [fuenteFNC, setFuenteFNC]           = useState(null);
   const [topCompradores, setTopCompradores] = useState([]);
   const [totalCompradores, setTotalCompradores] = useState(0);
+  const [compradoresMapa, setCompradoresMapa] = useState([]);
 
   const [clima, setClima] = useState(null);
 
@@ -126,13 +231,11 @@ export default function DashboardProductor() {
     finally { setCargandoAlerta(false); }
   }, [API_URL, usuario?.id]);
 
-  // ─── CAMBIO: construye la gráfica desde /api/precios (los precios de los compradores) ───
   const cargarHistorial = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/precios`);
       const datos = res.data;
       if (Array.isArray(datos) && datos.length > 0) {
-        // Agrupar por fecha y promediar precios de ese día
         const porFecha = {};
         datos.forEach(p => {
           const raw = p.updatedAt || p.createdAt || p.fecha;
@@ -159,7 +262,6 @@ export default function DashboardProductor() {
       setCargandoHistorial(false);
     }
   }, [API_URL]);
-  // ─────────────────────────────────────────────────────────────────────────────────────────
 
   const cargarNoticias = useCallback(async () => {
     try {
@@ -171,6 +273,21 @@ export default function DashboardProductor() {
     finally { setCargandoNoticias(false); }
   }, [API_URL]);
 
+  // Cargar compradores para el mini mapa
+  const cargarCompradoresMapa = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/comprador/mapa`, { withCredentials: true });
+      const normalizados = (res.data || []).filter(
+        c => Number.isFinite(c.latitud) && Number.isFinite(c.longitud)
+      );
+      setCompradoresMapa(normalizados);
+    } catch {
+      // silencioso
+    } finally {
+      setCargandoCompradores(false);
+    }
+  }, [API_URL]);
+
   useEffect(() => {
     cargarPrecios();
     cargarClima();
@@ -178,7 +295,8 @@ export default function DashboardProductor() {
     cargarHistorial();
     cargarNoticias();
     cargarPrecioFNC();
-  }, [cargarPrecios, cargarClima, cargarAlerta, cargarHistorial, cargarNoticias, cargarPrecioFNC]);
+    cargarCompradoresMapa();
+  }, [cargarPrecios, cargarClima, cargarAlerta, cargarHistorial, cargarNoticias, cargarPrecioFNC, cargarCompradoresMapa]);
 
   const handleGuardarAlerta = async () => {
     if (!usuario?.id) return;
@@ -217,7 +335,6 @@ export default function DashboardProductor() {
     fnc: '🏛️', produccion: '🌱', consejos: '💡', el_pital: '⛰️',
   };
 
-  // Variación precio más alto del mercado local vs FNC
   const varPct = precioMasAlto > 0 && precioFNC > 0
     ? (((precioMasAlto - precioFNC) / precioFNC) * 100).toFixed(1)
     : 0;
@@ -273,7 +390,6 @@ export default function DashboardProductor() {
                     <span className="text-[#D8C7A8] text-lg font-normal ml-2">COP / carga</span>
                   </p>
 
-                  {/* Badge fuente */}
                   <div className="flex items-center gap-2 mt-2 mb-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                       fuenteFNC === 'fnc-directo'
@@ -284,7 +400,6 @@ export default function DashboardProductor() {
                     </span>
                   </div>
 
-                  {/* Variación precio local vs FNC */}
                   {Number(varPct) !== 0 && (
                     <div className="flex gap-2 mt-1 flex-wrap">
                       <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
@@ -302,8 +417,7 @@ export default function DashboardProductor() {
                         {precioMasAlto > 0 ? precioMasAlto.toLocaleString('es-CO') : '---'} COP
                       </p>
                     </div>
-                    <div>
-                    </div>
+                    <div />
                   </div>
                 </div>
               )}
@@ -510,47 +624,15 @@ export default function DashboardProductor() {
           {/* ═══ Columna derecha (1/3) ═══ */}
           <div className="space-y-4">
 
-            {/* Mapa compradores — no depende de API, se muestra de inmediato */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[#2C1A0E] font-bold text-sm">📍 Compradores cerca</p>
-                <Link to="/mapa" className="text-xs text-[#C8A96E] hover:underline">
-                  Ver mapa completo →
-                </Link>
-              </div>
-              <div className="w-full h-36 rounded-xl bg-[#E8F0E0] relative overflow-hidden mb-3 border border-[#D4E4C4]">
-                <div className="absolute inset-0" style={{
-                  backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 20px,
-                    rgba(255,255,255,0.4) 20px, rgba(255,255,255,0.4) 21px),
-                    repeating-linear-gradient(90deg, transparent, transparent 20px,
-                    rgba(255,255,255,0.4) 20px, rgba(255,255,255,0.4) 21px)`
-                }} />
-                {[
-                  { top: '20%', left: '30%' },
-                  { top: '40%', left: '65%' },
-                  { top: '60%', left: '20%' },
-                  { top: '70%', left: '75%' },
-                ].map((pos, i) => (
-                  <div key={i}
-                    className="absolute w-5 h-5 bg-[#C8A96E] rounded-full border-2 border-white shadow flex items-center justify-center"
-                    style={{ top: pos.top, left: pos.left, transform: 'translate(-50%,-50%)' }}>
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  </div>
-                ))}
-                <div
-                  className="absolute w-5 h-5 bg-green-600 rounded-full border-2 border-white shadow"
-                  style={{ top: '48%', left: '47%', transform: 'translate(-50%,-50%)' }}
-                />
-                <div className="absolute bottom-2 left-2 flex gap-2">
-                  <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/80 px-2 py-0.5 rounded-full">
-                    <span className="w-2 h-2 bg-[#C8A96E] rounded-full inline-block" />Compradores
-                  </span>
-                  <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/80 px-2 py-0.5 rounded-full">
-                    <span className="w-2 h-2 bg-green-600 rounded-full inline-block" />Yo
-                  </span>
-                </div>
-              </div>
-            </div>
+            {/* Mini mapa real de compradores */}
+            {cargandoCompradores ? (
+              <SkeletonBox extra="bg-white border border-[#E7D9BF]" h="h-52" />
+            ) : (
+              <MiniMapaCompradores
+                compradores={compradoresMapa}
+                onVerMapa={() => navigate('/mapa')}
+              />
+            )}
 
             {/* Mejores precios hoy */}
             {cargandoPrecios ? <SkeletonBox extra="bg-white border border-[#E7D9BF]" /> : (
@@ -583,7 +665,7 @@ export default function DashboardProductor() {
               </div>
             )}
 
-            {/* Calculadora rápida — no depende de API */}
+            {/* Calculadora rápida */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora rápida</p>
               <p className="text-gray-400 text-xs mb-4">¿Cuánto recibirías si vendes hoy?</p>
