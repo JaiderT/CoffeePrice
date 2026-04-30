@@ -134,6 +134,18 @@ export const createprecio = async (req, res) => {
       });
     }
 
+    const ventanaDuplicado = new Date(Date.now() - 60 * 1000);
+    const precioDuplicadoReciente = await PrecioModel.findOne({
+      comprador,
+      tipocafe,
+      preciocarga: precioNumerico,
+      createdAt: { $gte: ventanaDuplicado },
+    }).sort({ createdAt: -1 });
+
+    if (precioDuplicadoReciente) {
+      return res.status(200).json(precioDuplicadoReciente);
+    }
+
     const nuevoPrecio = new PrecioModel({
       comprador,
       preciocarga: precioNumerico,
