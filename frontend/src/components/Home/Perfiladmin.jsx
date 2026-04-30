@@ -35,6 +35,7 @@ export default function PerfilAdmin() {
   const [modalEliminarReseña, setModalEliminarReseña] = useState(null);
   const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
   const [modalEliminarNoticia, setModalEliminarNoticia] = useState(null);
+  const [modalEliminarUsuario, setModalEliminarUsuario] = useState(null);
   const [mostrarFormNoticia, setMostrarFormNoticia] = useState(false);
   const [noticiaEditar, setNoticiaEditar] = useState(null);
   const [formNoticia, setFormNoticia] = useState({
@@ -226,7 +227,7 @@ export default function PerfilAdmin() {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'activo' }, { withCredentials: true });
-      mostrarMensaje('exito', 'Comprador aprobado correctamente');
+      mostrarMensaje('exito', 'Usuario reactivado correctamente');
       obtenerUsuarios();
       obtenerCompradores();
     } catch {
@@ -246,11 +247,11 @@ export default function PerfilAdmin() {
     }
   };
 
-  const handleEliminarUsuario = async (id) => {
-    if (!window.confirm('¿Eliminar este usuario permanentemente?')) return;
+  const handleEliminarUsuario = async () => {
     try {
-      await axios.delete(`${API_URL}/api/usuario/${id}`, { withCredentials: true });
+      await axios.delete(`${API_URL}/api/usuario/${modalEliminarUsuario}`, { withCredentials: true });
       mostrarMensaje('exito', 'Usuario eliminado correctamente');
+      setModalEliminarUsuario(null);
       obtenerUsuarios();
     } catch {
       mostrarMensaje('error', 'Error al eliminar usuario');
@@ -330,7 +331,7 @@ export default function PerfilAdmin() {
   });
 
   const compradoresPendientes = usuarios.filter((u) => u.rol === 'comprador' && u.estado === 'pendiente');
-
+  const usuariosSuspendidos = usuarios.filter((u) => u.estado === 'suspendido');
   const getEmpresa = (u) => compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
 
   return (
@@ -351,11 +352,18 @@ export default function PerfilAdmin() {
               </div>
             </div>
           </div>
-          {compradoresPendientes.length > 0 && (
-            <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold">
-              ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s)
-            </div>
-          )}
+          <div className="flex flex-col gap-2 items-end">
+            {compradoresPendientes.length > 0 && (
+              <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold">
+                ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s)
+              </div>
+            )}
+            {usuariosSuspendidos.length > 0 && (
+              <div className="bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs px-4 py-2 rounded-xl font-semibold">
+                ⏸ {usuariosSuspendidos.length} usuario(s) suspendido(s)
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mensaje */}
@@ -375,9 +383,9 @@ export default function PerfilAdmin() {
             className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'gestion' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-users-gear"></i>
             Gestionar usuarios
-            {compradoresPendientes.length > 0 && (
+            {(compradoresPendientes.length + usuariosSuspendidos.length) > 0 && (
               <span className="bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                {compradoresPendientes.length}
+                {compradoresPendientes.length + usuariosSuspendidos.length}
               </span>
             )}
           </button>
@@ -491,6 +499,38 @@ export default function PerfilAdmin() {
         {/* PESTAÑA GESTIÓN USUARIOS */}
         {pestana === 'gestion' && (
           <div className="space-y-6">
+
+            {/* Suspendidos */}
+            {usuariosSuspendidos.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                  <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full font-bold">
+                    ⏸ Cuentas suspendidas
+                  </span>
+                  <span className="text-gray-400 text-sm">{usuariosSuspendidos.length} usuario(s)</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  {usuariosSuspendidos.map((u, i) => {
+                    const comp = getEmpresa(u);
+                    return (
+                      <div key={i} className="flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                        <div>
+                          <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
+                          <p className="text-gray-400 text-xs">{u.email}</p>
+                          {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
+                        </div>
+                        <button onClick={() => handleAprobarComprador(u._id)}
+                          className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors">
+                          ✓ Reactivar
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Pendientes */}
             {compradoresPendientes.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
@@ -507,11 +547,7 @@ export default function PerfilAdmin() {
                         <div>
                           <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                           <p className="text-gray-400 text-xs">{u.email}</p>
-                          {comp && (
-                            <p className="text-[#C8A96E] text-xs font-semibold mt-1">
-                              🏢 {comp.nombreempresa}
-                            </p>
-                          )}
+                          {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => handleAprobarComprador(u._id)}
@@ -533,8 +569,8 @@ export default function PerfilAdmin() {
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-[#2C1A0E] font-bold">Todos los usuarios</h3>
-                <div className="flex gap-2">
-                  {['todos', 'productor', 'comprador', 'admin'].map(f => (
+                <div className="flex gap-2 flex-wrap">
+                  {['todos', 'productor', 'comprador', 'admin', 'suspendido'].map(f => (
                     <button key={f} onClick={() => setFiltroUsuarios(f)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${filtroUsuarios === f ? 'bg-[#2C1A0E] text-white' : 'bg-[#F5ECD7] text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
                       {f}
@@ -558,9 +594,7 @@ export default function PerfilAdmin() {
                             <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                             <p className="text-gray-400 text-xs">{u.email}</p>
                             {u.rol === 'comprador' && comp && (
-                              <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">
-                                🏢 {comp.nombreempresa}
-                              </p>
+                              <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">🏢 {comp.nombreempresa}</p>
                             )}
                           </div>
                         </div>
@@ -571,17 +605,29 @@ export default function PerfilAdmin() {
                           <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
                             u.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
                             u.estado === 'rechazado' ? 'bg-red-100 text-red-700' :
+                            u.estado === 'eliminado' ? 'bg-gray-200 text-gray-500' :
+                            u.estado === 'suspendido' ? 'bg-orange-100 text-orange-700' :
                             estaActivo(u.ultimaConexion) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                           }`}>
                             {u.estado === 'pendiente' ? '⏳ Pendiente' :
                               u.estado === 'rechazado' ? '✕ Rechazado' :
+                              u.estado === 'eliminado' ? '🗑 Eliminado' :
+                              u.estado === 'suspendido' ? '⏸ Suspendido' :
                               estaActivo(u.ultimaConexion) ? '● En línea' : '○ Ausente'}
                           </span>
-                          {u._id !== usuario?.id && (
-                            <button onClick={() => handleEliminarUsuario(u._id)}
-                              className="text-red-400 hover:text-red-600 transition-colors p-1">
-                              <i className="fa-solid fa-trash text-xs"></i>
-                            </button>
+                          {u._id !== usuario?.id && u.estado !== 'eliminado' && (
+                            <div className="flex gap-1">
+                              {u.estado === 'suspendido' && (
+                                <button onClick={() => handleAprobarComprador(u._id)}
+                                  className="bg-green-100 text-green-600 hover:bg-green-200 transition-colors p-1.5 rounded-lg text-xs font-semibold">
+                                  ✓
+                                </button>
+                              )}
+                              <button onClick={() => setModalEliminarUsuario(u._id)}
+                                className="text-red-400 hover:text-red-600 transition-colors p-1">
+                                <i className="fa-solid fa-trash text-xs"></i>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -858,6 +904,30 @@ export default function PerfilAdmin() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal eliminar usuario */}
+      {modalEliminarUsuario && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
+            </div>
+            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar usuario?</h3>
+            <p className="text-gray-400 text-sm mb-6">El usuario no podrá iniciar sesión. Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setModalEliminarUsuario(null)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleEliminarUsuario}
+                className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import {
   cambiarpassword,
   eliminarusuario,
   eliminarMiCuenta,
+  suspenderMiCuenta,
   cambiarestado,
 } from "../controllers/usuario.js"; 
 import rolMiddleware from "../middlewares/rolMiddleware.js";
@@ -43,6 +44,7 @@ router.put("/perfil", authMiddleware, async (req, res) => {
     res.status(400).json({ message: "Error al actualizar" });
   }
 });
+
 router.put("/password", authMiddleware, async (req, res) => {
   try {
     const { passwordactual, passwordnueva } = req.body;
@@ -64,7 +66,9 @@ router.put("/password", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Error al cambiar contraseña"});
   }
 });
+
 router.delete("/perfil", authMiddleware, eliminarMiCuenta);
+router.put("/suspender", authMiddleware, suspenderMiCuenta);
 
 router.put("/:id/actualizar", authMiddleware, rolMiddleware("admin"), updateusuario);
 router.put("/:id/password", authMiddleware, rolMiddleware("admin"), cambiarpassword);
