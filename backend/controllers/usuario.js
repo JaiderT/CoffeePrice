@@ -41,7 +41,6 @@ export const updateusuario = async (req, res) => {
     }
 };
 
-
 export const cambiarpassword = async (req, res) => {
     try {
         const { passwordactual, passwordnueva } = req.body;
@@ -54,7 +53,7 @@ export const cambiarpassword = async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         usuario.password = await bcrypt.hash(passwordnueva, salt);
-        await usuario.save(); // ✅ era Usuario.save() en vez de usuario.save()
+        await usuario.save();
 
         res.json({ message: "Contraseña actualizada" });
     } catch (error) {
@@ -64,26 +63,52 @@ export const cambiarpassword = async (req, res) => {
 
 export const eliminarusuario = async (req, res) => {
     try {
-        const usuario = await Usuario.findByIdAndDelete(req.params.id);
+        const usuario = await Usuario.findByIdAndUpdate(
+            req.params.id,
+            { estado: 'eliminado' },
+            { new: true }
+        );
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
         res.json({ message: "Usuario eliminado" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar usuario", error: error.message });
     }
 };
+
 export const eliminarMiCuenta = async (req, res) => {
     try {
-        const usuario = await Usuario.findByIdAndDelete(req.user.id);
-
+        const usuario = await Usuario.findByIdAndUpdate(
+            req.user.id,
+            { estado: 'eliminado' },
+            { new: true }
+        );
         if (!usuario) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-
+        res.clearCookie('auth_token');
         res.json({ message: "Tu cuenta fue eliminada correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar tu cuenta", error: error.message });
     }
 };
+
+export const suspenderMiCuenta = async (req, res) => {
+    try {
+        const usuario = await Usuario.findByIdAndUpdate(
+            req.user.id,
+            { estado: 'suspendido' },
+            { new: true }
+        );
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+        res.clearCookie('auth_token');
+        res.json({ message: "Tu cuenta fue suspendida. Puedes reactivarla iniciando sesión y contactando al administrador." });
+    } catch (error) {
+        res.status(500).json({ message: "Error al suspender tu cuenta", error: error.message });
+    }
+};
+
 export const cambiarestado = async (req, res) => {
     try {
         const { estado } = req.body;
