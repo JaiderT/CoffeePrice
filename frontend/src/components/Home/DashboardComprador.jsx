@@ -46,6 +46,7 @@ function DashboardComprador() {
   const [horarioForm, setHorarioForm] = useState({ horarioApertura: '07:00', horarioCierre: '17:00' });
   const [formPerfil, setFormPerfil] = useState({ nombreempresa: '', direccion: '', telefono: '', horarioApertura: '07:00', horarioCierre: '17:00' });
   const [mensaje, setMensaje] = useState(null);
+  const [publicandoPrecio, setPublicandoPrecio] = useState(false);
   const [sinPerfil, setSinPerfil] = useState(false);
   const [resenas, setResenas] = useState([]);
   const [promedio, setPromedio] = useState(0);
@@ -131,6 +132,9 @@ function DashboardComprador() {
 
   const handlePublicar = async (e) => {
     e.preventDefault();
+    if (publicandoPrecio) return;
+
+    setPublicandoPrecio(true);
     try {
       // ✅ Ruta protegida
       await api.post(`${API_URL}/api/precios`, {
@@ -144,6 +148,8 @@ function DashboardComprador() {
       await obtenerPrecios(comprador._id);
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al publicar el precio');
+    } finally {
+      setPublicandoPrecio(false);
     }
   };
 
@@ -596,9 +602,12 @@ function DashboardComprador() {
                   className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar
                 </button>
-                <button type="submit"
-                  className="flex-1 bg-[#C8A96E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
-                  Publicar
+                <button
+                  type="submit"
+                  disabled={publicandoPrecio}
+                  className="flex-1 bg-[#C8A96E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {publicandoPrecio ? 'Publicando...' : 'Publicar'}
                 </button>
               </div>
             </form>

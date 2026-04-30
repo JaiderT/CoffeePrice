@@ -75,6 +75,7 @@ export default function PerfilComprador() {
   const [passwords, setPasswords] = useState({ actual: '', nueva: '', confirmar: '' });
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [ubicandoMapa, setUbicandoMapa] = useState(false);
   const [modalAccion, setModalAccion] = useState(null); // 'eliminar' | 'suspender'
 
   useEffect(() => {
@@ -208,6 +209,30 @@ export default function PerfilComprador() {
       mostrarMensaje('error', 'Error al suspender la cuenta');
       setModalAccion(null);
     }
+  };
+
+  const usarMiUbicacion = () => {
+    if (!navigator.geolocation) {
+      mostrarMensaje('error', 'Tu navegador no permite obtener la ubicación');
+      return;
+    }
+
+    setUbicandoMapa(true);
+    navigator.geolocation.getCurrentPosition(
+      (posicion) => {
+        setEmpresa((prev) => ({
+          ...prev,
+          latitud: Number(posicion.coords.latitude.toFixed(6)),
+          longitud: Number(posicion.coords.longitude.toFixed(6)),
+        }));
+        setUbicandoMapa(false);
+      },
+      () => {
+        setUbicandoMapa(false);
+        mostrarMensaje('error', 'No se pudo obtener tu ubicación actual');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const iniciales = usuario
