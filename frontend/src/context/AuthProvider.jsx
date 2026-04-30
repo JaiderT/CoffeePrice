@@ -24,11 +24,9 @@ function limpiarUsuarioLocal() {
 }
 
 export function AuthProvider({ children }) {
-  // CORREGIDO: useState con función inicializadora para precarga instantánea desde localStorage
   const [usuario, setUsuario] = useState(() => {
     const rol = localStorage.getItem('rol');
     const id = localStorage.getItem('usuarioId');
-    // Si no hay rol o id guardados, no hay sesión previa
     if (!rol || !id) return null;
     return {
       id,
@@ -39,7 +37,7 @@ export function AuthProvider({ children }) {
       email: localStorage.getItem('email') || '',
     };
   });
-  
+
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -81,6 +79,7 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => {
     const usuarioSesion = {
+      // ✅ Soporte para _id (MongoDB) o id
       id: userData.id || userData._id,
       rol: userData.rol,
       nombre: userData.nombre,
