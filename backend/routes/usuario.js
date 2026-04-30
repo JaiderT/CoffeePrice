@@ -22,7 +22,6 @@ router.put("/:id/estado", authMiddleware, rolMiddleware("admin"), cambiarestado)
 router.put("/perfil", authMiddleware, async (req, res) => {
   try {
     const { nombre, apellido, celular } = req.body;
-
     const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
     if (!nombre || !soloLetras.test(nombre.trim())) {
       return res.status(400).json({ message: "El nombre solo puede contener letras" });
@@ -30,13 +29,11 @@ router.put("/perfil", authMiddleware, async (req, res) => {
     if (!apellido || !soloLetras.test(apellido.trim())) {
       return res.status(400).json({ message: "El apellido solo puede contener letras" });
     }
-
     const usuario = await Usuario.findByIdAndUpdate(
       req.user.id,
       { nombre, apellido, celular },
       { new: true, runValidators: true }
     ).select("-password");
-
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(usuario);
   } catch (error) {
@@ -56,19 +53,34 @@ router.put("/password", authMiddleware, async (req, res) => {
     const usuario = await Usuario.findById(req.user.id);
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     const esValida = await bcrypt.compare(passwordactual, usuario.password);
-    if (!esValida) return res.status(400).json({ message: "Contraseña Actual incorrecta"});
+    if (!esValida) return res.status(400).json({ message: "Contraseña Actual incorrecta" });
     const salt = await bcrypt.genSalt(10);
     usuario.password = await bcrypt.hash(passwordnueva, salt);
     await usuario.save();
     res.json({ message: "Contraseña Actualizada" });
   } catch (error) {
     console.error("[Usuario] Error al cambiar contraseña:", error.message);
-    res.status(500).json({ message: "Error al cambiar contraseña"});
+    res.status(500).json({ message: "Error al cambiar contraseña" });
   }
 });
 
 router.delete("/perfil", authMiddleware, eliminarMiCuenta);
 router.put("/suspender", authMiddleware, suspenderMiCuenta);
+
+// Ruta para que el usuario reactive su propia cuenta suspendida
+router.put("/reactivar", authMiddleware, async (req, res) => {
+  try {
+    const usuario = await Usuario.findByIdAndUpdate(
+      req.user.id,
+      { estado: 'activo' },
+      { new: true }
+    );
+    if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+    res.json({ message: "Cuenta reactivada correctamente", estado: 'activo' });
+  } catch (error) {
+    res.status(500).json({ message: "Error al reactivar cuenta", error: error.message });
+  }
+});
 
 router.put("/:id/actualizar", authMiddleware, rolMiddleware("admin"), updateusuario);
 router.put("/:id/password", authMiddleware, rolMiddleware("admin"), cambiarpassword);

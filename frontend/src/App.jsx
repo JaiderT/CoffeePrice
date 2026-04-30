@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAlertas } from './hooks/useAlertas.js';
 import { useAuth } from './context/useAuth.js';
 
@@ -38,6 +38,9 @@ import DashboardAdmin from './components/Home/DashboardAdmin.jsx';
 // Perfil público
 import PerfilPublicoComprador from "./components/Home/PerfilPublicoComprador.jsx";
 
+// Cuenta suspendida
+import CuentaSuspendida from "./components/Home/CuentaSuspendida.jsx";
+
 // Layouts y protección de rutas
 import LayoutPrivado from "./components/Layout/LayoutPrivado.jsx";
 import LayoutComprador from "./components/Layout/LayoutComprador.jsx";
@@ -50,16 +53,25 @@ function App() {
   useAlertas();
   const { usuario } = useAuth();
 
+  const suspendido = usuario?.estado === 'suspendido';
+
   return (
     <BrowserRouter>
       <>
         <Routes>
 
+          {/* ── CUENTA SUSPENDIDA ── */}
+          <Route path="/cuenta-suspendida" element={
+            usuario ? <CuentaSuspendida /> : <Navigate to="/login" />
+          } />
+
           {/* ── PÚBLICAS ── */}
           <Route path="/" element={
-            usuario?.rol
-              ? <LayoutPrivado><Inicio /></LayoutPrivado>
-              : <LayoutPublico><Inicio /></LayoutPublico>
+            suspendido
+              ? <Navigate to="/cuenta-suspendida" />
+              : usuario?.rol
+                ? <LayoutPrivado><Inicio /></LayoutPrivado>
+                : <LayoutPublico><Inicio /></LayoutPublico>
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -68,35 +80,47 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-code" element={<VerifyCode />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/contacto" element={<Contacto />} />
-          <Route path="/noticias" element={<Noticias />} />
-          <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+          <Route path="/contacto" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> : <Contacto />
+          } />
+          <Route path="/noticias" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> : <Noticias />
+          } />
+          <Route path="/noticias/:id" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> : <NoticiaDetalle />
+          } />
 
           {/* ── PRODUCTOR ── */}
           <Route path="/precios" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <LayoutPrivado><Precios /></LayoutPrivado>
           } />
           <Route path="/predicciones" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['productor', 'admin']}>
               <LayoutPrivado><Predicciones /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/perfil" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['productor']}>
               <LayoutPrivado><PerfilProductor /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/dashboard" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['productor']}>
               <LayoutPrivado><DashboardProductor /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/alertas" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['productor']}>
               <LayoutPrivado><Alertas /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/historial" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['productor', 'admin']}>
               <LayoutPrivado><Historial /></LayoutPrivado>
             </PrivateRoute>
@@ -104,36 +128,44 @@ function App() {
 
           {/* ── COMPRADOR ── */}
           <Route path="/comprador/dashboard" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['comprador']}>
               <LayoutComprador><DashboardComprador /></LayoutComprador>
             </PrivateRoute>
           } />
           <Route path="/comprador/perfil" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['comprador']}>
               <LayoutComprador><PerfilComprador /></LayoutComprador>
             </PrivateRoute>
           } />
           <Route path="/mapa" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['comprador', 'productor', 'admin']}>
               <LayoutComprador><MapaCompradores /></LayoutComprador>
             </PrivateRoute>
           } />
 
           {/* ── PERFIL PÚBLICO ── */}
-          <Route path="/comprador/:id" element={<PerfilPublicoComprador />} />
+          <Route path="/comprador/:id" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> : <PerfilPublicoComprador />
+          } />
 
           {/* ── ADMIN ── */}
           <Route path="/admin/perfil" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['admin']}>
               <LayoutPrivado><PerfilAdmin /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/configuracion" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['admin']}>
               <LayoutPrivado><Configuracion /></LayoutPrivado>
             </PrivateRoute>
           } />
           <Route path="/admin/dashboard" element={
+            suspendido ? <Navigate to="/cuenta-suspendida" /> :
             <PrivateRoute roles={['admin']}>
               <LayoutPrivado><DashboardAdmin /></LayoutPrivado>
             </PrivateRoute>
