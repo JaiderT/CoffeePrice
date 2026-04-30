@@ -3,7 +3,6 @@ import './config/env.js'
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import session from 'express-session';
 import passport from './config/passport.js';
 import mongoose from 'mongoose';
 import { esperarMongoDisponible } from "./db/db.js";
@@ -52,19 +51,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
-
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 1000 * 60 * 60 * 24,
-  },
-}));
 
 app.use(passport.initialize());
 

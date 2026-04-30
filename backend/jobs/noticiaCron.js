@@ -1,5 +1,9 @@
 import cron from 'node-cron';
-import { generarNoticiasDelDia, limpiarNoticiasViejas } from '../services/noticiaAutoService.js';
+import {
+    generarNoticiasDelDia,
+    limpiarNoticiasMedianoche,
+    limpiarNoticiasPorVentana,
+} from '../services/noticiaAutoService.js';
 
 export async function iniciarCronNoticias() {
     const generarAlIniciar = process.env.NOTICIAS_GENERAR_AL_INICIAR === 'true';
@@ -27,6 +31,13 @@ export async function iniciarCronNoticias() {
         console.log(`[Cron] ${hora} - Ejecutando generacion de noticias...`);
 
         try {
+            if (hora === '12:00') {
+                const eliminadasMedianoche = await limpiarNoticiasMedianoche();
+                if (eliminadasMedianoche > 0) {
+                    console.log(`[Cron] ${hora} - Limpieza previa de medianoche: ${eliminadasMedianoche} noticia(s) eliminada(s)`);
+                }
+            }
+
             const creadas = await generarNoticiasDelDia();
             console.log(`[Cron] ${hora} - Generacion completada. Noticias creadas: ${creadas}`);
         } catch (error) {
@@ -37,13 +48,13 @@ export async function iniciarCronNoticias() {
     });
 
     cron.schedule('0 3 * * *', async () => {
-        console.log('[Cron] 3:00 AM - Limpiando noticias viejas...');
+        console.log('[Cron] 3:00 AM - Limpiando ventanas anteriores...');
 
         try {
-            const eliminadas = await limpiarNoticiasViejas();
+            const eliminadas = await limpiarNoticiasPorVentana();
             console.log(`[Cron] Limpieza completada. Noticias eliminadas: ${eliminadas}`);
         } catch (error) {
-            console.error('[Cron] Error limpiando noticias viejas:', error.message);
+            console.error('[Cron] Error limpiando noticias por ventana:', error.message);
         }
     }, {
         timezone: 'America/Bogota'
@@ -51,5 +62,6 @@ export async function iniciarCronNoticias() {
 
     console.log('[Cron] Scheduler de noticias activo:');
     console.log(' Generacion: 6:00 AM / 12:00 PM / 6:00 PM / 12:00 AM (Bogota)');
-    console.log(' Limpieza: 3:00 AM diaria (Conserva los ultimos 7 dias)');
+    console.log(' Limpieza: 3:00 AM borra lotes 6 AM / 12 PM / 6 PM del dia anterior');
+    console.log(' Limpieza adicional: 12:00 PM borra lote de medianoche del mismo dia');
 }

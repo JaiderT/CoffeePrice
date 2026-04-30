@@ -1,6 +1,7 @@
 // routes/authRoutes.js
 import express from "express";
 import jwt from "jsonwebtoken";
+import session from "express-session";
 import {
   login,
   register,
@@ -14,6 +15,19 @@ import authMiddleware from "../middlewares/authMiddleware.js";
 import Usuario from "../models/usuario.js";
 
 const router = express.Router();
+
+const googleSessionMiddleware = session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 1000 * 60 * 15,
+  },
+});
 
 // ─── Autenticación normal ─────────────────────────────────────────
 router.post("/login",               loginLimiter,                 login);
@@ -99,7 +113,7 @@ router.post("/logout", (req, res) => {
 
 
 // ─── Google OAuth ──────────────────────────────────────────────────
-router.get("/google", (req, res, next) => {
+router.get("/google", googleSessionMiddleware, (req, res, next) => {
   const rol = req.query.rol || "productor";
   req.session.rolPendiente = rol;
   req.session.save((err) => {
@@ -114,6 +128,7 @@ router.get("/google", (req, res, next) => {
 
 router.get(
   "/google/callback",
+  googleSessionMiddleware,
   (req, res, next) => {
     passport.authenticate("google", {
       failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`,

@@ -13,13 +13,13 @@ export const getNoticias = async (req, res) => {
         res.set('Expires', '0');
         res.set('Surrogate-Control', 'no-store');
 
-        try {
-            await asegurarNoticiasRecientes();
-        } catch (refreshError) {
+        asegurarNoticiasRecientes().catch((refreshError) => {
             console.error('[Noticias] No se pudo refrescar automaticamente:', refreshError.message);
-        }
+        });
 
-        const noticias = await Noticia.find(filtro).sort({ publishedAt: -1, createdAt: -1 });
+        const noticias = await Noticia.find(filtro)
+            .sort({ createdAt: -1, publishedAt: -1 })
+            .lean();
         res.json(noticias);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener noticias", error: error.message });
@@ -28,7 +28,7 @@ export const getNoticias = async (req, res) => {
 
 export const getNoticiaById = async (req, res) => {
     try {
-        const noticia = await Noticia.findById(req.params.id);
+        const noticia = await Noticia.findById(req.params.id).lean();
         if (!noticia) return res.status(404).json({ message: "Noticia no encontrada" });
         res.json(noticia);
     } catch (error) {
