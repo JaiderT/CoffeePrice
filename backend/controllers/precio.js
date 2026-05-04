@@ -119,15 +119,21 @@ export const createprecio = async (req, res) => {
     if (!tiposPermitidos.includes(tipocafe)) {
       return res.status(400).json({ message: "Tipo de café no válido" });
     }
+    // DESPUÉS
+const compradorExistente = await CompradorModel.findById(comprador);
+if (!compradorExistente) {
+  return res.status(404).json({ message: "Comprador no encontrado" });
+}
 
-    const compradorExistente = await CompradorModel.findById(comprador);
-    if (!compradorExistente) {
-      return res.status(404).json({ message: "Comprador no encontrado" });
-    }
+// 👇 LOG TEMPORAL
+console.log('req.user completo:', JSON.stringify(req.user));
+console.log('compradorExistente.usuario:', compradorExistente.usuario?.toString());
+console.log('req.user.id:', req.user?.id);
+console.log('req.user._id:', req.user?._id);
+console.log('¿iguales?', compradorExistente.usuario?.toString() === req.user?.id);
 
-    const esAdmin = req.user?.rol === "admin";
-    const esPropietario = compradorExistente.usuario.toString() === req.user.id;
-
+const esAdmin = req.user?.rol === "admin";
+const esPropietario = compradorExistente.usuario.toString() === req.user.id;  
     if (!esAdmin && !esPropietario) {
       return res.status(403).json({
         message: "No tienes permisos para crear precios para este comprador"

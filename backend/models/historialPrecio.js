@@ -15,7 +15,7 @@ const historialPrecioSchema = new mongoose.Schema({
   },
   tipocafe: {
     type: String,
-    enum: ["pergamino_seco", "especial", "organico", "verde"],
+    enum: ["pergamino_seco", "especial", "organico", "verde", "pasilla", "cacao", "limon"],
     required: true,
   },
 }, { timestamps: true });

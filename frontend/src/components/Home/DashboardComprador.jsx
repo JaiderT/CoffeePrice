@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -35,6 +35,8 @@ function DashboardComprador() {
 
   const [precios, setPrecios] = useState([]);
   const [comprador, setComprador] = useState(null);
+  // ✅ Ref para siempre tener el valor más reciente de comprador en los handlers
+  const compradorRef = useRef(null);
   const [cargando, setCargando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarEditar, setMostrarEditar] = useState(false);
@@ -54,6 +56,12 @@ function DashboardComprador() {
   const [historial, setHistorial] = useState([]);
   const [todosPrecios, setTodosPrecios] = useState([]);
   const [pestana, setPestana] = useState('dashboard');
+
+  // ✅ Helper para actualizar comprador en estado y ref a la vez
+  const actualizarComprador = (data) => {
+    compradorRef.current = data;
+    setComprador(data);
+  };
 
   const obtenerPrecios = useCallback(async (compradorId) => {
     try {
@@ -76,7 +84,8 @@ function DashboardComprador() {
         // ✅ Usando 'api' (instancia con withCredentials) en rutas protegidas
         const { data } = await api.get(`${API_URL}/api/comprador/usuario/${usuario.id}`);
 
-        setComprador(data);
+        // ✅ Usar actualizarComprador para sincronizar ref y estado
+        actualizarComprador(data);
         setHorarioForm({
           horarioApertura: data.horarioApertura || '07:00',
           horarioCierre: data.horarioCierre || '17:00',
@@ -117,7 +126,8 @@ function DashboardComprador() {
     try {
       // ✅ Ruta protegida
       const { data } = await api.post(`${API_URL}/api/comprador`, formPerfil);
-      setComprador(data.comprador);
+      // ✅ Usar actualizarComprador para sincronizar ref y estado
+      actualizarComprador(data.comprador);
       setSinPerfil(false);
       setHorarioForm({
         horarioApertura: data.comprador.horarioApertura || '07:00',
@@ -129,10 +139,18 @@ function DashboardComprador() {
       mostrarMsg('error', error.response?.data?.message || 'Error al crear el perfil');
     }
   };
+  
 
   const handlePublicar = async (e) => {
     e.preventDefault();
     if (publicandoPrecio) return;
+
+    // ✅ Leer siempre desde el ref para evitar el closure stale
+    const compradorActual = compradorRef.current;
+    if (!compradorActual?._id) {
+      mostrarMsg('error', 'Espera a que se cargue tu perfil de empresa');
+      return;
+    }
 
     setPublicandoPrecio(true);
     try {
@@ -140,12 +158,12 @@ function DashboardComprador() {
       await api.post(`${API_URL}/api/precios`, {
         ...nuevoPrecio,
         preciocarga: Number(nuevoPrecio.preciocarga),
-        comprador: comprador._id,
+        comprador: compradorActual._id,
       });
       mostrarMsg('exito', '¡Precio publicado exitosamente!');
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
-      await obtenerPrecios(comprador._id);
+      await obtenerPrecios(compradorActual._id);
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al publicar el precio');
     } finally {
@@ -164,7 +182,7 @@ function DashboardComprador() {
       mostrarMsg('exito', '¡Precio actualizado exitosamente!');
       setMostrarEditar(false);
       setPrecioEditar(null);
-      await obtenerPrecios(comprador._id);
+      await obtenerPrecios(compradorRef.current._id);
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al actualizar el precio');
     }
@@ -177,7 +195,7 @@ function DashboardComprador() {
       mostrarMsg('exito', 'Precio eliminado correctamente');
       setMostrarEliminar(false);
       setPrecioEliminar(null);
-      await obtenerPrecios(comprador._id);
+      await obtenerPrecios(compradorRef.current._id);
     } catch {
       mostrarMsg('error', 'Error al eliminar el precio');
     }
@@ -187,8 +205,9 @@ function DashboardComprador() {
     e.preventDefault();
     try {
       // ✅ Ruta protegida
-      await api.put(`${API_URL}/api/comprador/${comprador._id}`, horarioForm);
-      setComprador({ ...comprador, ...horarioForm });
+      await api.put(`${API_URL}/api/comprador/${compradorRef.current._id}`, horarioForm);
+      // ✅ Usar actualizarComprador para sincronizar ref y estado
+      actualizarComprador({ ...compradorRef.current, ...horarioForm });
       mostrarMsg('exito', 'Horario actualizado correctamente');
       setMostrarHorario(false);
     } catch {
@@ -318,7 +337,9 @@ function DashboardComprador() {
             {comprador ? `${comprador.horarioApertura || '07:00'} – ${comprador.horarioCierre || '17:00'}` : 'Horario'}
           </button>
           <button onClick={() => setMostrarFormulario(true)}
-            className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-1.5">
+            disabled={!comprador}
+            className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-[#B8994E] transition-colors flex items-center gap-1.5
+            disabled:opacity-50 disabled:cursor-not-allowed">
             <i className="fa-solid fa-plus"></i> Publicar precio
           </button>
         </div>
