@@ -15,7 +15,6 @@ export default function CompletarPerfil() {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [cargandoSesion, setCargandoSesion] = useState(true);
-  const [usuarioId, setUsuarioId] = useState(null);
   const [token, setToken] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +41,6 @@ export default function CompletarPerfil() {
       return;
     }
     setToken(t);
-    setUsuarioId(id);
     setCargandoSesion(false);
   }, []);
 
@@ -68,7 +66,7 @@ export default function CompletarPerfil() {
   };
 
   const validarNombreEmpresa = (nombre) => {
-    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.&]+$/;
+    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.&]+$/;
     return soloLetras.test(nombre.trim());
   };
 

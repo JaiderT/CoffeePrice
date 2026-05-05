@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
-import MapaCompradores from "./MapaCompradores.jsx";
 
 const esPorKg = (tipo) => ['pasilla', 'cacao', 'limon'].includes(tipo);
 
@@ -92,22 +91,16 @@ function Precios() {
   const filtros = ['todos', 'pergamino_seco', 'verde', 'especial', 'organico', 'pasilla', 'cacao', 'limon'];
 
   const preciosFiltrados = precios
-    .filter((p) => filtro === 'todos' || p.tipocafe === filtro)
-    .filter((p) =>
-      p.comprador?.nombreempresa?.toLowerCase().includes(busqueda.toLowerCase())
+    .filter((precio) => filtro === 'todos' || precio.tipocafe === filtro)
+    .filter((precio) =>
+      precio.comprador?.nombreempresa?.toLowerCase().includes(busqueda.toLowerCase())
     );
 
   const preciosVisibles = usuario ? preciosFiltrados : preciosFiltrados.slice(0, 3);
 
   const mejorPrecio = precios[0]?.preciocarga || 0;
   const mejorComprador = precios[0]?.comprador?.nombreempresa || 'Sin registros';
-
-  const compradoresUnicos = new Set(precios.map(p => p.comprador?._id).filter(Boolean)).size;
-
-  const diferencia =
-    precios.length > 1
-      ? precios[0].preciocarga - precios[precios.length - 1].preciocarga
-      : 0;
+  const compradoresUnicos = new Set(precios.map((precio) => precio.comprador?._id).filter(Boolean)).size;
 
   const obtenerRecomendacionClima = () => {
     if (!clima?.actual) return 'Consulta el clima antes de mover o secar café.';
@@ -136,7 +129,7 @@ function Precios() {
     normalizarFecha(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[rgb(47,36,28)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
       <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
         <section className="overflow-hidden rounded-4xl bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -180,7 +173,7 @@ function Precios() {
               Precio FNC hoy
             </p>
             <p className="mt-3 text-3xl font-black text-[#2F241C]">
-              {precioFNC ? `$${precioFNC.toLocaleString()}` : '···'}
+              {precioFNC ? `$${precioFNC.toLocaleString()}` : '...'}
             </p>
             <p className="mt-3 text-sm font-semibold text-[#5F452C]">
               Precio de referencia FNC.
@@ -189,8 +182,8 @@ function Precios() {
               {fuenteFNC === 'fnc-directo'
                 ? 'Dato tomado directamente de la FNC.'
                 : fuenteFNC === 'ny-estimado'
-                ? 'Estimado a partir del precio en bolsa de NY.'
-                : 'Actualizando precio...'}
+                  ? 'Estimado a partir del precio en bolsa de NY.'
+                  : 'Actualizando precio...'}
             </p>
           </article>
 
@@ -231,8 +224,8 @@ function Precios() {
                   {prediccion.tendencia === 'sube'
                     ? 'Mañana podría pagar mejor'
                     : prediccion.tendencia === 'baja'
-                    ? 'Mañana podría bajar un poco'
-                    : 'Mañana seguiría parecido a hoy'}
+                      ? 'Mañana podría bajar un poco'
+                      : 'Mañana seguiría parecido a hoy'}
                 </p>
                 <p className="mt-1 text-sm text-[#6A543F]">
                   Seguridad del pronóstico: {prediccion.confianza}%
@@ -245,11 +238,19 @@ function Precios() {
                 </Link>
               </>
             ) : (
-              <p className="mt-3 text-sm text-[#6A543F]">
-                No hay predicción disponible.
-              </p>
+              <p className="mt-3 text-sm text-[#6A543F]">No hay predicción disponible.</p>
             )}
           </article>
+        </section>
+
+        <section className="mt-6 rounded-[28px] border border-[#E7D6BF] bg-[#FFF8EC] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.06)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
+            Kaffi recomienda
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-[#5E4B3A]">
+            Mira primero el mejor pago, luego compáralo con la referencia FNC y con la predicción de mañana.
+            Si la diferencia es poca, puede valer la pena confirmar directo con el comprador antes de moverte.
+          </p>
         </section>
 
         <section className="mt-6 rounded-[28px] bg-[linear-gradient(180deg,#EAD9C2_0%,#E5D2BA_100%)] p-4 shadow-[0_12px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#DEC7A7]/70">
@@ -260,30 +261,23 @@ function Precios() {
                 type="text"
                 placeholder="Busca por nombre del comprador"
                 value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                onChange={(event) => setBusqueda(event.target.value)}
                 className="w-full rounded-2xl border border-[#D7C0A1] bg-[#F9F4EC] px-4 py-3 text-sm text-[#2F241C] outline-none placeholder:text-[#9B8775] focus:border-[#B78E59]"
               />
             </div>
 
             <div data-kaffi="precios-filtros" className="flex flex-wrap gap-2 pt-1">
-              {filtros.map((f) => (
+              {filtros.map((tipo) => (
                 <button
-                  key={f}
-                  onClick={() => setFiltro(f)}
+                  key={tipo}
+                  onClick={() => setFiltro(tipo)}
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    filtro === f
+                    filtro === tipo
                       ? 'bg-[#2F241C] text-[#F9F3EA] shadow-[0_6px_18px_rgba(47,36,28,0.18)]'
                       : 'bg-[#F5EBDD] text-[#6B5A4D] hover:bg-[#F0E2D0]'
                   }`}
                 >
-                  {f === 'todos' ? 'Ver todos'
-                    : f === 'pergamino_seco' ? '☕ Pergamino seco'
-                    : f === 'verde' ? '🌿 Café verde'
-                    : f === 'especial' ? '✨ Especial'
-                    : f === 'organico' ? '🌱 Orgánico'
-                    : f === 'pasilla' ? '🟤 Pasilla'
-                    : f === 'cacao' ? '🍫 Cacao'
-                    : '🍋 Limón'}
+                  {tipo === 'todos' ? 'Ver todos' : LABEL_TIPO[tipo] || tipo.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
@@ -320,11 +314,11 @@ function Precios() {
             </div>
           ) : (
             <div data-kaffi="precios-lista" className="space-y-3">
-              {preciosVisibles.map((item, i) => {
+              {preciosVisibles.map((item, index) => {
                 const porKg = esPorKg(item.tipocafe);
                 return (
                   <article
-                    key={i}
+                    key={index}
                     className="rounded-[28px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)]"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

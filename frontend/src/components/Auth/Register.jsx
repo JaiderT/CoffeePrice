@@ -19,13 +19,11 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [celularError, setCelularError] = useState("");
 
-  // Solo letras y espacios (incluye tildes y ñ)
   const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]*$/;
 
-  // Validación celular según CRC Colombia
   function validarCelular(numero) {
     const digits = numero.replace(/\s+/g, "").replace(/^(\+57)/, "");
-    if (digits.length === 0) return ""; // campo opcional, vacío es válido
+    if (digits.length === 0) return "";
     if (!/^\d+$/.test(digits)) return "Solo se permiten números.";
     if (!digits.startsWith("3")) return "Los celulares colombianos deben comenzar por 3.";
     if (digits.length !== 10) return "El número debe tener exactamente 10 dígitos.";
@@ -109,7 +107,6 @@ export default function Register() {
       }
 
       navigate("/verify-email", { state: { email, tipo } });
-
     } catch {
       setError("Error al conectar con el servidor");
     } finally {
@@ -119,8 +116,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-full bg-[#F0E8D5] flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
-      
-      {/* Granos de café decorativos */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-5 left-5 text-4xl sm:text-6xl md:text-7xl lg:text-8xl opacity-5 animate-bounce">🫘</div>
         <div className="absolute bottom-5 right-5 text-5xl sm:text-7xl md:text-8xl lg:text-9xl opacity-5 animate-bounce animation-delay-1000">🫘</div>
@@ -129,9 +124,8 @@ export default function Register() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-200 h-full max-h-200 rounded-full bg-[#C8814A]/5 blur-3xl" />
       </div>
 
-      {/* Flecha salir */}
-      <a 
-        href="/" 
+      <a
+        href="/"
         className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 group transition-all duration-300 hover:scale-110"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-5 h-5 sm:w-6 sm:h-6 text-black">
@@ -139,12 +133,8 @@ export default function Register() {
         </svg>
       </a>
 
-      {/* Contenedor principal */}
       <div className="w-full max-w-6xl bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/10 mx-auto">
-        
         <div className="flex flex-col lg:flex-row">
-          
-          {/* PANEL IZQUIERDO - Hero */}
           <div className="lg:w-1/2 bg-linear-to-br from-[#2C1A0E]/90 to-[#3D1F0F]/90 p-6 sm:p-8 md:p-10 lg:p-12 relative overflow-hidden hidden lg:block">
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -190,10 +180,7 @@ export default function Register() {
             <div className="absolute -bottom-24 -left-24 w-64 h-64 md:w-80 md:h-80 rounded-full bg-linear-to-tr from-[#C8814A]/10 to-transparent blur-2xl" />
           </div>
 
-          {/* PANEL DERECHO - Formulario */}
           <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 md:p-8 lg:p-10">
-            
-            {/* Logo móvil */}
             <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 lg:hidden">
               <div className="w-10 h-10 bg-linear-to-br from-[#C8814A] to-[#E8A870] rounded-xl flex items-center justify-center text-xl shadow-lg">
                 ☕
@@ -231,7 +218,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Selector de tipo de usuario */}
             <div className="grid grid-cols-2 gap-2.5 mb-5">
               {[
                 { val: "productor", ico: "👨‍🌾", nombre: "Productor", desc: "Vendo mi café" },
@@ -240,8 +226,8 @@ export default function Register() {
                 <button key={val} type="button" onClick={() => setTipo(val)}
                   data-kaffi={val === "productor" ? "register-role-productor" : "register-role-comprador"}
                   className={`py-3.5 px-3 rounded-xl border-2 text-center transition-all ${
-                    tipo === val 
-                      ? "border-[#C8814A] bg-[#C8814A]/5 shadow-md" 
+                    tipo === val
+                      ? "border-[#C8814A] bg-[#C8814A]/5 shadow-md"
                       : "border-[#C8814A]/20 bg-white hover:border-[#C8814A]/50 hover:bg-gray-50"
                   }`}>
                   <div className="text-2xl sm:text-3xl mb-1.5">{ico}</div>
@@ -252,8 +238,6 @@ export default function Register() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              
-              {/* Nombre y Apellido */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Nombre</label>
@@ -288,7 +272,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Correo electrónico</label>
                 <div className="relative group">
@@ -299,7 +282,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Celular */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">
                   Celular <span className="text-gray-400 font-normal">(opcional)</span>
@@ -319,7 +301,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Contraseña */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Contraseña</label>
                 <div className="relative group">
@@ -355,7 +336,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Confirmar contraseña */}
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Confirmar contraseña</label>
                 <div className="relative group">
@@ -396,7 +376,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Términos */}
               <label className="flex items-start gap-2.5 mb-2 cursor-pointer">
                 <input type="checkbox" checked={terminos} onChange={e => setTerminos(e.target.checked)}
                   className="accent-[#C8814A] w-3.5 h-3.5 mt-0.5 shrink-0"/>
@@ -415,7 +394,6 @@ export default function Register() {
                 </div>
               )}
 
-              {/* Botón submit */}
               <button data-kaffi="register-submit" type="submit" disabled={loading || passwordsMismatch}
                 className="w-full py-2.5 sm:py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28]">
                 <span className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -434,7 +412,6 @@ export default function Register() {
                 </span>
               </button>
 
-              {/* Separador */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-[#E0D8CE]"></div>
@@ -444,7 +421,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Botón Google */}
               <button
                 type="button"
                 onClick={() => { window.location.href = `${API_URL}/api/auth/google?rol=${tipo}` }}
@@ -459,7 +435,6 @@ export default function Register() {
                 <span>Continuar con Google como {tipo === 'productor' ? '👨‍🌾 Productor' : '🏪 Comprador'}</span>
               </button>
 
-              {/* Login link */}
               <div className="text-center pt-2">
                 <p className="text-xs sm:text-sm text-gray-500">
                   ¿Ya tienes cuenta?{" "}
@@ -471,7 +446,6 @@ export default function Register() {
               </div>
             </form>
 
-            {/* Copyright */}
             <div className="text-center text-[9px] sm:text-[10px] text-gray-500 mt-6">
               © 2024 CoffePrice - Todos los derechos reservados
             </div>
@@ -479,7 +453,6 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Estilos adicionales */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -504,4 +477,3 @@ export default function Register() {
     </div>
   );
 }
-

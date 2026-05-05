@@ -51,40 +51,41 @@ function Sidebar() {
     : '?';
 
   const menuItems =
-    usuario?.rol === 'admin' ? menuAdmin :
-    usuario?.rol === 'comprador' ? menuComprador :
-    menuProductor;
+    usuario?.rol === 'admin'
+      ? menuAdmin
+      : usuario?.rol === 'comprador'
+        ? menuComprador
+        : menuProductor;
 
   return (
     <>
-      <div className="fixed left-0 top-0 h-screen w-16 bg-[#2C1A0E] flex flex-col items-center py-4 gap-2 z-50">
-
-        {/* Logo */}
-        <div className="w-10 h-10 bg-[#C8A96E] rounded-xl flex items-center justify-center text-xl mb-4">
+      <div className="fixed left-0 top-0 z-50 flex h-screen w-16 flex-col items-center gap-2 bg-[#2C1A0E] py-4">
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#C8A96E] text-xl">
           ☕
         </div>
 
-        {/* Links */}
         {menuItems.map((item, i) => (
-          <Link key={i} to={item.path}
-            className={`relative group w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${
+          <Link
+            key={i}
+            to={item.path}
+            className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
               location.pathname === item.path
                 ? 'bg-[#C8A96E] text-white'
                 : 'text-gray-400 hover:bg-[#3D1F0F] hover:text-white'
-            }`}>
-            <i className={`${item.icon} text-sm`}></i>
+            }`}
+          >
+            <i className={`${item.icon} text-sm`} />
 
-            {/* Contador alertas */}
             {item.esAlertas && alertasDisparadas.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                 {alertasDisparadas.length}
               </span>
             )}
 
-            <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
+            <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               {item.label}
               {item.esAlertas && alertasDisparadas.length > 0 && (
-                <span className="ml-1 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">
+                <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] text-white">
                   {alertasDisparadas.length}
                 </span>
               )}
@@ -92,19 +93,20 @@ function Sidebar() {
           </Link>
         ))}
 
-        {/* Perfil y logout abajo */}
         {usuario && (
           <div className="mt-auto flex flex-col items-center gap-2">
-            <div className="relative group w-10 h-10 rounded-full bg-[#C8A96E] flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:bg-[#B8994E] transition-colors">
+            <div className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[#C8A96E] text-sm font-bold text-white transition-colors hover:bg-[#B8994E]">
               {iniciales}
-              <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
+              <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 {usuario?.nombre} {usuario?.apellido}
               </span>
             </div>
-            <button onClick={() => setMostrarModal(true)}
-              className="relative group w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-900 hover:text-red-300 transition-all duration-200">
-              <i className="fa-solid fa-right-from-bracket text-sm"></i>
-              <span className="absolute left-14 bg-[#2C1A0E] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-gray-700">
+            <button
+              onClick={() => setMostrarModal(true)}
+              className="group relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 hover:bg-red-900 hover:text-red-300"
+            >
+              <i className="fa-solid fa-right-from-bracket text-sm" />
+              <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 Cerrar sesión
               </span>
             </button>
@@ -112,23 +114,30 @@ function Sidebar() {
         )}
       </div>
 
-      {/* Modal cerrar sesión */}
       {usuario && mostrarModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-[2000]"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
-            <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-right-from-bracket text-[#C8A96E] text-2xl"></i>
+        <div
+          className="fixed inset-0 z-2000 flex items-center justify-center"
+          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}
+        >
+          <div className="w-80 rounded-2xl bg-white p-8 text-center shadow-xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF8E7]">
+              <i className="fa-solid fa-right-from-bracket text-2xl text-[#C8A96E]" />
             </div>
-            <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Cerrar sesión?</h3>
-            <p className="text-gray-400 text-sm mb-6">¿Estás seguro que deseas cerrar tu sesión en CoffePrice?</p>
+            <h3 className="mb-2 text-lg font-bold text-[#2C1A0E]">¿Cerrar sesión?</h3>
+            <p className="mb-6 text-sm text-gray-400">
+              ¿Estás seguro de que deseas cerrar tu sesión en CoffePrice?
+            </p>
             <div className="flex gap-3">
-              <button onClick={() => setMostrarModal(false)}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <button
+                onClick={() => setMostrarModal(false)}
+                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+              >
                 Cancelar
               </button>
-              <button onClick={handleLogout}
-                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
+              <button
+                onClick={handleLogout}
+                className="flex-1 rounded-xl bg-[#2C1A0E] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3D1F0F]"
+              >
                 Cerrar sesión
               </button>
             </div>

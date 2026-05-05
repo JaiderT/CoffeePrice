@@ -10,53 +10,37 @@ function Navbar() {
     ? usuario.rol === 'admin'
       ? '/admin/perfil'
       : usuario.rol === 'comprador'
-      ? '/comprador/dashboard'
-      : '/perfil'
+        ? '/comprador/dashboard'
+        : '/perfil'
     : '/login';
 
   return (
-    <nav className="w-full bg-[#F5ECD7] px-4 md:px-8 py-4 border-b border-[#E0D0B0]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <nav className="w-full border-b border-[#E0D0B0] bg-[#F5ECD7] px-4 py-4 md:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">☕</span>
-          <span className="text-[#2C1A0E] text-xl font-bold">CoffePrice</span>
+          <span className="text-2xl" aria-hidden="true">☕</span>
+          <span className="text-xl font-bold text-[#2C1A0E]">CoffePrice</span>
         </div>
 
-        <ul className="hidden lg:flex items-center gap-8">
-          <li>
-            <Link to="/" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">
-              Inicio
-            </Link>
-          </li>
-          <li>
-            <Link to="/precios" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">
-              Precios
-            </Link>
-          </li>
-          <li>
-            <Link to="/noticias" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">
-              Noticias
-            </Link>
-          </li>
-          <li>
-            <Link to="/contacto" className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm">
-              Contacto
-            </Link>
-          </li>
+        <ul className="hidden items-center gap-8 lg:flex">
+          <li><Link to="/" className="text-sm text-[#2C1A0E] hover:text-[#6B3A2A]">Inicio</Link></li>
+          <li><Link to="/precios" className="text-sm text-[#2C1A0E] hover:text-[#6B3A2A]">Precios</Link></li>
+          <li><Link to="/noticias" className="text-sm text-[#2C1A0E] hover:text-[#6B3A2A]">Noticias</Link></li>
+          <li><Link to="/contacto" className="text-sm text-[#2C1A0E] hover:text-[#6B3A2A]">Contacto</Link></li>
         </ul>
 
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden items-center gap-3 lg:flex">
           {usuario ? (
             <>
               <Link
                 to={rutaPanel}
-                className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm hover:bg-[#2C1A0E] hover:text-white transition-colors"
+                className="rounded-full border border-[#2C1A0E] px-4 py-2 text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
               >
                 Mi panel
               </Link>
               <button
                 onClick={logout}
-                className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm hover:bg-[#B8994E] transition-colors"
+                className="rounded-full bg-[#C8A96E] px-4 py-2 text-sm text-white transition-colors hover:bg-[#B8994E]"
               >
                 Cerrar sesión
               </button>
@@ -65,13 +49,13 @@ function Navbar() {
             <>
               <Link
                 to="/login"
-                className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm hover:bg-[#2C1A0E] hover:text-white transition-colors"
+                className="rounded-full border border-[#2C1A0E] px-4 py-2 text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
               >
                 Iniciar sesión
               </Link>
               <Link
                 to="/register"
-                className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm hover:bg-[#B8994E] transition-colors"
+                className="rounded-full bg-[#C8A96E] px-4 py-2 text-sm text-white transition-colors hover:bg-[#B8994E]"
               >
                 Registrarse gratis
               </Link>
@@ -80,62 +64,31 @@ function Navbar() {
         </div>
 
         <button
-          className="lg:hidden flex flex-col gap-1.5 p-2"
+          className="flex flex-col gap-1.5 p-2 lg:hidden"
           onClick={() => setMenuAbierto(!menuAbierto)}
+          aria-label="Abrir menu"
         >
-          <span className={`block w-6 h-0.5 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'rotate-45 translate-y-2' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'opacity-0' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? '-rotate-45 -translate-y-2' : ''}`}></span>
+          <span className={`block h-0.5 w-6 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'translate-y-2 rotate-45' : ''}`} />
+          <span className={`block h-0.5 w-6 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'opacity-0' : ''}`} />
+          <span className={`block h-0.5 w-6 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? '-translate-y-2 -rotate-45' : ''}`} />
         </button>
       </div>
 
       {menuAbierto && (
-        <div className="lg:hidden mt-4 pb-4 border-t border-[#E0D0B0]">
-          <ul className="flex flex-col gap-4 mt-4">
-            <li>
-              <Link
-                to="/"
-                className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block"
-                onClick={() => setMenuAbierto(false)}
-              >
-                Inicio
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/precios"
-                className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block"
-                onClick={() => setMenuAbierto(false)}
-              >
-                Precios
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/noticias"
-                className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block"
-                onClick={() => setMenuAbierto(false)}
-              >
-                Noticias
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/contacto"
-                className="text-[#2C1A0E] hover:text-[#6B3A2A] text-sm block"
-                onClick={() => setMenuAbierto(false)}
-              >
-                Contacto
-              </Link>
-            </li>
+        <div className="mt-4 border-t border-[#E0D0B0] pb-4 lg:hidden">
+          <ul className="mt-4 flex flex-col gap-4">
+            <li><Link to="/" className="block text-sm text-[#2C1A0E] hover:text-[#6B3A2A]" onClick={() => setMenuAbierto(false)}>Inicio</Link></li>
+            <li><Link to="/precios" className="block text-sm text-[#2C1A0E] hover:text-[#6B3A2A]" onClick={() => setMenuAbierto(false)}>Precios</Link></li>
+            <li><Link to="/noticias" className="block text-sm text-[#2C1A0E] hover:text-[#6B3A2A]" onClick={() => setMenuAbierto(false)}>Noticias</Link></li>
+            <li><Link to="/contacto" className="block text-sm text-[#2C1A0E] hover:text-[#6B3A2A]" onClick={() => setMenuAbierto(false)}>Contacto</Link></li>
           </ul>
 
-          <div className="flex flex-col gap-3 mt-6">
+          <div className="mt-6 flex flex-col gap-3">
             {usuario ? (
               <>
                 <Link
                   to={rutaPanel}
-                  className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm text-center hover:bg-[#2C1A0E] hover:text-white transition-colors"
+                  className="rounded-full border border-[#2C1A0E] px-4 py-2 text-center text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
                   onClick={() => setMenuAbierto(false)}
                 >
                   Mi panel
@@ -145,7 +98,7 @@ function Navbar() {
                     logout();
                     setMenuAbierto(false);
                   }}
-                  className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm text-center hover:bg-[#B8994E] transition-colors"
+                  className="rounded-full bg-[#C8A96E] px-4 py-2 text-center text-sm text-white transition-colors hover:bg-[#B8994E]"
                 >
                   Cerrar sesión
                 </button>
@@ -154,14 +107,14 @@ function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="border border-[#2C1A0E] text-[#2C1A0E] px-4 py-2 rounded-full text-sm text-center hover:bg-[#2C1A0E] hover:text-white transition-colors"
+                  className="rounded-full border border-[#2C1A0E] px-4 py-2 text-center text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
                   onClick={() => setMenuAbierto(false)}
                 >
                   Iniciar sesión
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-[#C8A96E] text-white px-4 py-2 rounded-full text-sm text-center hover:bg-[#B8994E] transition-colors"
+                  className="rounded-full bg-[#C8A96E] px-4 py-2 text-center text-sm text-white transition-colors hover:bg-[#B8994E]"
                   onClick={() => setMenuAbierto(false)}
                 >
                   Registrarse gratis
