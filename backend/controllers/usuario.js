@@ -61,13 +61,10 @@ export const cambiarpassword = async (req, res) => {
     }
 };
 
+// ✅ Borrado físico de la base de datos
 export const eliminarusuario = async (req, res) => {
     try {
-        const usuario = await Usuario.findByIdAndUpdate(
-            req.params.id,
-            { estado: 'eliminado' },
-            { new: true }
-        );
+        const usuario = await Usuario.findByIdAndDelete(req.params.id);
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
         res.json({ message: "Usuario eliminado" });
     } catch (error) {
