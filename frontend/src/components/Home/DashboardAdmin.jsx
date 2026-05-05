@@ -9,17 +9,16 @@ export default function DashboardAdmin() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  const authConfig = {
+  const authConfig = useMemo(() => ({
     withCredentials: true,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-  };
+  }), [token]);
 
   // ─── Estado ───────────────────────────────────────────────────────
   const [cargandoUsuarios,    setCargandoUsuarios]    = useState(true);
   const [cargandoPrecios,     setCargandoPrecios]     = useState(true);
   const [cargandoFNC,         setCargandoFNC]         = useState(true);
   const [cargandoNoticias,    setCargandoNoticias]    = useState(true);
-  const [cargandoCompradores, setCargandoCompradores] = useState(true);
   const [cargandoActividad,   setCargandoActividad]   = useState(true);
 
   const [usuarios,    setUsuarios]    = useState([]);
@@ -27,7 +26,6 @@ export default function DashboardAdmin() {
   const [precioFNC,   setPrecioFNC]   = useState(null);
   const [fuenteFNC,   setFuenteFNC]   = useState(null);
   const [noticias,    setNoticias]    = useState([]);
-  const [compradores, setCompradores] = useState([]);
   const [actividad,   setActividad]   = useState([]);
 
   const [busqueda,  setBusqueda]  = useState('');
@@ -43,7 +41,7 @@ export default function DashboardAdmin() {
     } catch (err) {
       console.error('❌ Error cargando usuarios:', err.response?.status, err.message);
     } finally { setCargandoUsuarios(false); }
-  }, [API_URL, token]);
+  }, [API_URL, authConfig]);
 
   const cargarPrecios = useCallback(async () => {
     try {
@@ -72,12 +70,11 @@ export default function DashboardAdmin() {
   // CORREGIDO: /api/compradores → /api/comprador
   const cargarCompradores = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/comprador`, authConfig);
-      setCompradores(Array.isArray(data) ? data : []);
+      await axios.get(`${API_URL}/api/comprador`, authConfig);
     } catch (err) {
       console.error('❌ Error cargando compradores:', err.response?.status, err.message);
-    } finally { setCargandoCompradores(false); }
-  }, [API_URL, token]);
+    }
+  }, [API_URL, authConfig]);
 
   // CONECTADO: ahora usa el endpoint real /api/actividad
   const cargarActividad = useCallback(async () => {
@@ -88,7 +85,7 @@ export default function DashboardAdmin() {
       console.error('❌ Error cargando actividad:', err.response?.status, err.message);
       setActividad([]);
     } finally { setCargandoActividad(false); }
-  }, [API_URL, token]);
+  }, [API_URL, authConfig]);
 
   useEffect(() => {
     cargarUsuarios();

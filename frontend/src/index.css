@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+:root {
+  --kaffi-ink: #2c1a0e;
+  --kaffi-ink-soft: #6b5a4d;
+  --kaffi-coffee: #3d1f0f;
+  --kaffi-gold: #c8a96e;
+  --kaffi-cream: #fff8ec;
+  --kaffi-border: #e7d9bf;
+  --kaffi-page: #f5ecd7;
+}
+
 html {
   scroll-behavior: smooth;
+}
+
+body {
+  background: var(--kaffi-page);
+  color: var(--kaffi-ink);
+}
+
+#root {
+  min-height: 100vh;
 }

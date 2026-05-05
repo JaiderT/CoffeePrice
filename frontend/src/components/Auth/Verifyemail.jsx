@@ -3,15 +3,18 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth.js";
 import { abrirGuiaKaffi } from "../../utils/kaffiEvents";
 
+const INITIAL_CODE = ["", "", "", "", "", ""];
+
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
   const API_URL = import.meta.env.VITE_API_URL;
-  const { login, usuario } = useAuth();
+  const { login } = useAuth();
 
   const email = location.state?.email || "";
+  const tipoCuenta = location.state?.tipo || "productor";
 
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState(INITIAL_CODE);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -19,12 +22,12 @@ export default function VerifyEmail() {
   const [pendiente, setPendiente] = useState(false);
   const [verificado, setVerificado] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [listo, setListo] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   const inputsRef = useRef([]);
 
   useEffect(() => {
-    if (!email) navigate("/register");
+    if (!email) navigate("/register", { replace: true });
   }, [email, navigate]);
 
   useEffect(() => {
@@ -33,31 +36,15 @@ export default function VerifyEmail() {
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
-  // Countdown visual
   useEffect(() => {
     if (!verificado) return;
-    if (countdown <= 0) return;
+    if (countdown <= 0) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
     const timer = setTimeout(() => setCountdown(v => v - 1), 1000);
     return () => clearTimeout(timer);
-  }, [verificado, countdown]);
-
-  // Navegar cuando el usuario ya esté en el contexto
-  useEffect(() => {
-    if (!listo || !verificado) return;
-    if (!usuario) return;
-
-    const timer = setTimeout(() => {
-      if (usuario.rol === "productor") {
-        navigate("/precios", { replace: true });
-      } else if (usuario.rol === "admin") {
-        navigate("/admin/perfil", { replace: true });
-      } else {
-        navigate("/precios", { replace: true });
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [listo, verificado, usuario, navigate]);
+  }, [verificado, countdown, redirectPath, navigate]);
 
   function handleChange(index, value) {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -77,9 +64,10 @@ export default function VerifyEmail() {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (!pasted) return;
-    const newCode = ["", "", "", "", "", ""];
+    const newCode = [...INITIAL_CODE];
     for (let i = 0; i < pasted.length; i++) newCode[i] = pasted[i];
     setCode(newCode);
+    setError(null);
     inputsRef.current[Math.min(pasted.length, 5)]?.focus();
   }
 
@@ -101,11 +89,15 @@ export default function VerifyEmail() {
       const data = await response.json();
       if (!response.ok) {
         setError(data.message || "Código incorrecto. Intenta de nuevo.");
-        setCode(["", "", "", "", "", ""]);
+        setCode(INITIAL_CODE);
         inputsRef.current[0]?.focus();
         return;
       }
-      if (data.pendiente) { setPendiente(true); return; }
+      if (data.pendiente) {
+        setPendiente(true);
+        return;
+      }
+
       login({
         id: data.id,
         rol: data.role,
@@ -114,15 +106,16 @@ export default function VerifyEmail() {
         celular: data.celular,
         email: data.email,
       });
-      if (data.role === "comprador") {
-        navigate("/completar-perfil", { replace: true });
-      } else {
-        navigate("/precios", { replace: true });
-      }
 
+      setRedirectPath(
+        data.role === "comprador"
+          ? "/completar-perfil"
+          : data.role === "admin"
+            ? "/admin/dashboard"
+            : "/dashboard"
+      );
+      setCountdown(3);
       setVerificado(true);
-      setListo(true);
-
     } catch {
       setError("Error al conectar con el servidor.");
     } finally {
@@ -141,9 +134,12 @@ export default function VerifyEmail() {
         body: JSON.stringify({ email }),
       });
       const data = await response.json();
-      if (!response.ok) { setError(data.message || "No se pudo reenviar."); return; }
+      if (!response.ok) {
+        setError(data.message || "No se pudo reenviar.");
+        return;
+      }
       setResendCooldown(60);
-      setCode(["", "", "", "", "", ""]);
+      setCode(INITIAL_CODE);
       inputsRef.current[0]?.focus();
     } catch {
       setError("Error al conectar con el servidor.");
@@ -163,8 +159,6 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen w-full bg-[#F0E8D5] flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden">
-
-      {/* Granos de café decorativos */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-5 left-5 text-4xl sm:text-6xl md:text-7xl lg:text-8xl opacity-7 animate-bounce">🫘</div>
         <div className="absolute bottom-5 right-5 text-5xl sm:text-7xl md:text-8xl lg:text-9xl opacity-5 animate-bounce animation-delay-1000">🫘</div>
@@ -173,8 +167,7 @@ export default function VerifyEmail() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-200 h-full max-h-200 rounded-full bg-[#C8814A]/5 blur-3xl" />
       </div>
 
-      {/* Flecha atrás */}
-      {!verificado && (
+      {!verificado && !pendiente && (
         <button
           onClick={() => navigate("/register")}
           className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 group transition-all duration-300 hover:scale-110"
@@ -185,11 +178,8 @@ export default function VerifyEmail() {
         </button>
       )}
 
-      {/* Contenedor principal */}
       <div className="w-full max-w-6xl bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/10 mx-auto">
         <div className="flex flex-col lg:flex-row">
-
-          {/* PANEL IZQUIERDO */}
           <div className="lg:w-1/2 bg-linear-to-br from-[#2C1A0E]/90 to-[#3D1F0F]/90 p-6 sm:p-8 md:p-10 lg:p-12 relative overflow-hidden hidden lg:block">
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -235,16 +225,12 @@ export default function VerifyEmail() {
             <div className="absolute -bottom-24 -left-24 w-64 h-64 md:w-80 md:h-80 rounded-full bg-linear-to-tr from-[#C8814A]/10 to-transparent blur-2xl" />
           </div>
 
-          {/* PANEL DERECHO */}
           <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 md:p-8 lg:p-10">
-
-            {/* Logo móvil */}
             <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 lg:hidden">
               <div className="w-10 h-10 bg-linear-to-br from-[#C8814A] to-[#E8A870] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
               <span className="text-2xl font-black text-[#3B1F0A] font-serif">Coffe<span className="text-[#C8814A]">Price</span></span>
             </div>
 
-            {/* ── CUENTA VERIFICADA EXITOSAMENTE ── */}
             {verificado ? (
               <div className="flex flex-col items-center justify-center text-center py-10 px-4 animate-fade-in">
                 <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6 animate-bounce-once">
@@ -257,7 +243,6 @@ export default function VerifyEmail() {
                   Tu cuenta está lista. En un momento te llevamos a tu panel.
                 </p>
 
-                {/* Barra de progreso */}
                 <div className="w-full max-w-xs bg-gray-100 rounded-full h-1.5 overflow-hidden mb-3">
                   <div
                     className="h-full bg-[#C8814A] rounded-full transition-all duration-1000 ease-linear"
@@ -270,7 +255,6 @@ export default function VerifyEmail() {
               </div>
 
             ) : pendiente ? (
-              /* ── COMPRADOR PENDIENTE ── */
               <div className="text-center py-8 px-4">
                 <div className="w-20 h-20 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-5xl mx-auto mb-6">⏳</div>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-3 font-serif">¡Correo verificado!</h2>
@@ -287,7 +271,6 @@ export default function VerifyEmail() {
               </div>
 
             ) : (
-              /* ── FORMULARIO CÓDIGO ── */
               <div className="space-y-4">
                 <div className="text-center mb-2">
                   <div className="w-14 h-14 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-3xl mx-auto mb-4">✉️</div>
@@ -298,7 +281,6 @@ export default function VerifyEmail() {
                   </p>
                 </div>
 
-                {/* Banner Kaffi */}
                 <div className="rounded-2xl border border-[#E7D9BF] bg-[#FFF8EC] p-3">
                   <p className="text-sm font-semibold text-[#3B1F0A]">Kaffi le acompaña en este paso</p>
                   <p className="mt-1 text-xs leading-relaxed text-[#7B5C3E]">
@@ -313,7 +295,6 @@ export default function VerifyEmail() {
                   </button>
                 </div>
 
-                {/* Inputs del código */}
                 <form onSubmit={handleVerify} className="space-y-4">
                   <div className="flex gap-2.5 sm:gap-3 justify-center" onPaste={handlePaste}>
                     {code.map((digit, i) => (
@@ -364,7 +345,6 @@ export default function VerifyEmail() {
                   </button>
                 </form>
 
-                {/* Reenviar */}
                 <div className="text-center pt-1">
                   <p className="text-xs text-gray-400 mb-1">¿No recibiste el código?</p>
                   {resendCooldown > 0 ? (
@@ -385,7 +365,7 @@ export default function VerifyEmail() {
                 </div>
 
                 <div className="text-center text-[9px] sm:text-[10px] text-gray-500 mt-2">
-                  © 2024 CoffePrice - Todos los derechos reservados
+                  Cuenta en proceso como {tipoCuenta === "comprador" ? "comprador" : "productor"}.
                 </div>
               </div>
             )}

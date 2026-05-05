@@ -146,8 +146,8 @@ function PanelDetalles({ comprador, onClose, miUbicacion, onAgregarComparador, e
   ).toFixed(1) : null;
 
   return (
-    <div className="absolute top-4 right-4 w-96 max-w-[calc(100%-2rem)] bg-white rounded-2xl shadow-2xl z-[450] overflow-hidden transition-all duration-300 transform translate-x-0">
-      <div className="bg-gradient-to-r from-[#3B1F0A] to-[#6B3A1F] p-4 text-white">
+    <div className="absolute top-4 right-4 z-450 max-w-[calc(100%-2rem)] translate-x-0 transform overflow-hidden rounded-2xl bg-white shadow-2xl w-96">
+      <div className="bg-linear-to-r from-[#3B1F0A] to-[#6B3A1F] p-4 text-white">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div
@@ -250,7 +250,7 @@ function PanelComparador({ compradores, onEliminar, onCerrar, onVerEnMapa }) {
   const mejorPrecio = Math.max(...compradores.map(c => Number(c.precioReferencia) || 0));
   
   return (
-    <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-2xl z-[450] p-4 transition-all duration-300 transform translate-y-0">
+    <div className="absolute bottom-4 left-4 right-4 z-450 translate-y-0 transform rounded-2xl bg-white p-4 shadow-2xl transition-all duration-300">
       <div className="flex justify-between items-center mb-3">
         <div>
           <h4 className="font-bold text-[#3B1F0A] text-lg">📊 Comparador de precios</h4>
@@ -262,7 +262,7 @@ function PanelComparador({ compradores, onEliminar, onCerrar, onVerEnMapa }) {
         {compradores.map(c => (
           <div 
             key={c._id} 
-            className="min-w-[200px] bg-gray-50 rounded-xl p-3 border-2 relative cursor-pointer hover:shadow-lg transition-shadow"
+            className="min-w-50 relative cursor-pointer rounded-xl border-2 bg-gray-50 p-3 transition-shadow hover:shadow-lg"
             onClick={() => onVerEnMapa(c)}
             style={{ borderColor: c.precioReferencia === mejorPrecio && compradores.length > 1 ? '#10B981' : '#E5E7EB' }}
           >
@@ -566,7 +566,7 @@ export default function MapaCompradores() {
                   }}
                 >
                   <Popup>
-                    <div className="min-w-[200px]">
+                    <div className="min-w-50">
                       <div
                         className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold mb-2"
                         style={{ backgroundColor: c.tipoVisual.fondo, color: c.tipoVisual.color }}
@@ -604,7 +604,7 @@ export default function MapaCompradores() {
             </MapContainer>
 
             {/* Leyenda */}
-            <div className="pointer-events-none absolute bottom-3 left-3 bg-white/92 backdrop-blur-sm rounded-xl p-2.5 shadow-sm border border-[#E8D8BF] z-[450]">
+            <div className="pointer-events-none absolute bottom-3 left-3 z-450 rounded-xl border border-[#E8D8BF] bg-white/92 p-2.5 shadow-sm backdrop-blur-sm">
               <p className="font-bold text-[#3B1F0A] text-[10px] uppercase tracking-wide mb-1">Referencias</p>
               <div className="flex flex-col gap-1 text-xs">
                 <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#C8814A]"></span><span>Comprador</span></div>
@@ -631,7 +631,7 @@ export default function MapaCompradores() {
           </div>
         ) : (
           /* Vista de lista */
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="max-h-125 overflow-y-auto">
             {compradoresMostrados.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-400">No se encontraron compradores</p>

@@ -96,7 +96,7 @@ function MiniMapaCompradores({ compradores, onVerMapa }) {
         </MapContainer>
 
         {/* Overlay leyenda */}
-        <div className="absolute bottom-2 left-2 z-[400] flex gap-2 pointer-events-none">
+        <div className="absolute bottom-2 left-2 z-400 flex gap-2 pointer-events-none">
           <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/85 px-2 py-0.5 rounded-full">
             <span className="w-2 h-2 bg-[#C8A96E] rounded-full inline-block" />Compradores
           </span>

@@ -1,5 +1,4 @@
 import Footer from './Footer';
-import Kaffi from '../kaffi';
 import Navbar from './Navbar';
 
 function LayoutPublico({ children }) {
@@ -10,7 +9,6 @@ function LayoutPublico({ children }) {
         {children}
       </main>
       <Footer />
-      <Kaffi />
     </div>
   );
 }

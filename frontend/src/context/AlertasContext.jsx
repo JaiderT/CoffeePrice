@@ -31,7 +31,7 @@ export function AlertasProvider({ children }) {
         }
       }
     } catch { /* silencioso */ }
-  }, [API_URL, usuario?.id]);
+  }, [API_URL, usuario]);
 
   const confirmarAlerta = async (alerta) => {
     try {

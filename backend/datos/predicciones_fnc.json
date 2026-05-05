@@ -1,0 +1,8 @@
+{
+  "fecha_actual": "2026-05-04",
+  "precio_actual_fnc": 2300000,
+  "fecha_prediccion": "2026-05-05",
+  "precio_estimado": 2295012,
+  "variacion_porcentual": -0.22,
+  "modelo": "fnc_xgboost"
+}

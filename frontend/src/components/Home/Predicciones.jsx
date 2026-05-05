@@ -88,17 +88,18 @@ export default function Predicciones() {
   };
 
   const formatearFecha = (fecha, largo = false) =>
-    normalizarFecha(fecha).toLocaleDateString('es-CO', largo
-      ? { weekday: 'long', day: 'numeric', month: 'long' }
-      : { day: '2-digit', month: 'short' });
+    normalizarFecha(fecha).toLocaleDateString(
+      'es-CO',
+      largo
+        ? { weekday: 'long', day: 'numeric', month: 'long' }
+        : { day: '2-digit', month: 'short' }
+    );
 
   const configResumen = tendenciaConfig[resumen?.tendencia] || tendenciaConfig.estable;
 
   const datosGrafica = predicciones.map((item) => ({
     fecha: formatearFecha(item.fecha),
     precio: item.precioestimado,
-    minimo: item.preciominimo,
-    maximo: item.preciomaximo,
   }));
 
   const promedio =
@@ -180,9 +181,7 @@ export default function Predicciones() {
                 <p className="mt-4 text-sm font-semibold text-[#5F452C]">
                   Para el {formatearFecha(resumen.fecha, true)}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-[#6D5E53]">
-                  {resumen.mensaje}
-                </p>
+                <p className="mt-2 text-sm leading-relaxed text-[#6D5E53]">{resumen.mensaje}</p>
               </>
             ) : (
               <p className="mt-3 text-sm text-[#6D5E53]">No hay predicción disponible por ahora.</p>
@@ -223,6 +222,16 @@ export default function Predicciones() {
           </article>
         </section>
 
+        <section className="mt-6 rounded-[28px] border border-[#E7D6BF] bg-[#FFF8EC] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.06)]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
+            Kaffi recomienda
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-[#5E4B3A]">
+            Tómalo como una guía, no como una promesa. Si la confianza está baja o la variación esperada es amplia,
+            conviene comparar con el precio de hoy y revisar si realmente te sirve esperar.
+          </p>
+        </section>
+
         {consultaRealizada && (
           <>
             <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -246,19 +255,17 @@ export default function Predicciones() {
 
             <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
               <article className="rounded-[28px] bg-[#F8F1E6] p-5 shadow-[0_12px_30px_rgba(96,73,47,0.10)] ring-1 ring-[#E8D8BF]/80">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
-                      Comportamiento proyectado
-                    </p>
-                    <p className="mt-1 text-sm text-[#6D5E53]">
-                      Visualiza cómo se movería el precio estimado dentro del rango consultado.
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
+                    Comportamiento proyectado
+                  </p>
+                  <p className="mt-1 text-sm text-[#6D5E53]">
+                    Visualiza cómo se movería el precio estimado dentro del rango consultado.
+                  </p>
                 </div>
 
                 {cargandoConsulta ? (
-                  <div className="mt-6 h-70 rounded-3xl bg-[#F5EBDD] animate-pulse" />
+                  <div className="mt-6 h-70 animate-pulse rounded-3xl bg-[#F5EBDD]" />
                 ) : predicciones.length === 0 ? (
                   <p className="mt-6 text-sm text-[#6D5E53]">No encontramos predicciones para ese rango.</p>
                 ) : (

@@ -87,8 +87,6 @@ export default function VerifyCode() {
 
   if (!email) return null;
 
-  const codeComplete = code.every(d => d !== "");
-
   return (
     <div
       className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden"
