@@ -4,9 +4,8 @@ import { useAuth } from "../../context/useAuth.js";
 export default function PrivateRoute({ children, roles = [] }) {
   const { usuario, cargando } = useAuth();
 
-  // Solo muestra loading si NO hay datos en localStorage todavía
-  // Con el nuevo AuthProvider esto casi nunca ocurre
-  if (cargando) {
+  // ✅ Solo muestra loader si está cargando Y no hay usuario local todavía
+  if (cargando && !usuario) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5ECD7]">
         <div className="text-center">

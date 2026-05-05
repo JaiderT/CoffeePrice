@@ -21,8 +21,6 @@ export default function VerifyEmail() {
   const [resendCooldown, setResendCooldown] = useState(60);
   const [pendiente, setPendiente] = useState(false);
   const [verificado, setVerificado] = useState(false);
-  const [countdown, setCountdown] = useState(3);
-  const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   const inputsRef = useRef([]);
 
@@ -35,16 +33,6 @@ export default function VerifyEmail() {
     const timer = setTimeout(() => setResendCooldown(v => v - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendCooldown]);
-
-  useEffect(() => {
-    if (!verificado) return;
-    if (countdown <= 0) {
-      navigate(redirectPath, { replace: true });
-      return;
-    }
-    const timer = setTimeout(() => setCountdown(v => v - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [verificado, countdown, redirectPath, navigate]);
 
   function handleChange(index, value) {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -87,16 +75,25 @@ export default function VerifyEmail() {
         body: JSON.stringify({ email, code: fullCode }),
       });
       const data = await response.json();
+
       if (!response.ok) {
         setError(data.message || "Código incorrecto. Intenta de nuevo.");
         setCode(INITIAL_CODE);
         inputsRef.current[0]?.focus();
         return;
       }
+
       if (data.pendiente) {
         setPendiente(true);
         return;
       }
+
+      const path =
+        data.role === "comprador"
+          ? "/completar-perfil"
+          : data.role === "admin"
+          ? "/admin/dashboard"
+          : "/dashboard";
 
       login({
         id: data.id,
@@ -105,17 +102,11 @@ export default function VerifyEmail() {
         apellido: data.apellido,
         celular: data.celular,
         email: data.email,
+        estado: "activo",
       });
 
-      setRedirectPath(
-        data.role === "comprador"
-          ? "/completar-perfil"
-          : data.role === "admin"
-            ? "/admin/dashboard"
-            : "/dashboard"
-      );
-      setCountdown(3);
-      setVerificado(true);
+      navigate(path, { replace: true });
+
     } catch {
       setError("Error al conectar con el servidor.");
     } finally {
@@ -231,30 +222,7 @@ export default function VerifyEmail() {
               <span className="text-2xl font-black text-[#3B1F0A] font-serif">Coffe<span className="text-[#C8814A]">Price</span></span>
             </div>
 
-            {verificado ? (
-              <div className="flex flex-col items-center justify-center text-center py-10 px-4 animate-fade-in">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6 animate-bounce-once">
-                  ✅
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-2 font-serif">
-                  ¡Cuenta verificada!
-                </h2>
-                <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-xs">
-                  Tu cuenta está lista. En un momento te llevamos a tu panel.
-                </p>
-
-                <div className="w-full max-w-xs bg-gray-100 rounded-full h-1.5 overflow-hidden mb-3">
-                  <div
-                    className="h-full bg-[#C8814A] rounded-full transition-all duration-1000 ease-linear"
-                    style={{ width: `${((3 - countdown) / 3) * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400">
-                  Redirigiendo en <span className="font-semibold text-[#C8814A]">{countdown}s</span>...
-                </p>
-              </div>
-
-            ) : pendiente ? (
+            {pendiente ? (
               <div className="text-center py-8 px-4">
                 <div className="w-20 h-20 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-5xl mx-auto mb-6">⏳</div>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-3 font-serif">¡Correo verificado!</h2>

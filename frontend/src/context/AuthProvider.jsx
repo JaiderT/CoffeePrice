@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AuthContext } from './AuthContext.js';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -15,71 +15,27 @@ function guardarUsuarioLocal(usuario) {
 }
 
 function limpiarUsuarioLocal() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('rol');
-  localStorage.removeItem('name');
-  localStorage.removeItem('apellido');
-  localStorage.removeItem('usuarioId');
-  localStorage.removeItem('celular');
-  localStorage.removeItem('email');
-  localStorage.removeItem('estado');
+  ['token','rol','name','apellido','usuarioId','celular','email','estado']
+    .forEach(k => localStorage.removeItem(k));
+}
+
+function leerUsuarioLocal() {
+  const rol = localStorage.getItem('rol');
+  const id = localStorage.getItem('usuarioId');
+  if (!rol || !id) return null;
+  return {
+    id,
+    rol,
+    nombre: localStorage.getItem('name') || '',
+    apellido: localStorage.getItem('apellido') || '',
+    celular: localStorage.getItem('celular') || '',
+    email: localStorage.getItem('email') || '',
+    estado: localStorage.getItem('estado') || 'activo',
+  };
 }
 
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(() => {
-    const rol = localStorage.getItem('rol');
-    const id = localStorage.getItem('usuarioId');
-    if (!rol || !id) return null;
-    return {
-      id,
-      rol,
-      nombre: localStorage.getItem('name') || '',
-      apellido: localStorage.getItem('apellido') || '',
-      celular: localStorage.getItem('celular') || '',
-      email: localStorage.getItem('email') || '',
-      estado: localStorage.getItem('estado') || 'activo',
-    };
-  });
-
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    const inicializarSesion = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            limpiarUsuarioLocal();
-            setUsuario(null);
-          }
-          return;
-        }
-
-        const data = await response.json();
-        const usuarioSesion = {
-          id: data._id,
-          rol: data.rol,
-          nombre: data.nombre,
-          apellido: data.apellido,
-          celular: data.celular,
-          email: data.email,
-          estado: data.estado || 'activo',
-        };
-
-        guardarUsuarioLocal(usuarioSesion);
-        setUsuario(usuarioSesion);
-      } catch (error) {
-        console.warn('No se pudo validar la sesion con el backend. Se conserva la sesion local temporalmente.', error);
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    inicializarSesion();
-  }, []);
+  const [usuario, setUsuario] = useState(() => leerUsuarioLocal());
 
   const login = (userData) => {
     const usuarioSesion = {
@@ -91,7 +47,6 @@ export function AuthProvider({ children }) {
       email: userData.email,
       estado: userData.estado || 'activo',
     };
-
     guardarUsuarioLocal(usuarioSesion);
     setUsuario(usuarioSesion);
   };
@@ -99,32 +54,28 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     limpiarUsuarioLocal();
     setUsuario(null);
-
     try {
-      const response = await fetch(`${API_URL}/api/auth/logout`, {
+      await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
-
-      if (!response.ok) {
-        console.error('Error al cerrar sesion:', await response.text());
-      }
     } catch (error) {
-      console.error('Error al cerrar sesion:', error);
+      console.error('Error al cerrar sesión:', error);
     }
   };
 
   const actualizarUsuario = (nuevosDatos) => {
     setUsuario((prev) => {
       if (!prev) return prev;
-      const usuarioActualizado = { ...prev, ...nuevosDatos };
-      guardarUsuarioLocal(usuarioActualizado);
-      return usuarioActualizado;
+      const actualizado = { ...prev, ...nuevosDatos };
+      guardarUsuarioLocal(actualizado);
+      return actualizado;
     });
   };
 
+  // cargando siempre false — no hay fetch asíncrono
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, actualizarUsuario, cargando }}>
+    <AuthContext.Provider value={{ usuario, login, logout, actualizarUsuario, cargando: false }}>
       {children}
     </AuthContext.Provider>
   );
