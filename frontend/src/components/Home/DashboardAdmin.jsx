@@ -67,7 +67,6 @@ export default function DashboardAdmin() {
     finally { setCargandoNoticias(false); }
   }, [API_URL]);
 
-  // CORREGIDO: /api/compradores → /api/comprador
   const cargarCompradores = useCallback(async () => {
     try {
       await axios.get(`${API_URL}/api/comprador`, authConfig);
@@ -76,7 +75,6 @@ export default function DashboardAdmin() {
     }
   }, [API_URL, authConfig]);
 
-  // CONECTADO: ahora usa el endpoint real /api/actividad
   const cargarActividad = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/actividad`, authConfig);
@@ -239,13 +237,26 @@ export default function DashboardAdmin() {
     return { label: rol, cls: 'bg-gray-100 text-gray-600' };
   };
 
+  // ── FIX: comparación por fecha calendario, no por diferencia de ms ──
   const formatFecha = (fecha) => {
     if (!fecha) return '—';
     const d = new Date(fecha);
     const hoy = new Date();
-    const diff = Math.floor((hoy - d) / (1000 * 60 * 60 * 24));
-    if (diff === 0) return `Hoy, ${d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
-    if (diff === 1) return 'Ayer';
+
+    const esHoy =
+      d.getDate() === hoy.getDate() &&
+      d.getMonth() === hoy.getMonth() &&
+      d.getFullYear() === hoy.getFullYear();
+
+    const ayer = new Date(hoy);
+    ayer.setDate(hoy.getDate() - 1);
+    const esAyer =
+      d.getDate() === ayer.getDate() &&
+      d.getMonth() === ayer.getMonth() &&
+      d.getFullYear() === ayer.getFullYear();
+
+    if (esHoy)  return `Hoy, ${d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+    if (esAyer) return `Ayer, ${d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
     return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
   };
 
@@ -557,7 +568,7 @@ export default function DashboardAdmin() {
         {/* ── Actividad + Buscador + Acciones rápidas ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* Timeline de actividad — ahora conectado al backend */}
+          {/* Timeline de actividad */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🕐 Actividad reciente</p>
             {cargandoActividad ? (
