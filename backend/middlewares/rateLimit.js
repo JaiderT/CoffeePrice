@@ -12,7 +12,7 @@ export const loginLimiter = rateLimit({
 
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   message: {
     message: 'Demasiados registros. Intenta nuevamente mas tarde.',
   },

@@ -13,10 +13,7 @@ const CATEGORIAS = [
   { value: 'mercado', label: 'Precios del cafe' },
   { value: 'internacional', label: 'Mercado internacional' },
   { value: 'clima', label: 'Clima y cosechas' },
-  { value: 'fnc', label: 'Federacion Cafeteros' },
   { value: 'produccion', label: 'Produccion' },
-  { value: 'consejos', label: 'Consejos para caficultores' },
-  { value: 'el_pital', label: 'Noticias de El Pital' },
 ];
 
 const categoriaBadgeColors = {
@@ -291,9 +288,9 @@ export default function Noticias() {
       <div className="max-w-7xl mx-auto px-4 md:px-7">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al dia con el campo</p>
-            <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-2">Noticias del cafe</h2>
-            <p className="text-gray-500 text-sm mt-2">Lo mas relevante del sector cafetero colombiano e internacional.</p>
+            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al dia con el mundo</p>
+            <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-2">Noticias Internacionales</h2>
+            <p className="text-gray-500 text-sm mt-2">Lo mas relevante del sector colombiano e internacional.</p>
           </div>
         </div>
 
