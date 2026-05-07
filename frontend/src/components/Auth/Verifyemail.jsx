@@ -21,6 +21,8 @@ export default function VerifyEmail() {
   const [resendCooldown, setResendCooldown] = useState(60);
   const [pendiente, setPendiente] = useState(false);
   const [verificado, setVerificado] = useState(false);
+  const [exito, setExito] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   const inputsRef = useRef([]);
 
@@ -71,6 +73,7 @@ export default function VerifyEmail() {
     try {
       const response = await fetch(`${API_URL}/api/auth/verify-email`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: fullCode }),
       });
@@ -88,13 +91,6 @@ export default function VerifyEmail() {
         return;
       }
 
-      const path =
-        data.role === "comprador"
-          ? "/completar-perfil"
-          : data.role === "admin"
-          ? "/admin/dashboard"
-          : "/dashboard";
-
       login({
         id: data.id,
         rol: data.role,
@@ -105,7 +101,26 @@ export default function VerifyEmail() {
         estado: "activo",
       });
 
-      navigate(path, { replace: true });
+      const path =
+        data.role === "comprador"
+          ? "/completar-perfil"
+          : data.role === "admin"
+          ? "/admin/dashboard"
+          : "/dashboard";
+
+      // Mostrar pantalla de éxito y redirigir en 3 segundos
+      setExito(true);
+      setCountdown(3);
+
+      let current = 3;
+      const interval = setInterval(() => {
+        current -= 1;
+        setCountdown(current);
+        if (current <= 0) {
+          clearInterval(interval);
+          navigate(path, { replace: true });
+        }
+      }, 1000);
 
     } catch {
       setError("Error al conectar con el servidor.");
@@ -121,6 +136,7 @@ export default function VerifyEmail() {
     try {
       const response = await fetch(`${API_URL}/api/auth/resend-verification`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
@@ -158,7 +174,7 @@ export default function VerifyEmail() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-200 h-full max-h-200 rounded-full bg-[#C8814A]/5 blur-3xl" />
       </div>
 
-      {!verificado && !pendiente && (
+      {!verificado && !pendiente && !exito && (
         <button
           onClick={() => navigate("/register")}
           className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 group transition-all duration-300 hover:scale-110"
@@ -171,6 +187,7 @@ export default function VerifyEmail() {
 
       <div className="w-full max-w-6xl bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/10 mx-auto">
         <div className="flex flex-col lg:flex-row">
+          {/* Panel izquierdo decorativo */}
           <div className="lg:w-1/2 bg-linear-to-br from-[#2C1A0E]/90 to-[#3D1F0F]/90 p-6 sm:p-8 md:p-10 lg:p-12 relative overflow-hidden hidden lg:block">
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -216,13 +233,44 @@ export default function VerifyEmail() {
             <div className="absolute -bottom-24 -left-24 w-64 h-64 md:w-80 md:h-80 rounded-full bg-linear-to-tr from-[#C8814A]/10 to-transparent blur-2xl" />
           </div>
 
+          {/* Panel derecho */}
           <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 md:p-8 lg:p-10">
             <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 lg:hidden">
               <div className="w-10 h-10 bg-linear-to-br from-[#C8814A] to-[#E8A870] rounded-xl flex items-center justify-center text-xl shadow-lg">☕</div>
               <span className="text-2xl font-black text-[#3B1F0A] font-serif">Coffe<span className="text-[#C8814A]">Price</span></span>
             </div>
 
-            {pendiente ? (
+            {/* Pantalla de éxito con countdown */}
+            {exito ? (
+              <div className="text-center py-10 px-4 animate-fade-in">
+                <div className="w-20 h-20 rounded-2xl bg-green-100 flex items-center justify-center text-5xl mx-auto mb-5">
+                  ✅
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-2 font-serif">
+                  ¡Cuenta verificada!
+                </h2>
+                <p className="text-sm text-gray-500 leading-relaxed mb-8 max-w-xs mx-auto">
+                  Tu cuenta está lista. En unos segundos te llevamos a tu dashboard.
+                </p>
+                <div className="flex items-center justify-center gap-3 mb-5">
+                  <svg className="animate-spin h-5 w-5 text-[#C8814A]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-[#C8814A]">
+                    Redirigiendo al dashboard en {countdown}...
+                  </span>
+                </div>
+                {/* Barra de progreso */}
+                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-1.5 rounded-full bg-[#C8814A] transition-all duration-1000 ease-linear"
+                    style={{ width: `${((3 - countdown) / 3) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+            ) : pendiente ? (
               <div className="text-center py-8 px-4">
                 <div className="w-20 h-20 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-5xl mx-auto mb-6">⏳</div>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-3 font-serif">¡Correo verificado!</h2>
