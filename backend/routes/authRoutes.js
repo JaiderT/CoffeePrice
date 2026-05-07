@@ -43,9 +43,14 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
-    // Verificar el estado de la cuenta antes de dar acceso
     if (user.estado === "rechazado") {
       return res.status(403).json({ message: "Cuenta rechazada" });
+    }
+    if (user.estado === "eliminado") {
+      return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
+    }
+    if (user.estado === "suspendido") {
+      return res.status(200).json(user);
     }
     if (user.estado === "pendiente") {
       return res.status(403).json({ message: "Cuenta pendiente de verificación" });
@@ -61,28 +66,34 @@ router.get("/me", authMiddleware, async (req, res) => {
 router.post("/generate-token", authMiddleware, async (req, res) => {
   try {
     const user = await Usuario.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
-    
-    // Verificar que la cuenta esté activa
+
     if (user.estado === "rechazado") {
       return res.status(403).json({ message: "Cuenta rechazada" });
     }
-    
+
+    if (user.estado === "eliminado") {
+      return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
+    }
+
+    if (user.estado === "suspendido") {
+      return res.status(403).json({ message: "Tu cuenta está suspendida." });
+    }
+
     if (user.estado === "pendiente" && user.rol !== "comprador") {
       return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
-    
-    // Generar nuevo token JWT
+
     const token = jwt.sign(
       { id: user._id, rol: user.rol },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
-    
-    res.json({ 
+
+    res.json({
       token,
       user: {
         id: user._id,
@@ -90,7 +101,8 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
         apellido: user.apellido,
         email: user.email,
         rol: user.rol,
-        celular: user.celular
+        celular: user.celular,
+        estado: user.estado,
       }
     });
   } catch (error) {
@@ -101,7 +113,6 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
 
 // ─── Logout (eliminar cookie) ──────────────────────────────────────
 router.post("/logout", (req, res) => {
-  // Una sola llamada con las mismas opciones que fijarCookieAuth
   res.clearCookie("auth_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -110,7 +121,6 @@ router.post("/logout", (req, res) => {
   });
   res.json({ message: "Sesión cerrada exitosamente" });
 });
-
 
 // ─── Google OAuth ──────────────────────────────────────────────────
 router.get("/google", googleSessionMiddleware, (req, res, next) => {

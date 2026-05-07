@@ -7,39 +7,34 @@ export default function DashboardAdmin() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
 
   const authConfig = useMemo(() => ({
     withCredentials: true,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  }), [token]);
+  }), []);
 
-  // ─── Estado ───────────────────────────────────────────────────────
-  const [cargandoUsuarios,    setCargandoUsuarios]    = useState(true);
-  const [cargandoPrecios,     setCargandoPrecios]     = useState(true);
-  const [cargandoFNC,         setCargandoFNC]         = useState(true);
-  const [cargandoNoticias,    setCargandoNoticias]    = useState(true);
-  const [cargandoActividad,   setCargandoActividad]   = useState(true);
+  const [cargandoUsuarios,  setCargandoUsuarios]  = useState(true);
+  const [cargandoPrecios,   setCargandoPrecios]   = useState(true);
+  const [cargandoFNC,       setCargandoFNC]       = useState(true);
+  const [cargandoNoticias,  setCargandoNoticias]  = useState(true);
+  const [cargandoActividad, setCargandoActividad] = useState(true);
 
-  const [usuarios,    setUsuarios]    = useState([]);
-  const [precios,     setPrecios]     = useState([]);
-  const [precioFNC,   setPrecioFNC]   = useState(null);
-  const [fuenteFNC,   setFuenteFNC]   = useState(null);
-  const [noticias,    setNoticias]    = useState([]);
-  const [actividad,   setActividad]   = useState([]);
+  const [usuarios,  setUsuarios]  = useState([]);
+  const [precios,   setPrecios]   = useState([]);
+  const [precioFNC, setPrecioFNC] = useState(null);
+  const [fuenteFNC, setFuenteFNC] = useState(null);
+  const [noticias,  setNoticias]  = useState([]);
+  const [actividad, setActividad] = useState([]);
 
   const [busqueda,  setBusqueda]  = useState('');
   const [filtroRol, setFiltroRol] = useState('todos');
-
   const [crecimientoSemanal, setCrecimientoSemanal] = useState([]);
 
-  // ─── Fetches ──────────────────────────────────────────────────────
   const cargarUsuarios = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/usuario`, authConfig);
       setUsuarios(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('❌ Error cargando usuarios:', err.response?.status, err.message);
+      console.error('Error cargando usuarios:', err.response?.status, err.message);
     } finally { setCargandoUsuarios(false); }
   }, [API_URL, authConfig]);
 
@@ -71,7 +66,7 @@ export default function DashboardAdmin() {
     try {
       await axios.get(`${API_URL}/api/comprador`, authConfig);
     } catch (err) {
-      console.error('❌ Error cargando compradores:', err.response?.status, err.message);
+      console.error('Error cargando compradores:', err.response?.status, err.message);
     }
   }, [API_URL, authConfig]);
 
@@ -80,7 +75,7 @@ export default function DashboardAdmin() {
       const { data } = await axios.get(`${API_URL}/api/actividad`, authConfig);
       setActividad(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('❌ Error cargando actividad:', err.response?.status, err.message);
+      console.error('Error cargando actividad:', err.response?.status, err.message);
       setActividad([]);
     } finally { setCargandoActividad(false); }
   }, [API_URL, authConfig]);
@@ -94,7 +89,6 @@ export default function DashboardAdmin() {
     cargarActividad();
   }, [cargarUsuarios, cargarPrecios, cargarFNC, cargarNoticias, cargarCompradores, cargarActividad]);
 
-  // ── Crecimiento semanal calculado desde usuarios ──
   useEffect(() => {
     if (!usuarios.length) return;
     const semanas = [];
@@ -113,7 +107,6 @@ export default function DashboardAdmin() {
     setCrecimientoSemanal(semanas);
   }, [usuarios]);
 
-  // ─── Métricas derivadas ───────────────────────────────────────────
   const totalUsuarios       = usuarios.length;
   const totalProductores    = usuarios.filter(u => u.rol === 'productor').length;
   const totalCompradoresReg = usuarios.filter(u => u.rol === 'comprador').length;
@@ -158,12 +151,10 @@ export default function DashboardAdmin() {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5);
 
-  // ── Alertas del sistema ──
   const alertasSistema = useMemo(() => {
     const alertas = [];
     const hace30Dias = new Date();
     hace30Dias.setDate(hace30Dias.getDate() - 30);
-
     const hace3Dias = new Date();
     hace3Dias.setDate(hace3Dias.getDate() - 3);
 
@@ -209,7 +200,6 @@ export default function DashboardAdmin() {
     return alertas;
   }, [usuarios, compraventasUnicas, precios, precioFNC, fuenteFNC, noticias]);
 
-  // ── Buscador de usuarios ──
   const usuariosFiltrados = useMemo(() => {
     return usuarios.filter(u => {
       const coincideRol =
@@ -229,7 +219,6 @@ export default function DashboardAdmin() {
     }).slice(0, 5);
   }, [usuarios, busqueda, filtroRol]);
 
-  // ─── Helpers ──────────────────────────────────────────────────────
   const tagRol = (rol) => {
     if (rol === 'productor') return { label: 'Caficultor', cls: 'bg-green-100 text-green-700' };
     if (rol === 'comprador') return { label: 'Comprador',  cls: 'bg-blue-100 text-blue-700' };
@@ -237,24 +226,20 @@ export default function DashboardAdmin() {
     return { label: rol, cls: 'bg-gray-100 text-gray-600' };
   };
 
-  // ── FIX: comparación por fecha calendario, no por diferencia de ms ──
   const formatFecha = (fecha) => {
     if (!fecha) return '—';
     const d = new Date(fecha);
     const hoy = new Date();
-
     const esHoy =
       d.getDate() === hoy.getDate() &&
       d.getMonth() === hoy.getMonth() &&
       d.getFullYear() === hoy.getFullYear();
-
     const ayer = new Date(hoy);
     ayer.setDate(hoy.getDate() - 1);
     const esAyer =
       d.getDate() === ayer.getDate() &&
       d.getMonth() === ayer.getMonth() &&
       d.getFullYear() === ayer.getFullYear();
-
     if (esHoy)  return `Hoy, ${d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
     if (esAyer) return `Ayer, ${d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
     return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
@@ -271,7 +256,6 @@ export default function DashboardAdmin() {
     fnc: '🏛️', produccion: '🌱', consejos: '💡',
   };
 
-  // ─── Render ───────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
 
@@ -292,10 +276,8 @@ export default function DashboardAdmin() {
 
       <div className="px-6 md:px-8 py-6 flex flex-col gap-5">
 
-        {/* ── KPIs ── */}
+        {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-
-          {/* Total usuarios */}
           <div className="bg-[#2C1A0E] rounded-2xl p-5 shadow-sm relative overflow-hidden">
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">👥</div>
             <p className="text-[#C8A96E] text-[10px] uppercase tracking-widest mb-2">Usuarios registrados</p>
@@ -308,7 +290,6 @@ export default function DashboardAdmin() {
             </p>
           </div>
 
-          {/* Precio FNC */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF] relative overflow-hidden">
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">🏛️</div>
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Precio FNC hoy</p>
@@ -324,7 +305,6 @@ export default function DashboardAdmin() {
             </p>
           </div>
 
-          {/* Precio más alto */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Precio más alto hoy</p>
             {cargandoPrecios
@@ -346,7 +326,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Noticias */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF] relative overflow-hidden">
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">📰</div>
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Noticias publicadas</p>
@@ -358,7 +337,7 @@ export default function DashboardAdmin() {
           </div>
         </div>
 
-        {/* ── Alertas del sistema ── */}
+        {/* Alertas del sistema */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[#2C1A0E] font-bold text-sm">⚡ Alertas del sistema</p>
@@ -370,9 +349,9 @@ export default function DashboardAdmin() {
             <div className="flex flex-col gap-2">
               {alertasSistema.map((a, i) => (
                 <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-xl ${
-                  a.tipo === 'ok'    ? 'bg-green-50 border border-green-200' :
-                  a.tipo === 'warn'  ? 'bg-amber-50 border border-amber-200' :
-                                       'bg-red-50 border border-red-200'
+                  a.tipo === 'ok'   ? 'bg-green-50 border border-green-200' :
+                  a.tipo === 'warn' ? 'bg-amber-50 border border-amber-200' :
+                                      'bg-red-50 border border-red-200'
                 }`}>
                   <span className="text-base mt-0.5">
                     {a.tipo === 'ok' ? '✅' : a.tipo === 'warn' ? '⚠️' : '❌'}
@@ -389,10 +368,8 @@ export default function DashboardAdmin() {
           )}
         </div>
 
-        {/* ── Fila media ── */}
+        {/* Fila media */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          {/* Compraventas */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <div className="flex items-center justify-between mb-4">
               <p className="text-[#2C1A0E] font-bold text-sm">🏪 Compraventas activas</p>
@@ -422,7 +399,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Usuarios recientes */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <div className="flex items-center justify-between mb-4">
               <p className="text-[#2C1A0E] font-bold text-sm">🆕 Registros recientes</p>
@@ -459,10 +435,8 @@ export default function DashboardAdmin() {
           </div>
         </div>
 
-        {/* ── Fila inferior ── */}
+        {/* Fila inferior */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Top compradores */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🏆 Mejores precios hoy</p>
             {cargandoPrecios ? (
@@ -490,7 +464,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Desglose usuarios + crecimiento semanal */}
           <div className="bg-[#2C1A0E] rounded-2xl p-5 shadow-sm">
             <p className="text-[#C8A96E] font-bold text-sm mb-4">👥 Desglose de usuarios</p>
             {cargandoUsuarios ? (
@@ -538,7 +511,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Noticias recientes */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🗞️ Noticias recientes</p>
             {cargandoNoticias ? (
@@ -565,10 +537,8 @@ export default function DashboardAdmin() {
           </div>
         </div>
 
-        {/* ── Actividad + Buscador + Acciones rápidas ── */}
+        {/* Actividad + Buscador + Acciones rápidas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Timeline de actividad */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🕐 Actividad reciente</p>
             {cargandoActividad ? (
@@ -595,7 +565,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Buscador de usuarios */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-3">🔍 Buscar usuario</p>
             <input
@@ -661,7 +630,6 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          {/* Acciones rápidas */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">⚙️ Acciones rápidas</p>
             <div className="flex flex-col gap-2.5">
@@ -694,7 +662,6 @@ export default function DashboardAdmin() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

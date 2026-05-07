@@ -15,10 +15,10 @@ export default function CompletarPerfil() {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [cargandoSesion, setCargandoSesion] = useState(true);
-  const [token, setToken] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [usuarioValido, setUsuarioValido] = useState(false);
 
   const [form, setForm] = useState({
     nombreempresa: '',
@@ -33,14 +33,11 @@ export default function CompletarPerfil() {
   });
 
   useEffect(() => {
-    const t = localStorage.getItem('token');
     const id = localStorage.getItem('usuarioId');
     const rol = localStorage.getItem('rol');
-    if (!t || !id || rol !== 'comprador') {
-      setCargandoSesion(false);
-      return;
+    if (id && rol === 'comprador') {
+      setUsuarioValido(true);
     }
-    setToken(t);
     setCargandoSesion(false);
   }, []);
 
@@ -50,7 +47,7 @@ export default function CompletarPerfil() {
     </div>
   );
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!usuarioValido) return <Navigate to="/login" replace />;
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -101,8 +98,8 @@ export default function CompletarPerfil() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(form),
       });
 

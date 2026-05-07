@@ -10,7 +10,6 @@ function Historial() {
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [cargando, setCargando] = useState(true);
 
-  // ✅ useCallback para obtenerCompradores
   const obtenerCompradores = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/precios`);
@@ -28,7 +27,6 @@ function Historial() {
     }
   }, [API_URL]);
 
-  // ✅ useCallback para obtenerHistorial
   const obtenerHistorial = useCallback(async () => {
     setCargando(true);
     try {
@@ -48,14 +46,12 @@ function Historial() {
     }
   }, [API_URL, compradorSeleccionado, filtroTipo]);
 
-  // ✅ useEffect con dependencias correctas
   useEffect(() => {
     obtenerCompradores();
     obtenerHistorial();
   }, [obtenerCompradores, obtenerHistorial]);
 
-  // Datos para la gráfica — agrupa por comprador
-  const datosGrafica = historial.slice(0, 15).map((h) => ({  // ← cambiamos 'i' por 'idx'
+  const datosGrafica = historial.slice(0, 15).map((h) => ({
     fecha: new Date(h.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
     precio: h.preciocarga,
     comprador: h.comprador?.nombreempresa?.slice(0, 8) || '---',
@@ -63,10 +59,13 @@ function Historial() {
 
   const filtrosTipo = [
     { value: 'todos', label: 'Todos' },
-    { value: 'pergamino_seco', label: 'Pergamino' },
-    { value: 'especial', label: 'Especial' },
-    { value: 'organico', label: 'Orgánico' },
-    { value: 'verde', label: 'Verde' },
+    { value: 'pergamino_seco', label: '☕ Pergamino' },
+    { value: 'especial', label: '✨ Especial' },
+    { value: 'organico', label: '🌱 Orgánico' },
+    { value: 'verde', label: '🌿 Verde' },
+    { value: 'pasilla', label: '🟤 Pasilla' },
+    { value: 'cacao', label: '🍫 Cacao' },
+    { value: 'limon', label: '🍋 Limón' },
   ];
 
   const mejorPrecio = historial.length > 0 ? Math.max(...historial.map(h => h.preciocarga)) : 0;
@@ -138,7 +137,6 @@ function Historial() {
       <div className="px-5 md:px-8 pb-5">
         <div className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-4">
-            {/* Filtro por comprador */}
             <div>
               <p className="text-xs font-semibold text-[#8B7355] mb-2 uppercase">Comprador</p>
               <select
@@ -146,21 +144,20 @@ function Historial() {
                 onChange={e => setCompradorSeleccionado(e.target.value)}
                 className="w-full rounded-xl border border-[#DCC9A6] bg-[#FCFAF6] py-2.5 px-4 text-sm text-[#2C1A0E] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/30">
                 <option value="todos">Todos los compradores</option>
-                {compradores.map((c, idx) => (  // ← cambiamos 'i' por 'idx'
+                {compradores.map((c, idx) => (
                   <option key={idx} value={c._id}>{c.nombreempresa}</option>
                 ))}
               </select>
             </div>
-            {/* Filtro por tipo */}
             <div>
-              <p className="text-xs font-semibold text-[#8B7355] mb-2 uppercase">Tipo de café</p>
+              <p className="text-xs font-semibold text-[#8B7355] mb-2 uppercase">Tipo de producto</p>
               <div className="flex flex-wrap gap-2">
-                {filtrosTipo.map((f, idx) => (  // ← cambiamos 'i' por 'idx'
+                {filtrosTipo.map((f, idx) => (
                   <button key={idx} onClick={() => setFiltroTipo(f.value)}
                     className={`rounded-full px-3 py-2 text-xs font-bold transition-colors ${filtroTipo === f.value
-                        ? 'bg-[#2C1A0E] text-[#F5ECD7]'
-                        : 'bg-[#F8F3EA] border border-[#E7D9BF] text-[#6B5A4D] hover:bg-[#EFE4CF]'
-                      }`}>
+                      ? 'bg-[#2C1A0E] text-[#F5ECD7]'
+                      : 'bg-[#F8F3EA] border border-[#E7D9BF] text-[#6B5A4D] hover:bg-[#EFE4CF]'
+                    }`}>
                     {f.label}
                   </button>
                 ))}
@@ -191,7 +188,7 @@ function Historial() {
           </div>
         ) : (
           <div className="space-y-3">
-            {historial.map((item, idx) => {  // ← cambiamos 'i' por 'idx'
+            {historial.map((item, idx) => {
               const anterior = historial[idx + 1];
               const diferencia = anterior ? item.preciocarga - anterior.preciocarga : null;
               const sube = diferencia > 0;
@@ -200,9 +197,10 @@ function Historial() {
                 <div key={idx} className="rounded-2xl border border-[#E7D9BF] bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${diferencia === null ? 'bg-[#F5ECD7] text-[#7A4020]' :
-                          sube ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
-                        }`}>
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+                        diferencia === null ? 'bg-[#F5ECD7] text-[#7A4020]' :
+                        sube ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+                      }`}>
                         {diferencia === null ? <i className="fa-solid fa-minus text-xs"></i> :
                           sube ? <i className="fa-solid fa-arrow-up text-xs"></i> :
                             <i className="fa-solid fa-arrow-down text-xs"></i>}
@@ -217,7 +215,7 @@ function Historial() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div>
                         <p className="text-[11px] uppercase font-bold text-[#8B7355]">Precio/carga</p>
                         <p className="text-lg font-bold text-[#2C1A0E]">{item.preciocarga?.toLocaleString()}</p>
@@ -230,17 +228,24 @@ function Historial() {
                           </p>
                         </div>
                       )}
-                      <div>
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${item.tipocafe === 'especial' ? 'bg-[#F3E8FF] text-[#7E22CE]' :
-                            item.tipocafe === 'organico' ? 'bg-[#E8F5EA] text-[#2D6A4F]' :
-                              item.tipocafe === 'verde' ? 'bg-[#E6F6F0] text-[#147D64]' :
-                                'bg-[#FFF4D6] text-[#9A6700]'
-                          }`}>
-                          {item.tipocafe === 'pergamino_seco' ? 'Pergamino' :
-                            item.tipocafe === 'especial' ? 'Especial' :
-                              item.tipocafe === 'organico' ? 'Orgánico' : 'Verde'}
-                        </span>
-                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                        item.tipocafe === 'especial' ? 'bg-[#F3E8FF] text-[#7E22CE]' :
+                        item.tipocafe === 'organico' ? 'bg-[#E8F5EA] text-[#2D6A4F]' :
+                        item.tipocafe === 'verde' ? 'bg-[#E6F6F0] text-[#147D64]' :
+                        item.tipocafe === 'pasilla' ? 'bg-orange-50 text-orange-700' :
+                        item.tipocafe === 'cacao' ? 'bg-yellow-50 text-yellow-700' :
+                        item.tipocafe === 'limon' ? 'bg-lime-50 text-lime-700' :
+                        'bg-[#FFF4D6] text-[#9A6700]'
+                      }`}>
+                        {item.tipocafe === 'pergamino_seco' ? '☕ Pergamino' :
+                         item.tipocafe === 'especial' ? '✨ Especial' :
+                         item.tipocafe === 'organico' ? '🌱 Orgánico' :
+                         item.tipocafe === 'verde' ? '🌿 Verde' :
+                         item.tipocafe === 'pasilla' ? '🟤 Pasilla' :
+                         item.tipocafe === 'cacao' ? '🍫 Cacao' :
+                         item.tipocafe === 'limon' ? '🍋 Limón' :
+                         item.tipocafe?.replace(/_/g, ' ')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -249,11 +254,8 @@ function Historial() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
 
 export default Historial;
-
-
