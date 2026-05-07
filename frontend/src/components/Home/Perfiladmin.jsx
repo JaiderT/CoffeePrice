@@ -335,24 +335,24 @@ export default function PerfilAdmin() {
   const getEmpresa = (u) => compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
 
   return (
-    <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
+    <div className="min-h-screen bg-[#F5ECD7] p-4 md:p-10">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="bg-[#2C1A0E] rounded-2xl p-5 mb-6 flex items-center justify-between">
+        <div className="bg-[#2C1A0E] rounded-2xl p-4 md:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-[#C8A96E] flex items-center justify-center text-white text-xl font-bold shadow-lg">
+            <div className="w-14 h-14 rounded-xl bg-[#C8A96E] flex items-center justify-center text-white text-xl font-bold shadow-lg shrink-0">
               {iniciales}
             </div>
             <div>
               <p className="text-white font-bold text-lg">{usuario?.nombre} {usuario?.apellido}</p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="bg-[#C8A96E] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-bold">⚙️ Administrador</span>
                 <span className="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full font-semibold">● Activo</span>
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 items-end">
+          <div className="flex flex-col gap-2 items-start sm:items-end">
             {compradoresPendientes.length > 0 && (
               <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold">
                 ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s)
@@ -376,13 +376,14 @@ export default function PerfilAdmin() {
         {/* Pestañas */}
         <div className="flex gap-2 mb-6 flex-wrap">
           <button onClick={() => setPestana('perfil')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${pestana === 'perfil' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
+            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${pestana === 'perfil' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-user mr-2"></i>Mi perfil
           </button>
           <button onClick={() => setPestana('gestion')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'gestion' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
+            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'gestion' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-users-gear"></i>
-            Gestionar usuarios
+            <span className="hidden sm:inline">Gestionar usuarios</span>
+            <span className="sm:hidden">Usuarios</span>
             {(compradoresPendientes.length + usuariosSuspendidos.length) > 0 && (
               <span className="bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                 {compradoresPendientes.length + usuariosSuspendidos.length}
@@ -390,9 +391,10 @@ export default function PerfilAdmin() {
             )}
           </button>
           <button onClick={() => setPestana('resenas')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'resenas' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
+            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'resenas' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-star"></i>
-            Gestionar reseñas
+            <span className="hidden sm:inline">Gestionar reseñas</span>
+            <span className="sm:hidden">Reseñas</span>
             {reseñasPlataforma.filter(r => !r.aprobada).length > 0 && (
               <span className="bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                 {reseñasPlataforma.filter(r => !r.aprobada).length}
@@ -400,7 +402,7 @@ export default function PerfilAdmin() {
             )}
           </button>
           <button onClick={() => setPestana('noticias')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'noticias' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
+            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${pestana === 'noticias' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#2C1A0E] hover:bg-[#E0D0B0]'}`}>
             <i className="fa-solid fa-newspaper"></i>Noticias
           </button>
         </div>
@@ -408,7 +410,7 @@ export default function PerfilAdmin() {
         {/* PESTAÑA PERFIL */}
         {pestana === 'perfil' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-6 md:px-8 py-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-[#2C1A0E] font-bold">Información personal</h3>
               {modo === 'ver' && (
                 <button onClick={() => setModo('editar')}
@@ -417,7 +419,7 @@ export default function PerfilAdmin() {
                 </button>
               )}
             </div>
-            <div className="px-8 py-6">
+            <div className="px-6 md:px-8 py-6">
               {modo === 'ver' && (
                 <div className="space-y-4">
                   {[
@@ -503,7 +505,7 @@ export default function PerfilAdmin() {
             {/* Suspendidos */}
             {usuariosSuspendidos.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 flex-wrap">
                   <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full font-bold">
                     ⏸ Cuentas suspendidas
                   </span>
@@ -513,14 +515,14 @@ export default function PerfilAdmin() {
                   {usuariosSuspendidos.map((u, i) => {
                     const comp = getEmpresa(u);
                     return (
-                      <div key={i} className="flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-orange-50 border border-orange-100 rounded-xl">
                         <div>
                           <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                           <p className="text-gray-400 text-xs">{u.email}</p>
                           {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
                         </div>
                         <button onClick={() => handleAprobarComprador(u._id)}
-                          className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors">
+                          className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors self-start sm:self-auto">
                           ✓ Reactivar
                         </button>
                       </div>
@@ -533,7 +535,7 @@ export default function PerfilAdmin() {
             {/* Pendientes */}
             {compradoresPendientes.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 flex-wrap">
                   <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-bold">
                     ⚠️ Pendientes de aprobación
                   </span>
@@ -543,13 +545,13 @@ export default function PerfilAdmin() {
                   {compradoresPendientes.map((u, i) => {
                     const comp = getEmpresa(u);
                     return (
-                      <div key={i} className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-100 rounded-xl">
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-yellow-50 border border-yellow-100 rounded-xl">
                         <div>
                           <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                           <p className="text-gray-400 text-xs">{u.email}</p>
                           {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 self-start sm:self-auto">
                           <button onClick={() => handleAprobarComprador(u._id)}
                             className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors">
                             ✓ Aprobar
@@ -566,8 +568,9 @@ export default function PerfilAdmin() {
               </div>
             )}
 
+            {/* Todos los usuarios */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <h3 className="text-[#2C1A0E] font-bold">Todos los usuarios</h3>
                 <div className="flex gap-2 flex-wrap">
                   {['todos', 'productor', 'comprador', 'admin', 'suspendido'].map(f => (
@@ -585,20 +588,20 @@ export default function PerfilAdmin() {
                   {usuariosFiltrados.map((u, i) => {
                     const comp = getEmpresa(u);
                     return (
-                      <div key={i} className="flex items-center justify-between p-4 bg-[#F5ECD7]/50 rounded-xl hover:bg-[#F5ECD7] transition-colors">
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[#F5ECD7]/50 rounded-xl hover:bg-[#F5ECD7] transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-[#C8A96E] flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {u.nombre?.[0]}{u.apellido?.[0]}
                           </div>
-                          <div>
-                            <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
-                            <p className="text-gray-400 text-xs">{u.email}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#2C1A0E] text-sm truncate">{u.nombre} {u.apellido}</p>
+                            <p className="text-gray-400 text-xs truncate">{u.email}</p>
                             {u.rol === 'comprador' && comp && (
                               <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">🏢 {comp.nombreempresa}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
                           <span className={`text-xs px-2 py-1 rounded-full font-semibold ${u.rol === 'admin' ? 'bg-purple-100 text-purple-700' : u.rol === 'comprador' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                             {u.rol}
                           </span>
@@ -643,7 +646,7 @@ export default function PerfilAdmin() {
         {pestana === 'resenas' && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de compradores</h3>
                 <span className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-semibold">
                   {reseñas.length} reseñas
@@ -660,10 +663,10 @@ export default function PerfilAdmin() {
                 <div className="p-4 space-y-3">
                   {reseñas.map((r, i) => (
                     <div key={i} className="bg-[#F5ECD7]/50 rounded-xl p-4 hover:bg-[#F5ECD7] transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold text-[#C8A96E] bg-[#FFF8E7] px-2 py-0.5 rounded-full border border-[#C8A96E]/30">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-xs font-bold text-[#C8A96E] bg-[#FFF8E7] px-2 py-0.5 rounded-full border border-[#C8A96E]/30 truncate max-w-[150px]">
                               🏢 {r.compradorNombre}
                             </span>
                             <div className="text-sm">{renderEstrellas(r.calificacion)}</div>
@@ -684,7 +687,7 @@ export default function PerfilAdmin() {
                           )}
                         </div>
                         <button onClick={() => setModalEliminarReseña(r._id)}
-                          className="ml-4 text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0">
                           <i className="fa-solid fa-trash text-sm"></i>
                         </button>
                       </div>
@@ -695,7 +698,7 @@ export default function PerfilAdmin() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de la plataforma</h3>
                 <div className="flex items-center gap-2">
                   <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-semibold">
@@ -717,9 +720,9 @@ export default function PerfilAdmin() {
                 <div className="p-4 space-y-3">
                   {reseñasPlataforma.map((r, i) => (
                     <div key={i} className={`rounded-xl p-4 transition-colors ${r.aprobada ? 'bg-green-50 border border-green-100' : 'bg-yellow-50 border border-yellow-100'}`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${r.aprobada ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'}`}>
                               {r.aprobada ? '✓ Aprobada' : '⏳ Pendiente'}
                             </span>
@@ -735,7 +738,7 @@ export default function PerfilAdmin() {
                           </p>
                           <p className="text-[#6B5A4D] text-sm">{r.comentario}</p>
                         </div>
-                        <div className="flex flex-col gap-2 ml-4">
+                        <div className="flex flex-col gap-2 shrink-0">
                           {!r.aprobada && (
                             <button onClick={() => handleAprobarPlataforma(r._id)}
                               className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-600 transition-colors">
@@ -759,9 +762,9 @@ export default function PerfilAdmin() {
         {/* PESTAÑA NOTICIAS */}
         {pestana === 'noticias' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Gestionar noticias</h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={handleLimpiarNoticiasDanadas} disabled={limpiandoNoticias}
                   className="bg-[#7A4020] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#5f2f15] transition-colors flex items-center gap-2 disabled:opacity-60">
                   <i className="fa-solid fa-broom"></i>
@@ -783,20 +786,20 @@ export default function PerfilAdmin() {
             ) : (
               <div className="space-y-3">
                 {noticias.map((n) => (
-                  <div key={n._id} className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                  <div key={n._id} className="bg-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-start gap-4 hover:shadow-md transition-shadow">
                     {n.imagen ? (
-                      <img src={n.imagen} alt={n.titulo} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                      <img src={n.imagen} alt={n.titulo} className="w-full sm:w-16 h-40 sm:h-16 rounded-xl object-cover shrink-0" />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center shrink-0 text-2xl">📰</div>
+                      <div className="w-full sm:w-16 h-16 rounded-xl bg-[#F5ECD7] flex items-center justify-center shrink-0 text-2xl">📰</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#FFF8E7] text-[#C8A96E] border border-[#C8A96E]/30 font-semibold capitalize">
                           {n.categoria}
                         </span>
                         <span className="text-gray-400 text-xs">{formatearFechaNoticia(n)}</span>
                       </div>
-                      <p className="text-[#2C1A0E] font-semibold text-sm leading-snug truncate">{n.titulo}</p>
+                      <p className="text-[#2C1A0E] font-semibold text-sm leading-snug">{n.titulo}</p>
                       <p className="text-gray-400 text-xs mt-1 line-clamp-2">{n.resumen}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span className="text-[11px] text-[#8B6B45] font-semibold">{n.fuente || 'CoffePrice'}</span>
@@ -813,7 +816,7 @@ export default function PerfilAdmin() {
                         </a>
                       )}
                     </div>
-                    <div className="flex flex-col gap-2 shrink-0">
+                    <div className="flex sm:flex-col gap-2 shrink-0">
                       <button onClick={() => abrirEditar(n)}
                         className="bg-[#F5ECD7] text-[#2C1A0E] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
                         <i className="fa-solid fa-pen"></i>
@@ -835,7 +838,7 @@ export default function PerfilAdmin() {
       {mostrarFormNoticia && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">
                 {noticiaEditar ? 'Editar noticia' : 'Nueva noticia'}
@@ -910,9 +913,9 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar usuario */}
       {modalEliminarUsuario && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
             </div>
@@ -934,9 +937,9 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar reseña comprador */}
       {modalEliminarReseña && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
@@ -958,9 +961,9 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar reseña plataforma */}
       {modalEliminarPlataforma && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
@@ -982,9 +985,9 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar noticia */}
       {modalEliminarNoticia && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-newspaper text-red-400 text-2xl"></i>
             </div>
