@@ -5,6 +5,7 @@ import Sidebar from "../Layout/Sidebar.jsx";
 import { useAuth } from "../../context/useAuth.js";
 
 export default function Contacto() {
+  const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
   const [formData, setFormData] = useState({ nombre: "", correo: "", asunto: "", mensaje: "" });
   const [errors, setErrors] = useState({});
@@ -40,7 +41,7 @@ export default function Contacto() {
     setEnviando(true);
     setErrorEnvio("");
     try {
-      const response = await fetch("/api/contacto", {
+      const response = await fetch(`${API_URL}/api/contacto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -209,4 +210,3 @@ export default function Contacto() {
     </>
   );
 }
-

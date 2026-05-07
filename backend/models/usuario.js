@@ -40,7 +40,7 @@ const usuarioSchema = new mongoose.Schema({
   },
   estado: {
     type: String,
-    enum: ["activo", "pendiente", "rechazado"],
+    enum: ["activo", "pendiente", "rechazado", "eliminado", "suspendido"],
     default: "activo"
   },
   ultimaConexion: {
