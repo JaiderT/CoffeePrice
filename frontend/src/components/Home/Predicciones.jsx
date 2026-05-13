@@ -42,6 +42,7 @@ export default function Predicciones() {
   const [cargandoResumen, setCargandoResumen] = useState(true);
   const [cargandoConsulta, setCargandoConsulta] = useState(false);
   const [consultaRealizada, setConsultaRealizada] = useState(false);
+  const [infoConsulta, setInfoConsulta] = useState(null);
 
   useEffect(() => {
     const obtenerResumen = async () => {
@@ -69,9 +70,11 @@ export default function Predicciones() {
     try {
       const { data } = await axios.get(`${API_URL}/api/predicciones/rango?dias=${dias}`);
       setPredicciones(data.predicciones || []);
+      setInfoConsulta(data);
     } catch (error) {
       if (error.response?.status === 404) {
         setPredicciones([]);
+        setInfoConsulta(null);
       } else {
         console.error('Error al obtener predicciones por rango:', error);
       }
@@ -96,6 +99,7 @@ export default function Predicciones() {
     );
 
   const configResumen = tendenciaConfig[resumen?.tendencia] || tendenciaConfig.estable;
+  const esPrediccionUnica = infoConsulta?.modo === 'prediccion_unica';
 
   const datosGrafica = predicciones.map((item) => ({
     fecha: formatearFecha(item.fecha),
@@ -121,6 +125,53 @@ export default function Predicciones() {
     predicciones.length > 0
       ? Math.round(predicciones.reduce((acc, item) => acc + item.confianza, 0) / predicciones.length)
       : 0;
+
+  useEffect(() => {
+    const datosPagina = {
+      prediccionResumen: resumen
+        ? {
+            fecha: resumen.fecha,
+            precioEstimado: resumen.precioestimado,
+            precioMinimo: resumen.preciominimo,
+            precioMaximo: resumen.preciomaximo,
+            tendencia: resumen.tendencia,
+            confianza: resumen.confianza,
+            mensaje: resumen.mensaje,
+            explicacion: resumen.explicacion,
+            variacionPorcentual: resumen.variacionPorcentual,
+            estrategia: resumen.estrategiaAplicada,
+            holdoutMape: resumen.holdoutMape,
+          }
+        : null,
+      historialPredicciones: consultaRealizada
+        ? {
+            diasConsultados: predicciones.length,
+            rangoSeleccionado,
+            promedio,
+            minimo,
+            maximo,
+            confianzaPromedio,
+          }
+        : null,
+    };
+
+    window.__kaffiPageData = datosPagina;
+
+    return () => {
+      if (window.__kaffiPageData === datosPagina) {
+        delete window.__kaffiPageData;
+      }
+    };
+  }, [
+    resumen,
+    consultaRealizada,
+    predicciones.length,
+    rangoSeleccionado,
+    promedio,
+    minimo,
+    maximo,
+    confianzaPromedio,
+  ]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
@@ -182,6 +233,31 @@ export default function Predicciones() {
                   Para el {formatearFecha(resumen.fecha, true)}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-[#6D5E53]">{resumen.mensaje}</p>
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">Rango minimo</p>
+                    <p className="mt-1 text-lg font-black text-[#2F241C]">
+                      ${resumen.preciominimo.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">Rango maximo</p>
+                    <p className="mt-1 text-lg font-black text-[#2F241C]">
+                      ${resumen.preciomaximo.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">Variacion</p>
+                    <p className="mt-1 text-lg font-black text-[#2F241C]">
+                      {Number(resumen.variacionPorcentual || 0).toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+                {resumen.estrategiaAplicada && (
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#8A735B]">
+                    Modelo: {resumen.modelVersion} - Estrategia: {resumen.estrategiaAplicada}
+                  </p>
+                )}
               </>
             ) : (
               <p className="mt-3 text-sm text-[#6D5E53]">No hay predicción disponible por ahora.</p>
@@ -193,7 +269,7 @@ export default function Predicciones() {
               Buscar historial
             </p>
             <p className="mt-3 text-sm text-[#6A543F]">
-              Elige un horizonte y consulta el comportamiento proyectado. El historial solo aparece cuando lo buscas.
+              El modelo FNC hibrido genera una prediccion por ejecucion. El historial real ira creciendo con cada corrida diaria.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -234,6 +310,12 @@ export default function Predicciones() {
 
         {consultaRealizada && (
           <>
+            {esPrediccionUnica && (
+              <section className="mt-6 rounded-[28px] border border-[#DFC18E] bg-[#FFF8EC] p-5 text-sm text-[#5E4B3A] shadow-[0_10px_24px_rgba(96,73,47,0.06)]">
+                {infoConsulta?.mensaje || 'Por ahora el modelo FNC hibrido solo tiene una prediccion real disponible.'}
+              </section>
+            )}
+
             <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <article className="rounded-3xl bg-[#F8F1E6] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#E8D8BF]/80">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">Promedio</p>

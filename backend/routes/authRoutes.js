@@ -1,4 +1,3 @@
-// routes/authRoutes.js
 import express from "express";
 import jwt from "jsonwebtoken";
 import session from "express-session";
@@ -9,7 +8,7 @@ import {
   verifyEmailCodigo,
   resendVerification,
 } from "../controllers/AuthController.js";
-import passport from "../config/passport.js";
+import passport, { googleAuthConfigured } from "../config/passport.js";
 import { loginLimiter, registerLimiter, verifyLimiter, resendVerificationLimiter } from "../middlewares/rateLimit.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import Usuario from "../models/usuario.js";
@@ -17,29 +16,28 @@ import Usuario from "../models/usuario.js";
 const router = express.Router();
 
 const googleSessionMiddleware = session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || "coffeprice-google-session",
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
     maxAge: 1000 * 60 * 15,
   },
 });
 
-// ─── Autenticación normal ─────────────────────────────────────────
-router.post("/login",               loginLimiter,                 login);
-router.post("/register",            registerLimiter,              register);
-router.post("/verify-email",        verifyLimiter,                verifyEmailCodigo);
-router.post("/resend-verification", resendVerificationLimiter,    resendVerification);
+router.post("/login", loginLimiter, login);
+router.post("/register", registerLimiter, register);
+router.post("/verify-email", verifyLimiter, verifyEmailCodigo);
+router.post("/resend-verification", resendVerificationLimiter, resendVerification);
 
-// ─── Obtener usuario actual (desde cookie) ────────────────────────
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await Usuario.findById(req.user.id)
       .select("-password -codigoVerificacion -codigoVerificacionExpira");
+
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
@@ -52,9 +50,10 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (user.estado === "suspendido") {
       return res.status(200).json(user);
     }
-    if (user.estado === "pendiente") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
+    if (user.estado === "pendiente" && user.rol !== "comprador") {
+      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
     }
+
     res.json(user);
   } catch (error) {
     console.error("Error en /me:", error);
@@ -62,7 +61,6 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// ─── Generar token JWT desde cookie (para frontend) ────────────────
 router.post("/generate-token", authMiddleware, async (req, res) => {
   try {
     const user = await Usuario.findById(req.user.id);
@@ -70,21 +68,17 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
-
     if (user.estado === "rechazado") {
       return res.status(403).json({ message: "Cuenta rechazada" });
     }
-
     if (user.estado === "eliminado") {
       return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
     }
-
     if (user.estado === "suspendido") {
-      return res.status(403).json({ message: "Tu cuenta está suspendida." });
+      return res.status(403).json({ message: "Tu cuenta estÃ¡ suspendida." });
     }
-
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
     }
 
     const token = jwt.sign(
@@ -103,7 +97,7 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
         rol: user.rol,
         celular: user.celular,
         estado: user.estado,
-      }
+      },
     });
   } catch (error) {
     console.error("Error generando token:", error);
@@ -111,7 +105,6 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
   }
 });
 
-// ─── Logout (eliminar cookie) ──────────────────────────────────────
 router.post("/logout", (req, res) => {
   res.clearCookie("auth_token", {
     httpOnly: true,
@@ -119,11 +112,20 @@ router.post("/logout", (req, res) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
-  res.json({ message: "Sesión cerrada exitosamente" });
+  res.json({ message: "SesiÃ³n cerrada exitosamente" });
 });
 
-// ─── Google OAuth ──────────────────────────────────────────────────
+function responderGoogleNoDisponible(res) {
+  return res.status(503).json({
+    message: "El inicio de sesiÃ³n con Google no estÃ¡ configurado en este entorno.",
+  });
+}
+
 router.get("/google", googleSessionMiddleware, (req, res, next) => {
+  if (!googleAuthConfigured) {
+    return responderGoogleNoDisponible(res);
+  }
+
   const rol = req.query.rol || "productor";
   req.session.rolPendiente = rol;
   req.session.save((err) => {
@@ -140,6 +142,10 @@ router.get(
   "/google/callback",
   googleSessionMiddleware,
   (req, res, next) => {
+    if (!googleAuthConfigured) {
+      return responderGoogleNoDisponible(res);
+    }
+
     passport.authenticate("google", {
       failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`,
       session: false,

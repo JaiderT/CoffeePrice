@@ -1,6 +1,12 @@
 import Prediccion from "../models/prediccion.js";
+import { readFile } from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const TIME_ZONE = "America/Bogota";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PREDICCION_FNC_PATH = path.resolve(__dirname, "../datos/predicciones_fnc.json");
 
 function obtenerFechaBogota(offsetDias = 0) {
     const partes = new Intl.DateTimeFormat("en-CA", {
@@ -29,6 +35,97 @@ function serializarPrediccion(prediccion) {
     };
 }
 
+function construirMensaje(prediccion) {
+    if (prediccion.explicacion) return prediccion.explicacion;
+
+    if (prediccion.tendencia === "sube") {
+        return prediccion.confianza >= 70
+            ? "Se proyecta una subida del precio del cafe en la proxima jornada."
+            : "Hay senales de una posible subida en el precio del cafe.";
+    }
+
+    if (prediccion.tendencia === "baja") {
+        return prediccion.confianza >= 70
+            ? "Se proyecta una baja del precio del cafe en la proxima jornada."
+            : "Hay senales de una posible baja en el precio del cafe.";
+    }
+
+    if (prediccion.tendencia === "estable") {
+        return prediccion.confianza >= 70
+            ? "Se espera estabilidad en el precio del cafe para la proxima jornada."
+            : "El precio del cafe podria mantenerse estable en la proxima jornada.";
+    }
+
+    return "Se espera un comportamiento estable en el precio del cafe.";
+}
+
+function calcularConfianzaDesdeFnc(prediccion) {
+    const mape = Number(prediccion.holdout_mape);
+
+    if (prediccion.precio_minimo === prediccion.precio_maximo) {
+        return 92;
+    }
+
+    if (Number.isFinite(mape)) {
+        return Math.max(45, Math.min(90, Math.round(92 - (mape * 10))));
+    }
+
+    return 65;
+}
+
+function normalizarPrediccionFnc(prediccion) {
+    const confianza = calcularConfianzaDesdeFnc(prediccion);
+
+    return {
+        fecha: prediccion.fecha_prediccion,
+        precioestimado: prediccion.precio_estimado,
+        preciominimo: prediccion.precio_minimo,
+        preciomaximo: prediccion.precio_maximo,
+        tendencia: prediccion.tendencia,
+        confianza,
+        generatedAt: prediccion.generatedAt || prediccion.fecha_actual,
+        modelVersion: prediccion.modelo || "fnc_hibrido",
+        fuente: "fnc_hibrido_json",
+        mensaje: construirMensaje({
+            tendencia: prediccion.tendencia,
+            confianza,
+            explicacion: prediccion.explicacion,
+        }),
+        fechaActual: prediccion.fecha_actual,
+        precioActualFnc: prediccion.precio_actual_fnc,
+        variacionPorcentual: prediccion.variacion_porcentual,
+        estrategiaBase: prediccion.estrategia_base,
+        estrategiaAplicada: prediccion.estrategia_aplicada,
+        holdoutMape: prediccion.holdout_mape,
+        holdoutMae: prediccion.holdout_mae,
+        explicacion: prediccion.explicacion,
+        senalesModelo: prediccion.senales_modelo,
+    };
+}
+
+async function leerPrediccionFnc() {
+    try {
+        const contenido = await readFile(PREDICCION_FNC_PATH, "utf8");
+        const prediccion = JSON.parse(contenido);
+
+        if (!prediccion?.fecha_prediccion || typeof prediccion?.precio_estimado !== "number") {
+            return null;
+        }
+
+        return normalizarPrediccionFnc(prediccion);
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            console.warn("No se pudo leer predicciones_fnc.json:", error.message);
+        }
+
+        return null;
+    }
+}
+
+function fechaCoincide(fechaA, fechaB) {
+    return fechaA && fechaB && fechaA === fechaB;
+}
+
 export const getPredicciones = async (req, res) => {
     try {
         const predicciones = await Prediccion.find().sort({ fecha: -1 }).lean();
@@ -40,6 +137,9 @@ export const getPredicciones = async (req, res) => {
 
 export const getUltimaPrediccion = async (req, res) => {
     try {
+        const prediccionFnc = await leerPrediccionFnc();
+        if (prediccionFnc) return res.json(prediccionFnc);
+
         const prediccion = await Prediccion.findOne().sort({ fecha: -1 }).lean();
         if (!prediccion) return res.status(404).json({ message: "No hay predicciones disponibles" });
         res.json(serializarPrediccion(prediccion));
@@ -49,6 +149,9 @@ export const getUltimaPrediccion = async (req, res) => {
 };
 export const getResumenPredicciones = async (req, res) => {
     try {
+        const prediccionFnc = await leerPrediccionFnc();
+        if (prediccionFnc) return res.json(prediccionFnc);
+
         const manana = obtenerFechaBogota(1);
         const pasadoManana = obtenerFechaBogota(2);
 
@@ -91,7 +194,8 @@ export const getResumenPredicciones = async (req, res) => {
             confianza: prediccion.confianza,
             generatedAt: prediccion.generatedAt,
             modelVersion: prediccion.modelVersion,
-            mensaje,
+            mensaje: construirMensaje(prediccion),
+            fuente: "mongo",
         });
     } catch (error) {
         res.status(500).json({
@@ -103,6 +207,7 @@ export const getResumenPredicciones = async (req, res) => {
 export const getPrediccionesPorRango = async (req, res) => {
     try {
         const dias = Number(req.query.dias);
+        const prediccionFnc = await leerPrediccionFnc();
 
         const diasPermitidos = [7, 15, 30];
 
@@ -112,15 +217,31 @@ export const getPrediccionesPorRango = async (req, res) => {
             });
         }
 
+        if (prediccionFnc) {
+            return res.json({
+                dias,
+                total: 1,
+                generatedAt: prediccionFnc.generatedAt,
+                modelVersion: prediccionFnc.modelVersion,
+                fuente: "fnc_hibrido_json",
+                modo: "prediccion_unica",
+                mensaje: "El modelo FNC hibrido genera una prediccion por ejecucion. Aun no hay historial multi-dia real para este modelo.",
+                predicciones: [prediccionFnc],
+            });
+        }
+
         const hoy = obtenerFechaBogota(0);
 
         const predicciones = await Prediccion.find({
             fecha: { $gte: hoy }
         })
             .sort({ fecha: 1 })
-            .limit(dias);
+            .limit(dias)
+            .lean();
 
-        if (!predicciones.length) {
+        const prediccionesCombinadas = predicciones.map(serializarPrediccion);
+
+        if (!prediccionesCombinadas.length) {
             return res.status(404).json({
                 message: "No hay predicciones disponibles para ese rango"
             });
@@ -128,10 +249,11 @@ export const getPrediccionesPorRango = async (req, res) => {
 
         res.json({
             dias,
-            total: predicciones.length,
-            generatedAt: predicciones[0].generatedAt,
-            modelVersion: predicciones[0].modelVersion,
-            predicciones: predicciones.map((item) => serializarPrediccion(item.toObject ? item.toObject() : item)),
+            total: prediccionesCombinadas.length,
+            generatedAt: prediccionesCombinadas[0].generatedAt,
+            modelVersion: prediccionesCombinadas[0].modelVersion,
+            fuente: "mongo",
+            predicciones: prediccionesCombinadas,
         });
     } catch (error) {
         res.status(500).json({
@@ -153,6 +275,15 @@ export const getPrediccionPorDia = async (req, res) => {
         }
 
         const fechaInicio = obtenerFechaBogota(offset);
+        const fechaConsulta = serializarFecha(fechaInicio);
+        const prediccionFnc = await leerPrediccionFnc();
+
+        if (prediccionFnc && fechaCoincide(prediccionFnc.fecha, fechaConsulta)) {
+            return res.json({
+                offset,
+                ...prediccionFnc,
+            });
+        }
 
         const fechaFin = new Date(fechaInicio);
         fechaFin.setUTCDate(fechaFin.getUTCDate() + 1);
@@ -197,6 +328,11 @@ export const getPrediccionPorFecha = async (req, res) => {
             return res.status(400).json({
                 message: "Debes enviar una fecha en formato YYYY-MM-DD"
             });
+        }
+
+        const prediccionFnc = await leerPrediccionFnc();
+        if (prediccionFnc && fechaCoincide(prediccionFnc.fecha, fecha)) {
+            return res.json(prediccionFnc);
         }
 
         const fechaInicio = new Date(`${fecha}T00:00:00.000Z`);

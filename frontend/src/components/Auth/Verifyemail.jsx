@@ -19,8 +19,6 @@ export default function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(60);
-  const [pendiente, setPendiente] = useState(false);
-  const [verificado, setVerificado] = useState(false);
   const [exito, setExito] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
@@ -87,7 +85,19 @@ export default function VerifyEmail() {
       }
 
       if (data.pendiente) {
-        setPendiente(true);
+        login({
+          id: data.id,
+          rol: data.role,
+          nombre: data.name,
+          apellido: data.apellido,
+          celular: data.celular,
+          email: data.email,
+          estado: "pendiente",
+        });
+        navigate("/completar-perfil", {
+          replace: true,
+          state: { desdeVerificacion: true },
+        });
         return;
       }
 
@@ -174,7 +184,7 @@ export default function VerifyEmail() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-200 h-full max-h-200 rounded-full bg-[#C8814A]/5 blur-3xl" />
       </div>
 
-      {!verificado && !pendiente && !exito && (
+      {!exito && (
         <button
           onClick={() => navigate("/register")}
           className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 group transition-all duration-300 hover:scale-110"
@@ -268,22 +278,6 @@ export default function VerifyEmail() {
                     style={{ width: `${((3 - countdown) / 3) * 100}%` }}
                   />
                 </div>
-              </div>
-
-            ) : pendiente ? (
-              <div className="text-center py-8 px-4">
-                <div className="w-20 h-20 rounded-2xl bg-[#C8814A]/10 flex items-center justify-center text-5xl mx-auto mb-6">⏳</div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#3B1F0A] mb-3 font-serif">¡Correo verificado!</h2>
-                <p className="text-sm text-gray-400 leading-relaxed mb-8 max-w-sm mx-auto">
-                  Tu cuenta de comprador fue verificada. Un administrador revisará tu perfil empresarial pronto y te notificará por correo.
-                </p>
-                <button
-                  onClick={() => navigate("/login")}
-                  className="w-full py-2.5 sm:py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28]"
-                >
-                  <span className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <span className="relative">☕ Ir al inicio de sesión</span>
-                </button>
               </div>
 
             ) : (

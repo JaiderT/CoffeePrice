@@ -177,10 +177,22 @@ export const verifyEmailCodigo = async (req, res) => {
     usuario.codigoVerificacionExpira = null;
 
     if (usuario.rol === "comprador") {
+      usuario.ultimaConexion = new Date();
       await usuario.save();
+
+      const token = generarToken(usuario);
+      fijarCookieAuth(res, token);
+
       return res.status(200).json({
-        message: "Correo verificado. Tu cuenta será revisada por un administrador.",
+        message: "Correo verificado. Completa tu perfil empresarial para enviarlo a revisión.",
         pendiente: true,
+        user: construirSesionUsuario(usuario),
+        role: usuario.rol,
+        name: usuario.nombre,
+        apellido: usuario.apellido,
+        id: usuario._id,
+        celular: usuario.celular,
+        email: usuario.email,
       });
     }
 

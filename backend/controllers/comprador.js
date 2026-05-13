@@ -1,8 +1,11 @@
 import CompradorModel from "../models/comprador.js";
+import Usuario from "../models/usuario.js";
+import { ESTADOS_REVISION_COMPRADOR } from "../utils/compradorEstado.js";
+import { enviarSolicitudCompradorAdmin } from "../services/emailService.js";
 
 export const getcompradores = async (req, res) => {
     try {
-        const compradores = await CompradorModel.find().populate("usuario", "nombre apellido email");
+        const compradores = await CompradorModel.find().populate("usuario", "nombre apellido email estado");
         res.json(compradores);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener compradores", error: error.message });
@@ -64,9 +67,43 @@ export const createcomprador = async (req, res) => {
             horarioCierre: horarioCierre || "17:00",
             latitud: latitud ? parseFloat(latitud) : null,
             longitud: longitud ? parseFloat(longitud) : null,
+            estadoRevision: ESTADOS_REVISION_COMPRADOR.EN_REVISION,
         });
 
         await nuevoComprador.save();
+
+        const usuarioSolicitante = await Usuario.findById(usuario).select("nombre apellido email celular");
+
+        const admins = await Usuario.find({
+            rol: "admin",
+            estado: "activo",
+            email: { $exists: true, $ne: null },
+        }).select("email");
+
+        const destinatarios = admins.map((admin) => admin.email);
+        if (process.env.EMAIL_ADMIN_NOTIFY) {
+            const extras = process.env.EMAIL_ADMIN_NOTIFY
+                .split(",")
+                .map((email) => email.trim())
+                .filter(Boolean);
+            destinatarios.push(...extras);
+        }
+
+        const destinatariosUnicos = [...new Set(destinatarios)];
+        await enviarSolicitudCompradorAdmin({
+            destinatarios: destinatariosUnicos,
+            nombreSolicitante: `${usuarioSolicitante?.nombre || ""} ${usuarioSolicitante?.apellido || ""}`.trim() || usuarioSolicitante?.email,
+            emailSolicitante: usuarioSolicitante?.email || "No disponible",
+            celularSolicitante: usuarioSolicitante?.celular,
+            usuarioId: usuario,
+            empresa: {
+                nombreempresa: nuevoComprador.nombreempresa,
+                tipoempresa: nuevoComprador.tipoempresa,
+                municipio: nuevoComprador.municipio,
+                telefono: nuevoComprador.telefono,
+                direccion: nuevoComprador.direccion,
+            },
+        });
 
         res.status(201).json({
             comprador: nuevoComprador,
@@ -155,7 +192,7 @@ export const getcompradorByUsuario = async (req, res) => {
         }
 
         const comprador = await CompradorModel.findOne({ usuario: req.params.usuarioId })
-            .populate("usuario", "nombre apellido email");
+            .populate("usuario", "nombre apellido email estado rol");
 
         if (!comprador) {
             return res.status(404).json({ message: "Comprador no encontrado" });

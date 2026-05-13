@@ -1,6 +1,48 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
+import { MapContainer, Marker, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../../context/useAuth.js';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+function MapaSolicitud({ latitud, longitud }) {
+  if (!Number.isFinite(latitud) || !Number.isFinite(longitud)) {
+    return (
+      <div className="rounded-xl border border-dashed border-[#C8A96E]/40 bg-[#FCF8F1] px-4 py-6 text-sm text-[#8B7355]">
+        No registró una ubicación exacta en el mapa.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-[#E8D8BF]" style={{ height: '220px' }}>
+      <MapContainer
+        center={[latitud, longitud]}
+        zoom={17}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={false}
+        dragging={false}
+        doubleClickZoom={false}
+        touchZoom={false}
+        zoomControl={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={[latitud, longitud]} />
+      </MapContainer>
+    </div>
+  );
+}
 
 const TAGS = [
   { value: 'precio_justo', label: 'Precio justo' },
@@ -14,6 +56,7 @@ const TAGS = [
 export default function PerfilAdmin() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [pestana, setPestana] = useState('perfil');
   const [modo, setModo] = useState('ver');
@@ -36,6 +79,9 @@ export default function PerfilAdmin() {
   const [modalEliminarPlataforma, setModalEliminarPlataforma] = useState(null);
   const [modalEliminarNoticia, setModalEliminarNoticia] = useState(null);
   const [modalEliminarUsuario, setModalEliminarUsuario] = useState(null);
+  const [modalSolicitud, setModalSolicitud] = useState(null);
+  const [modalRechazo, setModalRechazo] = useState(null);
+  const [motivoRechazo, setMotivoRechazo] = useState('');
   const [mostrarFormNoticia, setMostrarFormNoticia] = useState(false);
   const [noticiaEditar, setNoticiaEditar] = useState(null);
   const [formNoticia, setFormNoticia] = useState({
@@ -227,7 +273,7 @@ export default function PerfilAdmin() {
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'activo' }, { withCredentials: true });
-      mostrarMensaje('exito', 'Usuario reactivado correctamente');
+      mostrarMensaje('exito', 'Comprador aprobado y notificado por correo');
       obtenerUsuarios();
       obtenerCompradores();
     } catch {
@@ -236,10 +282,18 @@ export default function PerfilAdmin() {
   };
 
   const handleRechazarComprador = async (usuarioId) => {
+    const motivoLimpio = motivoRechazo.trim();
+    if (!motivoLimpio) {
+      mostrarMensaje('error', 'Debes escribir un motivo de rechazo');
+      return;
+    }
+
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
-        { estado: 'rechazado' }, { withCredentials: true });
-      mostrarMensaje('exito', 'Comprador rechazado');
+        { estado: 'rechazado', motivoRevision: motivoLimpio }, { withCredentials: true });
+      mostrarMensaje('exito', 'Comprador rechazado y notificado por correo');
+      setModalRechazo(null);
+      setMotivoRechazo('');
       obtenerUsuarios();
       obtenerCompradores();
     } catch {
@@ -333,6 +387,43 @@ export default function PerfilAdmin() {
   const compradoresPendientes = usuarios.filter((u) => u.rol === 'comprador' && u.estado === 'pendiente');
   const usuariosSuspendidos = usuarios.filter((u) => u.estado === 'suspendido');
   const getEmpresa = (u) => compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
+  const getEstadoRevisionLabel = (estado) => {
+    switch (estado) {
+      case 'aprobado':
+        return 'Aprobado';
+      case 'enRevision':
+        return 'En revisión';
+      case 'rechazado':
+        return 'Rechazado';
+      case 'requiereInformacion':
+        return 'Requiere información';
+      default:
+        return 'Perfil incompleto';
+    }
+  };
+  const abrirSolicitud = useCallback((u) => {
+    const comp = compradores.find((c) => c.usuario?._id === u._id || c.usuario === u._id);
+    setPestana('gestion');
+    setModalSolicitud({ usuario: u, comprador: comp || null });
+  }, [compradores]);
+
+  useEffect(() => {
+    const solicitudId = searchParams.get('solicitud');
+    if (!solicitudId) return;
+    if (pestana !== 'gestion') {
+      setPestana('gestion');
+      return;
+    }
+    if (usuarios.length === 0) return;
+
+    const usuarioSolicitud = usuarios.find((u) => u._id === solicitudId);
+    if (!usuarioSolicitud) return;
+
+    abrirSolicitud(usuarioSolicitud);
+    const nuevosParams = new URLSearchParams(searchParams);
+    nuevosParams.delete('solicitud');
+    setSearchParams(nuevosParams, { replace: true });
+  }, [abrirSolicitud, pestana, searchParams, setSearchParams, usuarios]);
 
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-4 md:p-10">
@@ -354,9 +445,12 @@ export default function PerfilAdmin() {
           </div>
           <div className="flex flex-col gap-2 items-start sm:items-end">
             {compradoresPendientes.length > 0 && (
-              <div className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold">
-                ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s)
-              </div>
+              <button
+                onClick={() => abrirSolicitud(compradoresPendientes[0])}
+                className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold hover:bg-yellow-500/30 transition-colors text-left"
+              >
+                ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s). Presiona para revisar.
+              </button>
             )}
             {usuariosSuspendidos.length > 0 && (
               <div className="bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs px-4 py-2 rounded-xl font-semibold">
@@ -549,14 +643,31 @@ export default function PerfilAdmin() {
                         <div>
                           <p className="font-semibold text-[#2C1A0E] text-sm">{u.nombre} {u.apellido}</p>
                           <p className="text-gray-400 text-xs">{u.email}</p>
-                          {comp && <p className="text-[#C8A96E] text-xs font-semibold mt-1">🏢 {comp.nombreempresa}</p>}
+                          <p className="text-gray-400 text-xs mt-1">{u.celular || 'Sin celular registrado'}</p>
+                          {comp ? (
+                            <div className="mt-2 space-y-1 text-xs">
+                              <p className="text-[#C8A96E] font-semibold">🏢 {comp.nombreempresa}</p>
+                              <p className="text-[#6B5A4D]">{comp.tipoempresa || 'independiente'} · {comp.municipio || 'El Pital'}</p>
+                              <p className="text-[#6B5A4D]">{comp.telefono || 'Sin teléfono de empresa'} · {comp.direccion}</p>
+                              {comp.descripcion && <p className="text-[#8B7355] max-w-xl">{comp.descripcion}</p>}
+                              {comp.servicios?.length > 0 && (
+                                <p className="text-[#8B7355]">Servicios: {comp.servicios.join(', ')}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-red-500 text-xs font-semibold mt-2">Aún no ha completado el perfil de empresa</p>
+                          )}
                         </div>
                         <div className="flex gap-2 self-start sm:self-auto">
+                          <button onClick={() => abrirSolicitud(u)}
+                            className="bg-[#F5ECD7] text-[#7A4020] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
+                            Ver solicitud
+                          </button>
                           <button onClick={() => handleAprobarComprador(u._id)}
                             className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors">
                             ✓ Aprobar
                           </button>
-                          <button onClick={() => handleRechazarComprador(u._id)}
+                          <button onClick={() => { setModalRechazo(u); setMotivoRechazo(''); }}
                             className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-200 transition-colors">
                             ✕ Rechazar
                           </button>
@@ -597,7 +708,15 @@ export default function PerfilAdmin() {
                             <p className="font-semibold text-[#2C1A0E] text-sm truncate">{u.nombre} {u.apellido}</p>
                             <p className="text-gray-400 text-xs truncate">{u.email}</p>
                             {u.rol === 'comprador' && comp && (
-                              <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">🏢 {comp.nombreempresa}</p>
+                              <>
+                                <p className="text-[#C8A96E] text-xs font-semibold mt-0.5">🏢 {comp.nombreempresa}</p>
+                                {comp.estadoRevision && (
+                                  <p className="text-gray-400 text-[11px] mt-0.5">
+                                    Revisión: {comp.estadoRevision}
+                                    {comp.motivoRevision ? ` · Motivo: ${comp.motivoRevision}` : ''}
+                                  </p>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -833,6 +952,177 @@ export default function PerfilAdmin() {
           </div>
         )}
       </div>
+
+      {modalSolicitud && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-[#2C1A0E] font-bold text-lg">Solicitud de comprador</h3>
+                <p className="text-gray-400 text-sm mt-1">Revisa la información completa antes de aprobar o rechazar.</p>
+              </div>
+              <button onClick={() => setModalSolicitud(null)} className="text-gray-400 hover:text-gray-700">
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-[#F9F4E8] rounded-2xl p-5">
+                  <p className="text-xs font-bold text-[#8B6B45] uppercase mb-3">Datos del solicitante</p>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.usuario.nombre} {modalSolicitud.usuario.apellido}</p>
+                    <p className="text-gray-500">{modalSolicitud.usuario.email}</p>
+                    <p className="text-gray-500">{modalSolicitud.usuario.celular || 'Sin celular registrado'}</p>
+                    <p className="text-gray-500">Estado actual: {modalSolicitud.usuario.estado}</p>
+                  </div>
+                </div>
+
+                <div className="bg-[#FFF8EC] rounded-2xl p-5">
+                  <p className="text-xs font-bold text-[#8B6B45] uppercase mb-3">Estado de revisión</p>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-[#2C1A0E] font-semibold">
+                      {getEstadoRevisionLabel(modalSolicitud.comprador?.estadoRevision)}
+                    </p>
+                    <p className="text-gray-500">
+                      {modalSolicitud.comprador?.motivoRevision || 'Sin observaciones registradas'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E7D9BF] rounded-2xl p-5">
+                <p className="text-xs font-bold text-[#8B6B45] uppercase mb-4">Perfil de empresa</p>
+                {modalSolicitud.comprador ? (
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400 text-xs">Empresa</p>
+                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.nombreempresa}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Tipo</p>
+                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.tipoempresa || 'independiente'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Municipio</p>
+                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.municipio || 'El Pital'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Teléfono de empresa</p>
+                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.telefono || 'No registrado'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-gray-400 text-xs">Dirección</p>
+                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.direccion}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-gray-400 text-xs">Descripción</p>
+                      <p className="text-[#2C1A0E]">{modalSolicitud.comprador.descripcion || 'Sin descripción'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-gray-400 text-xs">Servicios</p>
+                      <p className="text-[#2C1A0E]">
+                        {modalSolicitud.comprador.servicios?.length > 0
+                          ? modalSolicitud.comprador.servicios.join(', ')
+                          : 'Sin servicios registrados'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-gray-400 text-xs">Ubicación exacta</p>
+                      <p className="text-[#2C1A0E]">
+                        {Number.isFinite(modalSolicitud.comprador.latitud) && Number.isFinite(modalSolicitud.comprador.longitud)
+                          ? `Lat: ${modalSolicitud.comprador.latitud} · Lng: ${modalSolicitud.comprador.longitud}`
+                          : 'No registró ubicación exacta en el mapa'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-gray-400 text-xs mb-2">Punto de compra en el mapa</p>
+                      <MapaSolicitud
+                        latitud={modalSolicitud.comprador.latitud}
+                        longitud={modalSolicitud.comprador.longitud}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-red-500 text-sm font-semibold">El comprador aún no ha completado el perfil de empresa.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap justify-end gap-3">
+              <button
+                onClick={() => setModalSolicitud(null)}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={() => {
+                  setModalSolicitud(null);
+                  setModalRechazo(modalSolicitud.usuario);
+                  setMotivoRechazo('');
+                }}
+                className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-sm font-semibold hover:bg-red-200 transition-colors"
+              >
+                Rechazar
+              </button>
+              <button
+                onClick={() => {
+                  handleAprobarComprador(modalSolicitud.usuario._id);
+                  setModalSolicitud(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
+              >
+                Aprobar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalRechazo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-[#2C1A0E] font-bold text-lg">Motivo de rechazo</h3>
+                <p className="text-gray-400 text-sm mt-1">Este mensaje se enviará al comprador por correo.</p>
+              </div>
+              <button onClick={() => { setModalRechazo(null); setMotivoRechazo(''); }} className="text-gray-400 hover:text-gray-700">
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm text-[#2C1A0E] font-semibold mb-3">
+                {modalRechazo.nombre} {modalRechazo.apellido}
+              </p>
+              <textarea
+                value={motivoRechazo}
+                onChange={(e) => setMotivoRechazo(e.target.value)}
+                rows={5}
+                placeholder="Escribe con claridad por qué se rechaza la solicitud o qué debe corregir el comprador."
+                className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none"
+              />
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => { setModalRechazo(null); setMotivoRechazo(''); }}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleRechazarComprador(modalRechazo._id)}
+                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
+              >
+                Enviar rechazo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal crear/editar noticia */}
       {mostrarFormNoticia && (

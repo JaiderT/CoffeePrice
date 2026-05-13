@@ -39,6 +39,7 @@ const categoriaEmoji = {
 function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   const [paso, setPaso] = useState('seleccion');
   const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState(alertasActivas.categorias || []);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState({
     push: alertasActivas.canales?.push ?? true,
@@ -56,10 +57,11 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
 
   const activarNotificaciones = async () => {
     setCargando(true);
+    setError(null);
     try {
       if (canalesSeleccionados.push) {
         if (!('Notification' in window)) {
-          alert('Tu navegador no soporta notificaciones push.');
+          setError('Tu navegador no soporta notificaciones push.');
           setCargando(false);
           return;
         }
@@ -72,7 +74,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       }
 
       if (usuarioId) {
-        await fetch(`${API_URL}/api/alertas-noticias`, {
+        const response = await fetch(`${API_URL}/api/alertas-noticias`, {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -84,6 +86,10 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
             activa: true,
           }),
         });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || 'No se pudo guardar la alerta');
+        }
       }
 
       const config = {
@@ -107,7 +113,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       setPaso('exito');
     } catch (error) {
       console.error('Error al activar alertas:', error);
-      setPaso('exito');
+      setError(error.message || 'No se pudo activar la alerta. Intenta de nuevo.');
     } finally {
       setCargando(false);
     }
@@ -143,6 +149,11 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
         <div className="px-6 py-6">
           {paso === 'seleccion' && (
             <>
+              {error && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-600">
+                  {error}
+                </div>
+              )}
               <p className="text-[#2C1A0E] text-sm font-semibold mb-4">Sobre que quieres recibir alertas?</p>
               <div className="space-y-2 mb-5">
                 {categorias.map((categoria) => {

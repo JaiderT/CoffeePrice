@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ESTADOS_REVISION_COMPRADOR } from "../utils/compradorEstado.js";
 const compradorSchema = new mongoose.Schema(
     {
         usuario: {
@@ -68,6 +69,26 @@ const compradorSchema = new mongoose.Schema(
         UbicacionVerificada: {
             type: Boolean,
             default: false,
+        },
+        estadoRevision: {
+            type: String,
+            enum: Object.values(ESTADOS_REVISION_COMPRADOR),
+            default: ESTADOS_REVISION_COMPRADOR.PERFIL_INCOMPLETO,
+        },
+        motivoRevision: {
+            type: String,
+            trim: true,
+            default: null,
+            maxlength: 500,
+        },
+        fechaRevision: {
+            type: Date,
+            default: null,
+        },
+        aprobadoPor: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "usuario",
+            default: null,
         },
     },
     { timestamps: true }

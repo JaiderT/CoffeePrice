@@ -8,6 +8,15 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function escaparHtml(texto = '') {
+  return String(texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export const enviarAlertaPrecio = async ({ destinatario, nombreUsuario, nombreComprador, precioMinimo, precioActual }) => {
   try {
     await transporter.sendMail({
@@ -195,6 +204,97 @@ export const enviarNotificacionPrecio = async ({ destinatario, nombreUsuario, no
     return true;
   } catch (error) {
     console.error('❌ Error al enviar notificación de precio:', error.message);
+    return false;
+  }
+};
+
+export const enviarSolicitudCompradorAdmin = async ({
+  destinatarios,
+  nombreSolicitante,
+  emailSolicitante,
+  celularSolicitante,
+  usuarioId,
+  empresa,
+}) => {
+  try {
+    if (!destinatarios?.length) return false;
+    const enlaceRevision = usuarioId
+      ? `${process.env.FRONTEND_URL}/admin/perfil?solicitud=${usuarioId}`
+      : `${process.env.FRONTEND_URL}/admin/perfil`;
+
+    await transporter.sendMail({
+      from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
+      to: destinatarios.join(','),
+      subject: `Nueva solicitud de comprador: ${empresa.nombreempresa}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border:1px solid #eadfca;border-radius:16px;overflow:hidden">
+          <div style="background:#2C1A0E;padding:24px;text-align:center;color:#fff">
+            <h1 style="margin:0;font-size:22px;">Nueva solicitud de comprador</h1>
+          </div>
+          <div style="padding:24px;color:#2C1A0E">
+            <p style="margin-top:0;">Un comprador completó su perfil y está pendiente de revisión.</p>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:8px 0;color:#8B7355">Solicitante</td><td style="padding:8px 0;text-align:right;font-weight:bold">${escaparHtml(nombreSolicitante)}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Correo</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(emailSolicitante)}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Celular</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(celularSolicitante || 'No registrado')}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Empresa</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(empresa.nombreempresa)}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Tipo</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(empresa.tipoempresa || 'independiente')}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Municipio</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(empresa.municipio || 'El Pital')}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Teléfono empresa</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(empresa.telefono || 'No registrado')}</td></tr>
+              <tr><td style="padding:8px 0;color:#8B7355;border-top:1px solid #eee">Dirección</td><td style="padding:8px 0;text-align:right;border-top:1px solid #eee">${escaparHtml(empresa.direccion)}</td></tr>
+            </table>
+            <div style="margin-top:24px">
+              <a href="${enlaceRevision}" style="display:inline-block;background:#C8A96E;color:#fff;text-decoration:none;padding:12px 24px;border-radius:24px;font-weight:bold">
+                Abrir solicitud en el panel admin
+              </a>
+            </div>
+            <p style="margin:24px 0 0;color:#8B7355;font-size:12px;">Revísalo desde el panel de administración de CoffePrice.</p>
+          </div>
+        </div>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error al notificar solicitud de comprador:', error.message);
+    return false;
+  }
+};
+
+export const enviarDecisionComprador = async ({
+  destinatario,
+  nombreUsuario,
+  estado,
+  motivoRevision,
+}) => {
+  try {
+    if (!destinatario) return false;
+
+    const aprobado = estado === 'activo';
+    await transporter.sendMail({
+      from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
+      to: destinatario,
+      subject: aprobado ? 'Tu cuenta de comprador fue aprobada' : 'Actualización sobre tu solicitud de comprador',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border:1px solid #eadfca;border-radius:16px;overflow:hidden">
+          <div style="background:${aprobado ? '#2C6B3F' : '#7A4020'};padding:24px;text-align:center;color:#fff">
+            <h1 style="margin:0;font-size:22px;">${aprobado ? 'Cuenta aprobada' : 'Solicitud rechazada'}</h1>
+          </div>
+          <div style="padding:24px;color:#2C1A0E">
+            <p>Hola <strong>${escaparHtml(nombreUsuario)}</strong>,</p>
+            <p>${aprobado ? 'tu perfil de comprador fue aprobado y ya puedes ingresar al panel de comprador.' : 'revisamos tu perfil de comprador y por ahora no fue aprobado.'}</p>
+            ${!aprobado && motivoRevision ? `<div style="background:#FFF4E8;border:1px solid #F0C79A;border-radius:12px;padding:16px;margin-top:16px"><p style="margin:0 0 8px;font-weight:bold;color:#7A4020">Motivo de revisión</p><p style="margin:0;color:#6B5A4D">${escaparHtml(motivoRevision)}</p></div>` : ''}
+            <div style="margin-top:24px;text-align:center">
+              <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#C8A96E;color:#fff;text-decoration:none;padding:12px 24px;border-radius:24px;font-weight:bold">
+                Ir a CoffePrice
+              </a>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error al enviar decisión de comprador:', error.message);
     return false;
   }
 };

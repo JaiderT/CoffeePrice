@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { AlertasProvider } from './context/AlertasContext.jsx'
 import axios from "axios";
+import { limpiarUsuarioLocal } from './utils/authStorage.js';
 
 const RUTAS_PUBLICAS = [
   "/api/precios",
@@ -24,7 +25,7 @@ axios.interceptors.response.use(
       const esPublica = RUTAS_PUBLICAS.some(ruta => url.includes(ruta));
       if (!esPublica) {
         // Solo redirige si la ruta requería autenticación
-        localStorage.clear();
+        limpiarUsuarioLocal();
         window.location.href = "/login?error=sesion_expirada";
       }
     }

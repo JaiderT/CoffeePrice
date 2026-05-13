@@ -233,28 +233,26 @@ export default function DashboardProductor() {
 
   const cargarHistorial = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/precios`);
+      const res = await axios.get(`${API_URL}/api/historial-precios`, { withCredentials: true });
       const datos = res.data;
       if (Array.isArray(datos) && datos.length > 0) {
         const porFecha = {};
         datos.forEach(p => {
           const raw = p.updatedAt || p.createdAt || p.fecha;
-          const fecha = raw
-            ? new Date(raw).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
-            : 'Hoy';
-          if (!porFecha[fecha]) porFecha[fecha] = [];
-          porFecha[fecha].push(p.preciocarga);
+          if (!raw) return;
+          const fechaBase = new Date(raw);
+          if (Number.isNaN(fechaBase.getTime())) return;
+          const fechaKey = fechaBase.toISOString().slice(0, 10);
+          if (!porFecha[fechaKey]) porFecha[fechaKey] = [];
+          porFecha[fechaKey].push(p.preciocarga);
         });
         const grafica = Object.entries(porFecha)
-          .slice(-10)
+          .sort(([a], [b]) => a.localeCompare(b))
           .map(([label, vals]) => ({
-            label,
+            fecha: label,
             precio: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length),
           }));
-        if (grafica.length > 0) {
-          grafica[grafica.length - 1].label = 'Hoy';
-          setHistorial(grafica);
-        }
+        setHistorial(grafica);
       }
     } catch {
       // silencioso
@@ -320,7 +318,27 @@ export default function DashboardProductor() {
 
   const totalVenta = precioMasAlto * cargas;
 
-  const datosGrafica = historial.length > 1 ? historial : [
+  const diasPorRango = {
+    "7D": 7,
+    "30D": 30,
+    "90D": 90,
+    "1A": 365,
+  };
+
+  const datosHistorialFiltrados = historial.filter((item) => {
+    const dias = diasPorRango[rangoGrafica] || 30;
+    const fecha = new Date(`${item.fecha}T12:00:00`);
+    if (Number.isNaN(fecha.getTime())) return false;
+    const diffDias = Math.floor((Date.now() - fecha.getTime()) / 86400000);
+    return diffDias <= dias;
+  });
+
+  const datosGrafica = datosHistorialFiltrados.length > 1 ? datosHistorialFiltrados.map((item, index, array) => ({
+    label: index === array.length - 1
+      ? 'Hoy'
+      : new Date(`${item.fecha}T12:00:00`).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+    precio: item.precio,
+  })) : [
     { label: "Feb 3",  precio: 1840000 },
     { label: "Feb 9",  precio: 1870000 },
     { label: "Feb 16", precio: 1900000 },
@@ -585,7 +603,7 @@ export default function DashboardProductor() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                {historial.length === 0 && (
+                {datosHistorialFiltrados.length === 0 && (
                   <p className="text-center text-xs text-gray-400 mt-2">
                     Mostrando datos de ejemplo — se actualizará con actividad real
                   </p>

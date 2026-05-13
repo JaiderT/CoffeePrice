@@ -1,8 +1,38 @@
 {
-  "fecha_actual": "2026-05-04",
+  "fecha_actual": "2026-05-12",
   "precio_actual_fnc": 2300000,
-  "fecha_prediccion": "2026-05-05",
-  "precio_estimado": 2295012,
-  "variacion_porcentual": -0.22,
-  "modelo": "fnc_xgboost"
+  "fecha_prediccion": "2026-05-13",
+  "fecha_prediccion_original": "2026-05-13",
+  "salto_fin_semana": false,
+  "precio_estimado": 2287200,
+  "precio_minimo": 2246600,
+  "precio_maximo": 2327800,
+  "variacion_porcentual": -0.56,
+  "tendencia": "baja",
+  "modelo": "fnc_hibrido",
+  "estrategia_base": "naive",
+  "estrategia_aplicada": "ensemble_ponderado",
+  "holdout_mape": 1.7897,
+  "holdout_mae": 40570.23,
+  "explicacion": "La base historica sigue favoreciendo continuidad, pero la salida final ahora usa un ensamble ponderado para no depender solo de replicar el ultimo FNC.",
+  "senales_modelo": {
+    "ultimo_fnc": 2300000,
+    "kc_variacion_pct": 0.0,
+    "trm_variacion_pct": 0.82,
+    "fuerza_senal": 0.18,
+    "pesos_ensamble": {
+      "naive": 0.4191,
+      "prophet": 0.0515,
+      "hybrid": 0.054,
+      "formula": 0.4753
+    },
+    "prophet_bruto": 2256600,
+    "prophet_variacion_pct": -1.89,
+    "residual_xgboost": 5000,
+    "hybrid_bruto": 2261600,
+    "hybrid_variacion_pct": -1.67,
+    "formula_bruto": 2282700,
+    "formula_variacion_pct": -0.75,
+    "formula_residual_xgboost": 82300
+  }
 }

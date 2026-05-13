@@ -1,6 +1,5 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAlertas } from './hooks/useAlertas.js';
 import { useAuth } from './context/useAuth.js';
 
 const Login = lazy(() => import('./components/Auth/Login.jsx'));
@@ -48,10 +47,10 @@ function ScreenLoader() {
 }
 
 function App() {
-  useAlertas();
   const { usuario } = useAuth();
 
   const suspendido = usuario?.estado === 'suspendido';
+  const compradorPendiente = usuario?.rol === 'comprador' && usuario?.estado !== 'activo';
 
   return (
     <BrowserRouter>
@@ -68,6 +67,8 @@ function App() {
               element={
                 suspendido ? (
                   <Navigate to="/cuenta-suspendida" />
+                ) : compradorPendiente ? (
+                  <Navigate to="/completar-perfil" replace />
                 ) : usuario?.rol ? (
                   <LayoutPrivado>
                     <Inicio />
@@ -83,7 +84,12 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/auth/google" element={<GoogleAuth />} />
-            <Route path="/completar-perfil" element={<CompletarPerfil />} />
+            <Route
+              path="/completar-perfil"
+              element={
+                suspendido ? <Navigate to="/cuenta-suspendida" /> : <CompletarPerfil />
+              }
+            />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-code" element={<VerifyCode />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
@@ -106,6 +112,8 @@ function App() {
               element={
                 suspendido ? (
                   <Navigate to="/cuenta-suspendida" />
+                ) : compradorPendiente ? (
+                  <Navigate to="/completar-perfil" replace />
                 ) : (
                   <LayoutPrivado>
                     <Precios />
@@ -191,9 +199,13 @@ function App() {
                   <Navigate to="/cuenta-suspendida" />
                 ) : (
                   <PrivateRoute roles={['comprador']}>
-                    <LayoutComprador>
-                      <DashboardComprador />
-                    </LayoutComprador>
+                    {compradorPendiente ? (
+                      <Navigate to="/completar-perfil" replace />
+                    ) : (
+                      <LayoutComprador>
+                        <DashboardComprador />
+                      </LayoutComprador>
+                    )}
                   </PrivateRoute>
                 )
               }
@@ -205,9 +217,13 @@ function App() {
                   <Navigate to="/cuenta-suspendida" />
                 ) : (
                   <PrivateRoute roles={['comprador']}>
-                    <LayoutComprador>
-                      <PerfilComprador />
-                    </LayoutComprador>
+                    {compradorPendiente ? (
+                      <Navigate to="/completar-perfil" replace />
+                    ) : (
+                      <LayoutComprador>
+                        <PerfilComprador />
+                      </LayoutComprador>
+                    )}
                   </PrivateRoute>
                 )
               }
@@ -219,9 +235,13 @@ function App() {
                   <Navigate to="/cuenta-suspendida" />
                 ) : (
                   <PrivateRoute roles={['comprador', 'productor', 'admin']}>
-                    <LayoutComprador>
-                      <MapaCompradores />
-                    </LayoutComprador>
+                    {compradorPendiente ? (
+                      <Navigate to="/completar-perfil" replace />
+                    ) : (
+                      <LayoutComprador>
+                        <MapaCompradores />
+                      </LayoutComprador>
+                    )}
                   </PrivateRoute>
                 )
               }
