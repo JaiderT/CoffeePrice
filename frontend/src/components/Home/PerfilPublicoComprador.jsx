@@ -57,6 +57,120 @@ function renderEstrellas(n) {
   );
 }
 
+function Calculadora({ precios }) {
+  const [tipoCafe, setTipoCafe] = useState('');
+  const [cantidad, setCantidad] = useState('');
+  const [unidad, setUnidad] = useState('cargas');
+
+  useEffect(() => {
+    if (precios.length > 0) {
+      setTipoCafe(precios[0].tipocafe);
+    }
+  }, [precios]);
+
+  const precioSeleccionado = precios.find(p => p.tipocafe === tipoCafe);
+  const porKg = esPorKg(tipoCafe);
+  const cantidadNum = Number(cantidad);
+
+  const calcularGanancia = () => {
+    if (!precioSeleccionado || !cantidadNum || cantidadNum <= 0) return null;
+    if (porKg) {
+      return precioSeleccionado.preciocarga * cantidadNum;
+    }
+    if (unidad === 'cargas') {
+      return precioSeleccionado.preciocarga * cantidadNum;
+    } else {
+      return precioSeleccionado.preciokg * cantidadNum;
+    }
+  };
+
+  const ganancia = calcularGanancia();
+
+  if (precios.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+      <h3 className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora de ganancia</h3>
+      <p className="text-[#8B7355] text-xs mb-4">Calcula cuánto recibirías por tu cosecha</p>
+
+      <div className="mb-3">
+        <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">Producto</label>
+        <select value={tipoCafe} onChange={e => { setTipoCafe(e.target.value); setCantidad(''); setUnidad('cargas'); }}
+          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E]">
+          {precios.map(p => {
+            const info = LABELS_PRODUCTO[p.tipocafe] || { label: p.tipocafe?.replace(/_/g, ' '), emoji: '📦' };
+            return (
+              <option key={p.tipocafe} value={p.tipocafe}>
+                {info.emoji} {info.label}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
+      {!porKg && (
+        <div className="mb-3">
+          <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">Calcular por</label>
+          <div className="flex rounded-xl border border-[#E7D9BF] overflow-hidden">
+            <button type="button"
+              onClick={() => { setUnidad('cargas'); setCantidad(''); }}
+              className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                unidad === 'cargas' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#8B7355] hover:bg-[#F7F1E3]'
+              }`}>
+              🏋️ Cargas
+            </button>
+            <button type="button"
+              onClick={() => { setUnidad('kg'); setCantidad(''); }}
+              className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                unidad === 'kg' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#8B7355] hover:bg-[#F7F1E3]'
+              }`}>
+              ⚖️ Kilogramos
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">
+          {porKg ? 'Cantidad (kg)' : unidad === 'cargas' ? 'Número de cargas' : 'Cantidad (kg)'}
+        </label>
+        <input type="number" min="0"
+          placeholder={porKg ? 'Ej: 50' : unidad === 'cargas' ? 'Ej: 3' : 'Ej: 375'}
+          value={cantidad}
+          onChange={e => setCantidad(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-white text-[#2C1A0E]" />
+        {precioSeleccionado && (
+          <p className="text-xs text-[#8B7355] mt-1">
+            {porKg
+              ? `$${precioSeleccionado.preciocarga?.toLocaleString()} / kg`
+              : unidad === 'cargas'
+                ? `$${precioSeleccionado.preciocarga?.toLocaleString()} / carga (125 kg)`
+                : `$${precioSeleccionado.preciokg?.toLocaleString()} / kg`}
+          </p>
+        )}
+      </div>
+
+      {ganancia !== null ? (
+        <div className="bg-[#2C1A0E] rounded-xl p-4 text-center">
+          <p className="text-[#D8C7A8] text-xs uppercase font-semibold mb-1">Recibirías aprox.</p>
+          <p className="text-white text-2xl font-bold">${Math.round(ganancia).toLocaleString()}</p>
+          <p className="text-[#D8C7A8] text-xs mt-1">
+            {porKg
+              ? `${cantidadNum} kg × $${precioSeleccionado?.preciocarga?.toLocaleString()}/kg`
+              : unidad === 'cargas'
+                ? `${cantidadNum} carga${cantidadNum !== 1 ? 's' : ''} × $${precioSeleccionado?.preciocarga?.toLocaleString()}`
+                : `${cantidadNum} kg × $${precioSeleccionado?.preciokg?.toLocaleString()}/kg`}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-[#F7F1E3] rounded-xl p-4 text-center">
+          <p className="text-[#8B7355] text-xs">Ingresa una cantidad para calcular</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PerfilPublicoComprador() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -169,7 +283,6 @@ export default function PerfilPublicoComprador() {
   const iniciales = (nombre) =>
     nombre ? nombre.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase() : '?';
 
-  // Precio principal — pergamino seco o el primero disponible
   const precioActual = precios.find(p => p.tipocafe === 'pergamino_seco') || precios[0];
   const historialFiltrado = historialPrecios.slice(0, 7);
   const maxPrecioHistorial = historialFiltrado.length > 0
@@ -454,6 +567,9 @@ export default function PerfilPublicoComprador() {
                 )}
               </div>
             </div>
+
+            {/* Calculadora */}
+            <Calculadora precios={precios} />
 
             {usuario && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm">
