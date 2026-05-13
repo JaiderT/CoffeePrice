@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken"; // ← NUEVO
 import CompradorModel from "../models/comprador.js";
 import PrecioModel from "../models/precio.js";
 import Usuario from "../models/usuario.js";
+import { ESTADOS_REVISION_COMPRADOR, esCompradorAprobado } from "../utils/compradorEstado.js";
 import {
   getcompradores,
   createcomprador,
@@ -79,11 +80,29 @@ router.post("/", authMiddleware, roleMiddleware("comprador"), createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
 router.get("/mapa", async (req, res) => {
     try {
-        const compradores = await CompradorModel.find({})
-        .select("nombreempresa direccion telefono horarioApertura horarioCierre latitud longitud tipoempresa municipio descripcion servicios")
+        const compradoresConUsuario = await CompradorModel.find({
+        $or: [
+            { estadoRevision: ESTADOS_REVISION_COMPRADOR.APROBADO },
+            { estadoRevision: { $exists: false } },
+            { estadoRevision: null },
+        ],
+        })
+        .populate("usuario", "estado")
+        .select("nombreempresa direccion telefono horarioApertura horarioCierre latitud longitud tipoempresa municipio descripcion servicios estadoRevision usuario")
         .lean();
 
+        const compradores = compradoresConUsuario.filter((comprador) =>
+            esCompradorAprobado(comprador.usuario, comprador)
+        );
+
         const preciosRecientes = await PrecioModel.aggregate([
+            {
+                $match: {
+                    comprador: {
+                        $in: compradores.map((comprador) => comprador._id),
+                    },
+                }
+            },
             { $sort: { createdAt: -1 } },
             {
                 $group: {
@@ -132,10 +151,15 @@ router.get("/mapa", async (req, res) => {
 
 router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agregado
   try {
-    const comprador = await CompradorModel.findById(req.params.id);
+    const comprador = await CompradorModel.findById(req.params.id).populate("usuario", "estado rol");
     if (!comprador) return res.status(404).json({ message: 'Comprador no encontrado' });
 
+    const compradorVisible = esCompradorAprobado(comprador.usuario, comprador);
+
     if (!req.user) {
+      if (!compradorVisible) {
+        return res.status(404).json({ message: 'Comprador no encontrado' });
+      }
       return res.json({
         _id: comprador._id,
         nombreempresa: comprador.nombreempresa,
@@ -150,9 +174,12 @@ router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agreg
 
     const usuarioSolicitante = await Usuario.findById(req.user.id).select("rol");
     const esAdmin = usuarioSolicitante?.rol === "admin";
-    const esPropietario = comprador.usuario?.toString() === req.user.id;
+    const esPropietario = comprador.usuario?._id?.toString() === req.user.id;
 
     if (!esAdmin && !esPropietario) {
+      if (!compradorVisible) {
+        return res.status(404).json({ message: 'Comprador no encontrado' });
+      }
       return res.json({
         _id: comprador._id,
         nombreempresa: comprador.nombreempresa,

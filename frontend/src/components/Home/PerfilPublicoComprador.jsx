@@ -62,14 +62,11 @@ function Calculadora({ precios }) {
   const [cantidad, setCantidad] = useState('');
   const [unidad, setUnidad] = useState('cargas');
 
-  useEffect(() => {
-    if (precios.length > 0) {
-      setTipoCafe(precios[0].tipocafe);
-    }
-  }, [precios]);
-
-  const precioSeleccionado = precios.find(p => p.tipocafe === tipoCafe);
-  const porKg = esPorKg(tipoCafe);
+  const tipoCafeActivo = precios.some((p) => p.tipocafe === tipoCafe)
+    ? tipoCafe
+    : (precios[0]?.tipocafe || '');
+  const precioSeleccionado = precios.find(p => p.tipocafe === tipoCafeActivo);
+  const porKg = esPorKg(tipoCafeActivo);
   const cantidadNum = Number(cantidad);
 
   const calcularGanancia = () => {
@@ -95,7 +92,7 @@ function Calculadora({ precios }) {
 
       <div className="mb-3">
         <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">Producto</label>
-        <select value={tipoCafe} onChange={e => { setTipoCafe(e.target.value); setCantidad(''); setUnidad('cargas'); }}
+        <select value={tipoCafeActivo} onChange={e => { setTipoCafe(e.target.value); setCantidad(''); setUnidad('cargas'); }}
           className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E]">
           {precios.map(p => {
             const info = LABELS_PRODUCTO[p.tipocafe] || { label: p.tipocafe?.replace(/_/g, ' '), emoji: '📦' };

@@ -4,6 +4,11 @@ import HistorialPrecio from "../models/historialPrecio.js";
 import Alerta from "../models/alerta.js";
 import Usuario from "../models/usuario.js";
 import { enviarAlertaPrecio, enviarNotificacionPrecio } from "../services/emailService.js";
+import { esCompradorAprobado } from "../utils/compradorEstado.js";
+
+function puedeOperarComprador(usuario, comprador) {
+  return esCompradorAprobado(usuario, comprador);
+}
 
 const verificarAlertas = async (compradorId, preciocarga) => {
   try {
@@ -68,16 +73,31 @@ export const getprecios = async (req, res) => {
     const filtro = tipocafe ? { tipocafe } : {};
 
     const precios = await PrecioModel.find(filtro)
-      .populate("comprador", "nombreempresa direccion")
+      .populate({
+        path: "comprador",
+        select: "nombreempresa direccion estadoRevision usuario",
+        populate: {
+          path: "usuario",
+          select: "estado",
+        },
+      })
       .sort({ preciocarga: -1 });
 
     const vistos = new Set();
     const preciosPorComprador = precios.filter(p => {
       const key = p.comprador?._id?.toString();
       if (!key || vistos.has(key)) return false;
+      if (!puedeOperarComprador(p.comprador?.usuario, p.comprador)) return false;
       vistos.add(key);
       return true;
-    });
+    }).map((precio) => ({
+      ...precio.toObject(),
+      comprador: {
+        _id: precio.comprador._id,
+        nombreempresa: precio.comprador.nombreempresa,
+        direccion: precio.comprador.direccion,
+      },
+    }));
 
     res.json(preciosPorComprador);
   } catch (error) {
@@ -87,6 +107,13 @@ export const getprecios = async (req, res) => {
 
 export const getpreciosBycomprador = async (req, res) => {
   try {
+    const comprador = await CompradorModel.findById(req.params.compradorId)
+      .populate("usuario", "estado");
+
+    if (!comprador || !puedeOperarComprador(comprador.usuario, comprador)) {
+      return res.status(404).json({ message: "Comprador no encontrado" });
+    }
+
     const precios = await PrecioModel.find({ comprador: req.params.compradorId })
       .populate("comprador", "nombreempresa")
       .sort({ createdAt: -1 });
@@ -118,18 +145,23 @@ export const createprecio = async (req, res) => {
     if (!tiposPermitidos.includes(tipocafe)) {
       return res.status(400).json({ message: "Tipo de café no válido" });
     }
+    // DESPUÉS
+const compradorExistente = await CompradorModel.findById(comprador).populate("usuario", "estado");
+if (!compradorExistente) {
+  return res.status(404).json({ message: "Comprador no encontrado" });
+}
 
-    const compradorExistente = await CompradorModel.findById(comprador);
-    if (!compradorExistente) {
-      return res.status(404).json({ message: "Comprador no encontrado" });
-    }
-
-    const esAdmin = req.user?.rol === "admin";
-    const esPropietario = compradorExistente.usuario.toString() === req.user.id;
-
+const esAdmin = req.user?.rol === "admin";
+const esPropietario = compradorExistente.usuario._id.toString() === req.user.id;
     if (!esAdmin && !esPropietario) {
       return res.status(403).json({
         message: "No tienes permisos para crear precios para este comprador"
+      });
+    }
+
+    if (!puedeOperarComprador(compradorExistente.usuario, compradorExistente)) {
+      return res.status(403).json({
+        message: "Tu perfil de comprador aún no está aprobado por un administrador"
       });
     }
 
@@ -176,17 +208,23 @@ export const updateprecio = async (req, res) => {
       return res.status(404).json({ message: "Precio no encontrado" });
     }
 
-    const compradorExistente = await CompradorModel.findById(precio.comprador);
+    const compradorExistente = await CompradorModel.findById(precio.comprador).populate("usuario", "estado");
     if (!compradorExistente) {
       return res.status(404).json({ message: "Comprador asociado no encontrado" });
     }
 
     const esAdmin = req.user?.rol === "admin";
-    const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+    const esPropietario = compradorExistente.usuario._id.toString() === req.user.id;
 
     if (!esAdmin && !esPropietario) {
       return res.status(403).json({
         message: "No tienes permisos para actualizar este precio"
+      });
+    }
+
+    if (!puedeOperarComprador(compradorExistente.usuario, compradorExistente)) {
+      return res.status(403).json({
+        message: "Tu perfil de comprador aún no está aprobado por un administrador"
       });
     }
 
@@ -231,17 +269,23 @@ export const deleteprecio = async (req, res) => {
       return res.status(404).json({ message: "Precio no encontrado" });
     }
 
-    const compradorExistente = await CompradorModel.findById(precio.comprador);
+    const compradorExistente = await CompradorModel.findById(precio.comprador).populate("usuario", "estado");
     if (!compradorExistente) {
       return res.status(404).json({ message: "Comprador asociado no encontrado" });
     }
 
     const esAdmin = req.user?.rol === "admin";
-    const esPropietario = compradorExistente.usuario.toString() === req.user.id;
+    const esPropietario = compradorExistente.usuario._id.toString() === req.user.id;
 
     if (!esAdmin && !esPropietario) {
       return res.status(403).json({
         message: "No tienes permisos para eliminar este precio"
+      });
+    }
+
+    if (!puedeOperarComprador(compradorExistente.usuario, compradorExistente)) {
+      return res.status(403).json({
+        message: "Tu perfil de comprador aún no está aprobado por un administrador"
       });
     }
 

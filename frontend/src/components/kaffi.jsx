@@ -42,6 +42,11 @@ function esLenguajeOfensivo(value = '') {
   return PATRONES_OFENSIVOS.some((patron) => patron.test(texto));
 }
 
+function leerDatosPaginaKaffi() {
+  if (typeof window === 'undefined') return null;
+  return window.__kaffiPageData || null;
+}
+
 export default function Kaffi() {
   const API_URL = import.meta.env.VITE_API_URL;
   const location = useLocation();
@@ -219,6 +224,7 @@ export default function Kaffi() {
           ayudaPagina: ayudaPagina?.title || null,
           resumenAyuda: ayudaPagina?.summary || null,
           accionesDisponibles: ayudaPagina?.actions?.map((accion) => accion.label) || [],
+          datosPagina: leerDatosPaginaKaffi(),
         },
       });
 

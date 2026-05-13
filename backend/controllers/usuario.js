@@ -1,5 +1,8 @@
 import Usuario from "../models/usuario.js";
 import bcrypt from "bcryptjs";
+import CompradorModel from "../models/comprador.js";
+import { ESTADOS_REVISION_COMPRADOR } from "../utils/compradorEstado.js";
+import { enviarDecisionComprador } from "../services/emailService.js";
 
 export const getusuario = async (req, res) => {
     try {
@@ -101,13 +104,39 @@ export const suspenderMiCuenta = async (req, res) => {
 
 export const cambiarestado = async (req, res) => {
     try {
-        const { estado } = req.body;
-        const usuario = await Usuario.findByIdAndUpdate(
-            req.params.id,
-            { estado },
-            { new: true, runValidators: true }
-        ).select("-password");
+        const { estado, motivoRevision } = req.body;
+        const usuario = await Usuario.findById(req.params.id).select("-password");
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
+
+        usuario.estado = estado;
+        await usuario.save();
+
+        if (usuario.rol === "comprador") {
+            const comprador = await CompradorModel.findOne({ usuario: usuario._id });
+            if (comprador) {
+                if (estado === "activo") {
+                    comprador.estadoRevision = ESTADOS_REVISION_COMPRADOR.APROBADO;
+                    comprador.motivoRevision = null;
+                } else if (estado === "rechazado") {
+                    comprador.estadoRevision = ESTADOS_REVISION_COMPRADOR.RECHAZADO;
+                    comprador.motivoRevision = motivoRevision?.trim() || "La solicitud no cumple los criterios de validación actuales.";
+                } else if (estado === "pendiente") {
+                    comprador.estadoRevision = ESTADOS_REVISION_COMPRADOR.EN_REVISION;
+                    comprador.motivoRevision = null;
+                }
+                comprador.fechaRevision = new Date();
+                comprador.aprobadoPor = req.user.id;
+                await comprador.save();
+            }
+
+            await enviarDecisionComprador({
+                destinatario: usuario.email,
+                nombreUsuario: `${usuario.nombre} ${usuario.apellido}`.trim(),
+                estado,
+                motivoRevision,
+            });
+        }
+
         res.json(usuario);
     } catch (error) {
         res.status(400).json({ message: "Error al cambiar estado", error: error.message });

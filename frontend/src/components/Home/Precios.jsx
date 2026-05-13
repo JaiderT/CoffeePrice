@@ -128,6 +128,55 @@ function Precios() {
   const formatearDiaCorto = (fecha) =>
     normalizarFecha(fecha).toLocaleDateString('es-CO', { weekday: 'short' });
 
+  useEffect(() => {
+    const diferenciaVsFNC =
+      Number.isFinite(mejorPrecio) && Number.isFinite(precioFNC)
+        ? mejorPrecio - precioFNC
+        : null;
+
+    const datosPagina = {
+      resumenPrecios: {
+        mejorPrecio: mejorPrecio || null,
+        mejorComprador,
+        compradoresRegistrados: compradoresUnicos,
+        precioFNC: precioFNC || null,
+        diferenciaVsFNC,
+        filtroActivo: filtro,
+        busquedaActiva: busqueda || null,
+        resultadosVisibles: preciosVisibles.length,
+      },
+      prediccionResumen: prediccion
+        ? {
+            fecha: prediccion.fecha,
+            precioEstimado: prediccion.precioestimado,
+            precioMinimo: prediccion.preciominimo,
+            precioMaximo: prediccion.preciomaximo,
+            tendencia: prediccion.tendencia,
+            confianza: prediccion.confianza,
+            explicacion: prediccion.explicacion || prediccion.mensaje,
+            estrategia: prediccion.estrategiaAplicada,
+          }
+        : null,
+    };
+
+    window.__kaffiPageData = datosPagina;
+
+    return () => {
+      if (window.__kaffiPageData === datosPagina) {
+        delete window.__kaffiPageData;
+      }
+    };
+  }, [
+    mejorPrecio,
+    mejorComprador,
+    compradoresUnicos,
+    precioFNC,
+    filtro,
+    busqueda,
+    preciosVisibles.length,
+    prediccion,
+  ]);
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
       <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
@@ -234,7 +283,7 @@ function Precios() {
                   to="/predicciones"
                   className="mt-4 inline-flex items-center rounded-full bg-[#2F241C] px-4 py-2 text-xs font-bold text-[#F7F1E8] transition hover:bg-[#443126]"
                 >
-                  Ver predicciones completas
+                  Ver detalles
                 </Link>
               </>
             ) : (
