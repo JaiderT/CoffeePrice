@@ -10,7 +10,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: 'Precios del cafe' },
   { value: 'internacional', label: 'Mercado internacional' },
   { value: 'clima', label: 'Clima y cosechas' },
   { value: 'produccion', label: 'Produccion' },
