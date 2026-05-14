@@ -1,30 +1,28 @@
+param(
+    [string]$FechaPrediccion
+)
+
 Write-Host "========================================="
 Write-Host " ACTUALIZANDO PREDICCIONES - CoffePrice"
 Write-Host "========================================="
 Write-Host ""
 
-Set-Location "C:\Proyecto\CoffePrice\ml-service"
+$RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $RootDir "ml-service-experimental")
 
-Write-Host "1. Limpiando datos..."
-python limpiar_datos.py
+Write-Host "1. Ejecutando pipeline FNC hibrido..."
+$PipelineArgs = @("actualizar_todo.py")
+if ($FechaPrediccion) {
+    $PipelineArgs += @("--fecha-prediccion", $FechaPrediccion)
+}
+
+python @PipelineArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Set-Location (Join-Path $RootDir "backend")
 
 Write-Host ""
-Write-Host "2. Entrenando modelo..."
-python entrenar.py
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host ""
-Write-Host "3. Generando predicciones..."
-python predecir.py
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Set-Location "C:\Proyecto\CoffePrice\backend"
-
-Write-Host ""
-Write-Host "4. Importando predicciones a MongoDB..."
-node scripts/importarPredicciones.js
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Host "2. Prediccion FNC actualizada en backend/datos/predicciones_fnc.json"
 
 Write-Host ""
 Write-Host "========================================="

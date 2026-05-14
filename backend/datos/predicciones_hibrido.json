@@ -1,7 +1,0 @@
-{
-  "fecha_prediccion": "2026-05-05",
-  "precio_estimado": 2187826,
-  "kc_estimado": 281.02,
-  "trm_usada": 3593.17,
-  "modelo": "hibrido_prophet_xgboost"
-}

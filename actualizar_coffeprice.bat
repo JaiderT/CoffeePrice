@@ -1,4 +1,4 @@
 @echo off
-cd /d C:\Proyecto\CoffePrice\ml-service
-python actualizar_todo.py
+cd /d "%~dp0ml-service-experimental"
+python actualizar_todo.py %*
 pause

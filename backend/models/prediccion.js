@@ -40,7 +40,7 @@ const prediccionSchema = new mongoose.Schema(
     },
     modelVersion: {
         type: String,
-        default: "prophet-v1",
+        default: "fnc_hibrido",
     },
 },
     { timestamps: true }

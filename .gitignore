@@ -1,1 +1,12 @@
-ml-service-experimental/
+.DS_Store
+**/__pycache__/
+*.pyc
+
+# Datos crudos grandes del pipeline FNC experimental.
+ml-service-experimental/datos/Tasa_de_cambio_TRM.csv
+ml-service-experimental/datos/Tasa de cambio TRM.csv
+ml-service-experimental/datos/Precios cafe.csv
+ml-service-experimental/datos/Precios_cafe.csv
+
+# Artefactos generados localmente por entrenamiento.
+ml-service-experimental/modelos/*.pkl

@@ -7,6 +7,7 @@ const TIME_ZONE = "America/Bogota";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PREDICCION_FNC_PATH = path.resolve(__dirname, "../datos/predicciones_fnc.json");
+const HISTORIAL_PREDICCIONES_FNC_PATH = path.resolve(__dirname, "../datos/historial_predicciones_fnc.csv");
 
 function obtenerFechaBogota(offsetDias = 0) {
     const partes = new Intl.DateTimeFormat("en-CA", {
@@ -103,6 +104,47 @@ function normalizarPrediccionFnc(prediccion) {
     };
 }
 
+function normalizarPrediccionFncHistorica(prediccion) {
+    const adaptada = {
+        fecha_prediccion: prediccion.fecha_prediccion,
+        precio_estimado: Number(prediccion.precio_estimado),
+        precio_minimo: Number(prediccion.precio_minimo),
+        precio_maximo: Number(prediccion.precio_maximo),
+        tendencia: prediccion.tendencia || "estable",
+        modelo: prediccion.modelo || "fnc_hibrido",
+        fecha_actual: prediccion.fecha_generacion,
+        precio_actual_fnc: Number(prediccion.precio_actual_fnc),
+        variacion_porcentual: Number(prediccion.variacion_porcentual),
+        estrategia_base: prediccion.estrategia_base,
+        estrategia_aplicada: prediccion.estrategia,
+        holdout_mape: Number(prediccion.holdout_mape),
+        holdout_mae: Number(prediccion.holdout_mae),
+        explicacion: "Prediccion historica generada por el modelo FNC hibrido.",
+    };
+
+    return {
+        ...normalizarPrediccionFnc(adaptada),
+        fuente: "fnc_hibrido_historial",
+        fechaGeneracion: prediccion.fecha_generacion,
+        fechaPrediccionOriginal: prediccion.fecha_prediccion_original,
+        saltoFinSemana: Boolean(Number(prediccion.salto_fin_semana || 0)),
+    };
+}
+
+function parseCsvSimple(contenido) {
+    const lineas = contenido.trim().split(/\r?\n/).filter(Boolean);
+    if (lineas.length < 2) return [];
+
+    const encabezados = lineas[0].split(",").map((item) => item.trim());
+    return lineas.slice(1).map((linea) => {
+        const valores = linea.split(",");
+        return encabezados.reduce((registro, encabezado, index) => {
+            registro[encabezado] = valores[index] ?? "";
+            return registro;
+        }, {});
+    });
+}
+
 async function leerPrediccionFnc() {
     try {
         const contenido = await readFile(PREDICCION_FNC_PATH, "utf8");
@@ -122,12 +164,52 @@ async function leerPrediccionFnc() {
     }
 }
 
+async function leerHistorialPrediccionesFnc() {
+    try {
+        const contenido = await readFile(HISTORIAL_PREDICCIONES_FNC_PATH, "utf8");
+        return parseCsvSimple(contenido)
+            .filter((item) => item.fecha_prediccion && item.precio_estimado)
+            .map(normalizarPrediccionFncHistorica);
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            console.warn("No se pudo leer historial_predicciones_fnc.csv:", error.message);
+        }
+
+        return [];
+    }
+}
+
+function ordenarPrediccionesPorFecha(predicciones) {
+    return [...predicciones].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+}
+
+async function leerPrediccionesFncDisponibles() {
+    const historial = await leerHistorialPrediccionesFnc();
+    const actual = await leerPrediccionFnc();
+    const porFecha = new Map();
+
+    for (const prediccion of historial) {
+        porFecha.set(prediccion.fecha, prediccion);
+    }
+
+    if (actual) {
+        porFecha.set(actual.fecha, actual);
+    }
+
+    return ordenarPrediccionesPorFecha([...porFecha.values()]);
+}
+
 function fechaCoincide(fechaA, fechaB) {
     return fechaA && fechaB && fechaA === fechaB;
 }
 
 export const getPredicciones = async (req, res) => {
     try {
+        const prediccionesFnc = await leerPrediccionesFncDisponibles();
+        if (prediccionesFnc.length) {
+            return res.json(prediccionesFnc);
+        }
+
         const predicciones = await Prediccion.find().sort({ fecha: -1 }).lean();
         res.json(predicciones.map(serializarPrediccion));
     } catch (error) {
@@ -207,7 +289,7 @@ export const getResumenPredicciones = async (req, res) => {
 export const getPrediccionesPorRango = async (req, res) => {
     try {
         const dias = Number(req.query.dias);
-        const prediccionFnc = await leerPrediccionFnc();
+        const prediccionesFnc = await leerPrediccionesFncDisponibles();
 
         const diasPermitidos = [7, 15, 30];
 
@@ -217,16 +299,17 @@ export const getPrediccionesPorRango = async (req, res) => {
             });
         }
 
-        if (prediccionFnc) {
+        if (prediccionesFnc.length) {
+            const prediccionesRango = prediccionesFnc.slice(-dias);
             return res.json({
                 dias,
-                total: 1,
-                generatedAt: prediccionFnc.generatedAt,
-                modelVersion: prediccionFnc.modelVersion,
-                fuente: "fnc_hibrido_json",
-                modo: "prediccion_unica",
-                mensaje: "El modelo FNC hibrido genera una prediccion por ejecucion. Aun no hay historial multi-dia real para este modelo.",
-                predicciones: [prediccionFnc],
+                total: prediccionesRango.length,
+                generatedAt: prediccionesRango[prediccionesRango.length - 1].generatedAt,
+                modelVersion: prediccionesRango[prediccionesRango.length - 1].modelVersion,
+                fuente: "fnc_hibrido_historial",
+                modo: prediccionesRango.length === 1 ? "prediccion_unica" : "historial_fnc",
+                mensaje: "Historial real generado por el modelo FNC hibrido. Crece con cada ejecucion diaria del pipeline.",
+                predicciones: prediccionesRango,
             });
         }
 
@@ -276,9 +359,10 @@ export const getPrediccionPorDia = async (req, res) => {
 
         const fechaInicio = obtenerFechaBogota(offset);
         const fechaConsulta = serializarFecha(fechaInicio);
-        const prediccionFnc = await leerPrediccionFnc();
+        const prediccionesFnc = await leerPrediccionesFncDisponibles();
+        const prediccionFnc = prediccionesFnc.find((item) => fechaCoincide(item.fecha, fechaConsulta));
 
-        if (prediccionFnc && fechaCoincide(prediccionFnc.fecha, fechaConsulta)) {
+        if (prediccionFnc) {
             return res.json({
                 offset,
                 ...prediccionFnc,
@@ -330,8 +414,10 @@ export const getPrediccionPorFecha = async (req, res) => {
             });
         }
 
-        const prediccionFnc = await leerPrediccionFnc();
-        if (prediccionFnc && fechaCoincide(prediccionFnc.fecha, fecha)) {
+        const prediccionesFnc = await leerPrediccionesFncDisponibles();
+        const prediccionFnc = prediccionesFnc.find((item) => fechaCoincide(item.fecha, fecha));
+
+        if (prediccionFnc) {
             return res.json(prediccionFnc);
         }
 
