@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
@@ -15,7 +15,7 @@ const TAGS = [
 ];
 
 const LABELS_PRODUCTO = {
-  pergamino_seco: { label: 'Pergamino seco', emoji: '☕', color: 'bg-amber-50 border-amber-200 text-amber-800' },
+  pergamino_seco: { label: 'Pergamino seco', emoji: 'â˜•', color: 'bg-amber-50 border-amber-200 text-amber-800' },
   verde: { label: 'Café verde / mojado', emoji: '🌿', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
   especial: { label: 'Café especial', emoji: '✨', color: 'bg-purple-50 border-purple-200 text-purple-800' },
   organico: { label: 'Café orgánico', emoji: '🌱', color: 'bg-green-50 border-green-200 text-green-800' },
@@ -40,7 +40,7 @@ function Estrellas({ valor, onChange }) {
               ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#C8A96E]'
               : 'bg-white border-gray-200 text-gray-300'
           } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}>
-          ★
+          â˜…
         </button>
       ))}
     </div>
@@ -51,8 +51,8 @@ function renderEstrellas(n) {
   const llenas = Math.round(n);
   return (
     <span className="text-[#C8A96E]">
-      {'★'.repeat(llenas)}
-      <span className="text-gray-300">{'★'.repeat(5 - llenas)}</span>
+      {'â˜…'.repeat(llenas)}
+      <span className="text-gray-300">{'â˜…'.repeat(5 - llenas)}</span>
     </span>
   );
 }
@@ -86,14 +86,14 @@ function Calculadora({ precios }) {
   if (precios.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-      <h3 className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora de ganancia</h3>
+    <div className="bg-white rounded-[22px] border border-[#E7D9BF] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)]">
+      <h3 className="text-[#2C1A0E] font-bold text-sm mb-1">Calculadora de ganancia</h3>
       <p className="text-[#8B7355] text-xs mb-4">Calcula cuánto recibirías por tu cosecha</p>
 
       <div className="mb-3">
         <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">Producto</label>
         <select value={tipoCafeActivo} onChange={e => { setTipoCafe(e.target.value); setCantidad(''); setUnidad('cargas'); }}
-          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E]">
+          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40 bg-[#F7F1E3] text-[#2C1A0E]">
           {precios.map(p => {
             const info = LABELS_PRODUCTO[p.tipocafe] || { label: p.tipocafe?.replace(/_/g, ' '), emoji: '📦' };
             return (
@@ -114,14 +114,14 @@ function Calculadora({ precios }) {
               className={`flex-1 py-2 text-xs font-semibold transition-colors ${
                 unidad === 'cargas' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#8B7355] hover:bg-[#F7F1E3]'
               }`}>
-              🏋️ Cargas
+              Cargas
             </button>
             <button type="button"
               onClick={() => { setUnidad('kg'); setCantidad(''); }}
               className={`flex-1 py-2 text-xs font-semibold transition-colors ${
                 unidad === 'kg' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#8B7355] hover:bg-[#F7F1E3]'
               }`}>
-              ⚖️ Kilogramos
+              âš–ï¸ Kilogramos
             </button>
           </div>
         </div>
@@ -129,13 +129,13 @@ function Calculadora({ precios }) {
 
       <div className="mb-4">
         <label className="block text-xs font-semibold text-[#8B7355] uppercase mb-1">
-          {porKg ? 'Cantidad (kg)' : unidad === 'cargas' ? 'Número de cargas' : 'Cantidad (kg)'}
+          {porKg ? 'Cantidad (kg)' : unidad === 'cargas' ? 'número de cargas' : 'Cantidad (kg)'}
         </label>
         <input type="number" min="0"
           placeholder={porKg ? 'Ej: 50' : unidad === 'cargas' ? 'Ej: 3' : 'Ej: 375'}
           value={cantidad}
           onChange={e => setCantidad(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-white text-[#2C1A0E]" />
+          className="w-full px-3 py-2.5 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40 bg-white text-[#2C1A0E]" />
         {precioSeleccionado && (
           <p className="text-xs text-[#8B7355] mt-1">
             {porKg
@@ -148,7 +148,7 @@ function Calculadora({ precios }) {
       </div>
 
       {ganancia !== null ? (
-        <div className="bg-[#2C1A0E] rounded-xl p-4 text-center">
+        <div className="bg-[#2C1A0E] rounded-2xl p-4 text-center shadow-[0_12px_28px_rgba(44,26,14,0.14)]">
           <p className="text-[#D8C7A8] text-xs uppercase font-semibold mb-1">Recibirías aprox.</p>
           <p className="text-white text-2xl font-bold">${Math.round(ganancia).toLocaleString()}</p>
           <p className="text-[#D8C7A8] text-xs mt-1">
@@ -177,7 +177,7 @@ export default function PerfilPublicoComprador() {
   const [comprador, setComprador] = useState(null);
   const [precios, setPrecios] = useState([]);
   const [historialPrecios, setHistorialPrecios] = useState([]);
-  const [reseñas, setReseñas] = useState([]);
+  const [reseñas, setreseñas] = useState([]);
   const [promedio, setPromedio] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState(null);
@@ -199,7 +199,7 @@ export default function PerfilPublicoComprador() {
         axios.get(`${API_URL}/api/precios/comprador/${id}`),
       ]);
       setComprador(compradorRes.data);
-      setReseñas(reseñasRes.data.reseñas || []);
+      setreseñas(reseñasRes.data.reseñas || []);
       setPromedio(reseñasRes.data.promedio || 0);
       setPrecios(preciosRes.data);
       try {
@@ -227,7 +227,7 @@ export default function PerfilPublicoComprador() {
     );
   };
 
-  const handleEnviarReseña = async (e) => {
+  const handleEnviarreseña = async (e) => {
     e.preventDefault();
     if (calificacion === 0) {
       setMensaje({ tipo: 'error', texto: 'Debes seleccionar una calificacion' });
@@ -244,7 +244,7 @@ export default function PerfilPublicoComprador() {
         comentario,
         tags: tagsSeleccionados,
       }, { withCredentials: true });
-      setMensaje({ tipo: 'exito', texto: 'Reseña publicada correctamente' });
+      setMensaje({ tipo: 'exito', texto: 'reseña publicada correctamente' });
       setCalificacion(0);
       setComentario('');
       setTagsSeleccionados([]);
@@ -280,10 +280,39 @@ export default function PerfilPublicoComprador() {
   const iniciales = (nombre) =>
     nombre ? nombre.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase() : '?';
 
+  const TeléfonoPlano = (comprador?.Teléfono || '').replace(/\D/g, '');
+  const TeléfonoWhatsapp = TeléfonoPlano.startsWith('57') ? TeléfonoPlano : `57${TeléfonoPlano}`;
+  const whatsappLink = TeléfonoPlano ? `https://wa.me/${TeléfonoWhatsapp}` : null;
+  const direccionMapa = comprador?.Dirección
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${comprador.direccion}${comprador.municipio ? `, ${comprador.municipio}` : ''}`)}`
+    : null;
+
+  const copiarTexto = async (texto, etiqueta) => {
+    if (!texto) return;
+
+    try {
+      await navigator.clipboard.writeText(texto);
+      setMensaje({ tipo: 'exito', texto: `${etiqueta} copiado correctamente` });
+    } catch {
+      setMensaje({ tipo: 'error', texto: `No se pudo copiar ${etiqueta.toLowerCase()}` });
+    } finally {
+      setTimeout(() => setMensaje(null), 2500);
+    }
+  };
+
   const precioActual = precios.find(p => p.tipocafe === 'pergamino_seco') || precios[0];
   const historialFiltrado = historialPrecios.slice(0, 7);
   const maxPrecioHistorial = historialFiltrado.length > 0
     ? Math.max(...historialFiltrado.map((item) => item.preciocarga)) : 1;
+  const cardBase = 'bg-white rounded-[22px] border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)]';
+  const señalesContacto = [
+    { label: 'Teléfono activo', ok: Boolean(comprador?.telefono) },
+    { label: 'WhatsApp disponible', ok: Boolean(whatsappLink) },
+    { label: 'Horario registrado', ok: Boolean(comprador?.horarioApertura && comprador?.horarioCierre) },
+    { label: 'Ubicación lista', ok: Boolean(comprador?.direccion || direccionMapa) },
+  ];
+  const canalesActivos = señalesContacto.filter((item) => item.ok).length;
+  const tieneContactoCompleto = canalesActivos >= 3;
 
   if (cargando) return (
     <div className="min-h-screen bg-[#F7F1E3] flex items-center justify-center">
@@ -308,10 +337,10 @@ export default function PerfilPublicoComprador() {
       <div className="px-4 md:px-8 pb-8 max-w-6xl mx-auto">
 
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-[#E7D9BF] mb-6 shadow-sm overflow-hidden">
+        <div className={`${cardBase} mb-6 overflow-hidden`}>
           <div className="h-36 bg-linear-to-r from-[#2C1A0E] via-[#5A2E18] to-[#7A4020] relative">
             <div className="absolute bottom-0 left-6 translate-y-1/2">
-              <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
+              <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-[0_12px_30px_rgba(77,48,24,0.18)]">
                 {iniciales(comprador.nombreempresa)}
               </div>
             </div>
@@ -319,17 +348,42 @@ export default function PerfilPublicoComprador() {
           <div className="pt-14 px-6 pb-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
-                <h1 className="text-[#2C1A0E] text-2xl font-bold">{comprador.nombreempresa}</h1>
+                <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">{comprador.nombreempresa}</h1>
                 <p className="text-[#8B7355] text-sm mt-1">
                   <i className="fa-solid fa-location-dot mr-1"></i>
                   {comprador.direccion || 'Ubicacion no registrada'}
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {comprador.tipoempresa && (
+                    <span className="rounded-full border border-[#C8A96E]/30 bg-[#FFF8E7] px-3 py-1 text-xs font-semibold text-[#7A4020]">
+                      {comprador.tipoempresa}
+                    </span>
+                  )}
+                  {comprador.municipio && (
+                    <span className="rounded-full border border-[#E7D9BF] bg-white px-3 py-1 text-xs font-semibold text-[#6B5A4D]">
+                      {comprador.municipio}
+                    </span>
+                  )}
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tieneContactoCompleto ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-[#E7D9BF] bg-[#FCF8F1] text-[#8B7355]'}`}>
+                    {tieneContactoCompleto ? 'Contacto completo' : 'Contacto parcial'}
+                  </span>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setModalContacto(true)}
                   className="flex items-center gap-2 bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
                   <i className="fa-solid fa-phone text-xs"></i> Contactar
                 </button>
+                {direccionMapa && (
+                  <a
+                    href={direccionMapa}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 rounded-xl border border-[#E7D9BF] bg-white px-4 py-2 text-sm font-semibold text-[#2C1A0E] transition-colors hover:bg-[#FCF8F1]"
+                  >
+                    <i className="fa-solid fa-location-arrow text-xs text-[#C8A96E]"></i> Ubicacion
+                  </a>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
@@ -342,7 +396,7 @@ export default function PerfilPublicoComprador() {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-[#2C1A0E] text-lg font-bold">★ {Number(promedio).toFixed(1)}</p>
+                <p className="text-[#2C1A0E] text-lg font-bold">â˜… {Number(promedio).toFixed(1)}</p>
                 <p className="text-[#8B7355] text-xs">{reseñas.length} reseñas</p>
               </div>
               <div className="text-center">
@@ -361,9 +415,9 @@ export default function PerfilPublicoComprador() {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Precio actual */}
-            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-              <h2 className="text-[#2C1A0E] font-bold text-base mb-4">💰 Precio actual</h2>
-              <div className="bg-[#2C1A0E] rounded-xl p-4 mb-4">
+            <div className={`${cardBase} p-5`}>
+              <h2 className="text-[#2C1A0E] font-bold text-base mb-4">Precio actual</h2>
+              <div className="bg-[#2C1A0E] rounded-2xl p-4 mb-4 shadow-[0_14px_34px_rgba(44,26,14,0.16)]">
                 <p className="text-[#D8C7A8] text-xs uppercase font-semibold mb-1">
                   PRECIO HOY · {LABELS_PRODUCTO[precioActual?.tipocafe]?.label?.toUpperCase() || precioActual?.tipocafe?.replace(/_/g, ' ').toUpperCase() || 'CAFÉ'}
                 </p>
@@ -378,8 +432,8 @@ export default function PerfilPublicoComprador() {
 
             {/* Todos los productos */}
             {precios.length > 0 && (
-              <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">🛒 Productos que compran</h2>
+              <div className={`${cardBase} p-5`}>
+                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">Productos que compran</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {precios.map((p, i) => {
                     const info = LABELS_PRODUCTO[p.tipocafe] || { label: p.tipocafe?.replace(/_/g, ' '), emoji: '📦', color: 'bg-gray-50 border-gray-200 text-gray-800' };
@@ -406,8 +460,8 @@ export default function PerfilPublicoComprador() {
 
             {/* Historial */}
             {historialFiltrado.length > 0 && (
-              <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">📈 Historial de precios</h2>
+              <div className={`${cardBase} p-5`}>
+                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">Historial de precios</h2>
                 <div className="space-y-2">
                   {historialFiltrado.map((item, index) => {
                     const barWidth = Math.round((item.preciocarga / maxPrecioHistorial) * 100);
@@ -426,10 +480,10 @@ export default function PerfilPublicoComprador() {
               </div>
             )}
 
-            {/* Reseñas */}
-            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
+            {/* reseñas */}
+            <div className={`${cardBase} p-5`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[#2C1A0E] font-bold text-base">⭐ Reseñas de caficultores</h2>
+                <h2 className="text-[#2C1A0E] font-bold text-base">â­ reseñas de caficultores</h2>
                 {usuario?.rol === 'productor' && (
                   <button onClick={() => document.getElementById('form-resena')?.scrollIntoView({ behavior: 'smooth' })}
                     className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#B8994E] transition-colors">
@@ -438,7 +492,7 @@ export default function PerfilPublicoComprador() {
                 )}
               </div>
               {reseñas.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="text-center py-8 rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">
                   <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
                   <p className="text-[#8B7355] text-sm">Aun no hay reseñas</p>
                 </div>
@@ -471,14 +525,14 @@ export default function PerfilPublicoComprador() {
 
             {/* Formulario reseña */}
             {usuario?.rol === 'productor' && (
-              <div id="form-resena" className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">✍️ Dejar una reseña</h2>
+              <div id="form-resena" className={`${cardBase} p-5`}>
+                <h2 className="text-[#2C1A0E] font-bold text-base mb-4">Dejar una reseña</h2>
                 {mensaje && (
                   <div className={`px-4 py-3 rounded-xl mb-4 text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {mensaje.texto}
                   </div>
                 )}
-                <form onSubmit={handleEnviarReseña}>
+                <form onSubmit={handleEnviarreseña}>
                   <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Calificacion</p>
                   <div className="mb-4"><Estrellas valor={calificacion} onChange={setCalificacion} /></div>
                   <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Tags (opcional)</p>
@@ -496,7 +550,7 @@ export default function PerfilPublicoComprador() {
                   </div>
                   <textarea value={comentario} onChange={(e) => setComentario(e.target.value)}
                     placeholder="Escribe tu experiencia con este comprador..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none h-20 focus:outline-none focus:border-[#C8A96E] bg-[#F7F1E3] text-[#2C1A0E] placeholder-gray-400 mb-3" />
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none h-20 focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40 bg-[#F7F1E3] text-[#2C1A0E] placeholder-gray-400 mb-3" />
                   <button type="submit" disabled={enviando}
                     className="w-full py-3 rounded-xl bg-[#2C1A0E] text-white text-sm font-semibold hover:bg-[#3D1F0F] transition-colors disabled:opacity-60">
                     {enviando ? 'Publicando...' : 'Publicar reseña'}
@@ -508,15 +562,137 @@ export default function PerfilPublicoComprador() {
 
           {/* Columna lateral */}
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-[#E7D9BF] p-5 shadow-sm">
-              <h3 className="text-[#2C1A0E] font-bold text-sm mb-4">📋 Informacion</h3>
+            <div className="rounded-[22px] bg-[linear-gradient(135deg,#2C1A0E_0%,#4A2A18_100%)] p-5 text-white shadow-[0_16px_34px_rgba(44,26,14,0.20)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D8C7A8]">Contacto directo</p>
+                  <p className="mt-2 text-lg font-black">{comprador.telefono || 'Contacto pendiente'}</p>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${tieneContactoCompleto ? 'bg-green-500/15 text-green-100 ring-1 ring-green-300/30' : 'bg-white/10 text-[#F3E3CD]'}`}>
+                  {canalesActivos}/4 listo
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-[#E7D6C0]">
+                Confirma precio, horario y dirección antes de desplazarte.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {señalesContacto.map((item) => (
+                  <span
+                    key={item.label}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.ok ? 'bg-white text-[#2C1A0E]' : 'bg-white/10 text-[#E7D6C0]'}`}
+                  >
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 space-y-2">
+                <a
+                  href={comprador.telefono ? `tel:${comprador.telefono}` : '#'}
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${
+                    comprador.telefono
+                      ? 'bg-white text-[#2C1A0E]'
+                      : 'bg-white/10 text-white/50 pointer-events-none'
+                  }`}
+                >
+                  <span><i className="fa-solid fa-phone mr-2"></i>Llamar ahora</span>
+                  <span>{comprador.telefono ? 'Disponible' : 'No disponible'}</span>
+                </a>
+                <a
+                  href={whatsappLink || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${
+                    whatsappLink
+                      ? 'bg-[#25D366] text-white'
+                      : 'bg-white/10 text-white/50 pointer-events-none'
+                  }`}
+                >
+                  <span><i className="fa-brands fa-whatsapp mr-2"></i>Abrir WhatsApp</span>
+                  <span>{whatsappLink ? 'Ir al chat' : 'No disponible'}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => copiarTexto(comprador.telefono, 'Teléfono')}
+                  disabled={!comprador.telefono}
+                  className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${
+                    comprador.telefono
+                      ? 'bg-[#F5ECD7] text-[#2C1A0E]'
+                      : 'bg-white/10 text-white/50 cursor-not-allowed'
+                  }`}
+                >
+                  <span><i className="fa-regular fa-copy mr-2"></i>Copiar número</span>
+                  <span>{comprador.telefono ? 'Compartir' : 'No disponible'}</span>
+                </button>
+                <a
+                  href={direccionMapa || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${
+                    direccionMapa
+                      ? 'bg-white text-[#2C1A0E]'
+                      : 'bg-white/10 text-white/50 pointer-events-none'
+                  }`}
+                >
+                  <span><i className="fa-solid fa-location-arrow mr-2"></i>Abrir ubicación</span>
+                  <span>{direccionMapa ? 'Ver mapa' : 'Sin dirección'}</span>
+                </a>
+              </div>
+            </div>
+
+            <div className={`${cardBase} p-5`}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="text-[#2C1A0E] font-bold text-sm">Señales de confianza</h3>
+                  <p className="text-[#8B7355] text-xs mt-1">Verifica rápido si este comprador ya tiene sus datos clave listos.</p>
+                </div>
+                <span className="rounded-full bg-[#F5ECD7] px-3 py-1 text-[11px] font-bold text-[#7A4020]">
+                  {canalesActivos}/4 listo
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {señalesContacto.map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${
+                      item.ok
+                        ? 'border border-green-200 bg-green-50 text-green-700'
+                        : 'border border-[#E7D9BF] bg-[#FCF8F1] text-[#8B7355]'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-xs">{item.ok ? 'Disponible' : 'Pendiente'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={`${cardBase} p-5`}>
+              <h3 className="text-[#2C1A0E] font-bold text-sm mb-4">Información</h3>
               <div className="space-y-3">
                 {comprador.direccion && (
                   <div className="flex items-start gap-3">
                     <i className="fa-solid fa-location-dot text-[#C8A96E] mt-0.5"></i>
                     <div>
                       <p className="text-[#2C1A0E] text-sm">{comprador.direccion}</p>
-                      <p className="text-[#8B7355] text-xs">Direccion</p>
+                      <p className="text-[#8B7355] text-xs">Dirección</p>
+                    </div>
+                  </div>
+                )}
+                {comprador.municipio && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-map text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.municipio}</p>
+                      <p className="text-[#8B7355] text-xs">Municipio</p>
+                    </div>
+                  </div>
+                )}
+                {comprador.tipoempresa && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-building text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.tipoempresa}</p>
+                      <p className="text-[#8B7355] text-xs">Tipo de empresa</p>
                     </div>
                   </div>
                 )}
@@ -525,7 +701,7 @@ export default function PerfilPublicoComprador() {
                     <i className="fa-solid fa-phone text-[#C8A96E] mt-0.5"></i>
                     <div>
                       <p className="text-[#2C1A0E] text-sm">{comprador.telefono}</p>
-                      <p className="text-[#8B7355] text-xs">Telefono</p>
+                      <p className="text-[#8B7355] text-xs">Teléfono</p>
                     </div>
                   </div>
                 )}
@@ -533,7 +709,7 @@ export default function PerfilPublicoComprador() {
                   <div className="flex items-start gap-3">
                     <i className="fa-solid fa-clock text-[#C8A96E] mt-0.5"></i>
                     <div>
-                      <p className="text-[#2C1A0E] text-sm">{comprador.horarioApertura} – {comprador.horarioCierre}</p>
+                      <p className="text-[#2C1A0E] text-sm">{comprador.horarioApertura} - {comprador.horarioCierre}</p>
                       <p className="text-[#8B7355] text-xs">Horario</p>
                     </div>
                   </div>
@@ -569,9 +745,9 @@ export default function PerfilPublicoComprador() {
             <Calculadora precios={precios} />
 
             {usuario && (
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm">
-                <h3 className="text-green-800 font-bold text-sm mb-1">🔔 Alerta de precio</h3>
-                <p className="text-green-700 text-xs mb-3">Avisame cuando este comprador suba su precio</p>
+              <div className="bg-green-50 border border-green-200 rounded-[22px] p-5 shadow-[0_10px_28px_rgba(40,120,72,0.10)]">
+                <h3 className="text-green-800 font-bold text-sm mb-1">Alerta de precio</h3>
+                <p className="text-green-700 text-xs mb-3">Avísame cuando este comprador suba su precio</p>
                 {mensajeAlerta && (
                   <div className={`px-3 py-2 rounded-xl mb-3 text-xs font-semibold ${mensajeAlerta.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {mensajeAlerta.texto}
@@ -579,17 +755,17 @@ export default function PerfilPublicoComprador() {
                 )}
                 {alertaGuardada ? (
                   <div className="text-center py-2">
-                    <p className="text-green-700 text-sm font-semibold">✅ Alerta activa</p>
+                    <p className="text-green-700 text-sm font-semibold">Alerta activa</p>
                     <p className="text-green-600 text-xs mt-1">Te avisamos cuando supere ${Number(precioAlerta).toLocaleString()}</p>
                   </div>
                 ) : (
                   <>
                     <input type="number" placeholder="Ej: 2100000" value={precioAlerta}
                       onChange={(e) => setPrecioAlerta(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 bg-white text-[#2C1A0E] mb-3" />
+                      className="w-full px-4 py-3 rounded-xl border border-green-200 text-sm focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200/70 bg-white text-[#2C1A0E] mb-3" />
                     <button onClick={handleActivarAlerta} disabled={!precioAlerta || enviandoAlerta}
                       className="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-60">
-                      {enviandoAlerta ? 'Activando...' : '🔔 Activar alerta'}
+                      {enviandoAlerta ? 'Activando...' : 'Activar alerta'}
                     </button>
                   </>
                 )}
@@ -600,10 +776,10 @@ export default function PerfilPublicoComprador() {
               <div className="bg-[#FFF8E7] border border-[#C8A96E]/30 rounded-2xl px-6 py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <i className="fa-solid fa-lock text-[#C8A96E]"></i>
-                  <p className="text-[#2C1A0E] text-sm font-semibold">Inicia sesion para dejar una reseña</p>
+                  <p className="text-[#2C1A0E] text-sm font-semibold">Inicia sesión para dejar una reseña</p>
                 </div>
                 <Link to="/login" className="bg-[#2C1A0E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#3D1F0F] transition-colors whitespace-nowrap">
-                  Iniciar sesion
+                  Iniciar sesión
                 </Link>
               </div>
             )}
@@ -613,21 +789,77 @@ export default function PerfilPublicoComprador() {
 
       {/* Modal contacto */}
       {modalContacto && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
-            <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-phone text-[#C8A96E] text-2xl"></i>
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-5 shadow-[0_24px_60px_rgba(44,26,14,0.22)] md:p-6">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <h3 className="text-[#2C1A0E] font-bold text-lg">Contactar comprador</h3>
+                <p className="text-[#8B7355] text-sm mt-1">{comprador.nombreempresa}</p>
+              </div>
+              <button onClick={() => setModalContacto(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
             </div>
-            <h3 className="text-[#2C1A0E] font-bold text-lg mb-1">Contactar comprador</h3>
-            <p className="text-[#8B7355] text-sm mb-4">{comprador.nombreempresa}</p>
-            <div className="bg-[#F7F1E3] rounded-xl px-6 py-4 mb-6">
-              <p className="text-[#2C1A0E] text-2xl font-bold tracking-wide">{comprador.telefono || 'No registrado'}</p>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8B7355] mb-3">Opciones rápidas</p>
+                  <div className="space-y-2">
+                    <a
+                      href={comprador.telefono ? `tel:${comprador.telefono}` : '#'}
+                      className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${comprador.telefono ? 'bg-white text-[#2C1A0E] border border-[#E7D9BF]' : 'bg-gray-100 text-gray-400 pointer-events-none'}`}
+                    >
+                      <span><i className="fa-solid fa-phone mr-2 text-[#C8A96E]"></i>Llamar</span>
+                      <span>{comprador.telefono || 'No disponible'}</span>
+                    </a>
+                    <a
+                      href={whatsappLink || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${whatsappLink ? 'bg-[#E9F9EE] text-[#1E7A46] border border-green-200' : 'bg-gray-100 text-gray-400 pointer-events-none'}`}
+                    >
+                      <span><i className="fa-brands fa-whatsapp mr-2"></i>WhatsApp</span>
+                      <span>{whatsappLink ? 'Abrir chat' : 'No disponible'}</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => copiarTexto(comprador.telefono, 'Teléfono')}
+                      disabled={!comprador.telefono}
+                      className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${comprador.telefono ? 'bg-white text-[#2C1A0E] border border-[#E7D9BF]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                    >
+                      <span><i className="fa-regular fa-copy mr-2 text-[#C8A96E]"></i>Copiar teléfono</span>
+                      <span>{comprador.telefono ? 'Listo para compartir' : 'No disponible'}</span>
+                    </button>
+                    <a
+                      href={direccionMapa || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold ${direccionMapa ? 'bg-white text-[#2C1A0E] border border-[#E7D9BF]' : 'bg-gray-100 text-gray-400 pointer-events-none'}`}
+                    >
+                      <span><i className="fa-solid fa-location-arrow mr-2 text-[#C8A96E]"></i>Abrir ubicación</span>
+                      <span>{direccionMapa ? 'Ver mapa' : 'Sin dirección'}</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#E7D9BF] bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8B7355] mb-2">Información útil</p>
+                  <p className="text-sm text-[#6B5A4D]">{comprador.municipio || 'El Pital'} · {comprador.tipoempresa || 'Comprador'}</p>
+                  <p className="text-sm text-[#6B5A4D] mt-1">{comprador.direccion || 'Sin dirección registrada'}</p>
+                  {comprador.horarioApertura && (
+                    <p className="text-sm text-[#6B5A4D] mt-1">Horario: {comprador.horarioApertura} - {comprador.horarioCierre}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] p-4 text-sm text-[#6B5A4D]">
+                  Usa estas opciones para llamar, abrir WhatsApp, copiar el número o revisar la ubicación antes de desplazarte.
+                </div>
+              </div>
             </div>
-            <button onClick={() => setModalContacto(false)}
-              className="w-full bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-              Cerrar
-            </button>
           </div>
         </div>
       )}
@@ -637,7 +869,7 @@ export default function PerfilPublicoComprador() {
   return usuario ? (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="ml-16 flex-1">{contenido}</div>
+      <div className="flex-1 pb-20 md:ml-16 md:pb-0">{contenido}</div>
     </div>
   ) : (
     <>
@@ -646,3 +878,6 @@ export default function PerfilPublicoComprador() {
     </>
   );
 }
+
+
+

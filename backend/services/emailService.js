@@ -218,18 +218,16 @@ export const enviarSolicitudCompradorAdmin = async ({
 }) => {
   try {
     if (!destinatarios?.length) return false;
-    const enlaceRevision = usuarioId
-      ? `${process.env.FRONTEND_URL}/admin/perfil?solicitud=${usuarioId}`
-      : `${process.env.FRONTEND_URL}/admin/perfil`;
+    const enlaceRevision = `${process.env.FRONTEND_URL}/admin/perfil`;
 
     await transporter.sendMail({
       from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
       to: destinatarios.join(','),
-      subject: `Nueva solicitud de comprador: ${empresa.nombreempresa}`,
+      subject: `Nuevo registro de comprador: ${empresa.nombreempresa}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border:1px solid #eadfca;border-radius:16px;overflow:hidden">
           <div style="background:#2C1A0E;padding:24px;text-align:center;color:#fff">
-            <h1 style="margin:0;font-size:22px;">Nueva solicitud de comprador</h1>
+            <h1 style="margin:0;font-size:22px;">Nuevo registro de comprador</h1>
           </div>
           <div style="padding:24px;color:#2C1A0E">
             <p style="margin-top:0;">Un comprador completó su perfil y está pendiente de revisión.</p>
@@ -245,7 +243,7 @@ export const enviarSolicitudCompradorAdmin = async ({
             </table>
             <div style="margin-top:24px">
               <a href="${enlaceRevision}" style="display:inline-block;background:#C8A96E;color:#fff;text-decoration:none;padding:12px 24px;border-radius:24px;font-weight:bold">
-                Abrir solicitud en el panel admin
+                Abrir revisión en el panel admin
               </a>
             </div>
             <p style="margin:24px 0 0;color:#8B7355;font-size:12px;">Revísalo desde el panel de administración de CoffePrice.</p>
@@ -255,7 +253,7 @@ export const enviarSolicitudCompradorAdmin = async ({
     });
     return true;
   } catch (error) {
-    console.error('Error al notificar solicitud de comprador:', error.message);
+    console.error('Error al notificar registro de comprador:', error.message);
     return false;
   }
 };
@@ -273,7 +271,7 @@ export const enviarDecisionComprador = async ({
     await transporter.sendMail({
       from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
       to: destinatario,
-      subject: aprobado ? 'Tu cuenta de comprador fue aprobada' : 'Actualización sobre tu solicitud de comprador',
+      subject: aprobado ? 'Tu cuenta de comprador fue aprobada' : 'Actualización sobre tu registro de comprador',
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:24px auto;background:#fff;border:1px solid #eadfca;border-radius:16px;overflow:hidden">
           <div style="background:${aprobado ? '#2C6B3F' : '#7A4020'};padding:24px;text-align:center;color:#fff">

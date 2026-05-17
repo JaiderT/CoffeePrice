@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -15,15 +15,15 @@ L.Icon.Default.mergeOptions({
 const CENTRO_PITAL = [2.266205, -75.805401];
 
 const SERVICIOS_OPCIONES = [
-  "Café pergamino seco",
-  "Café especial",
-  "Café orgánico",
-  "Café verde",
+  "CafÃ© pergamino seco",
+  "CafÃ© especial",
+  "CafÃ© orgÃ¡nico",
+  "CafÃ© verde",
   "Pasilla",
   "Cacao",
-  "Maíz",
+  "MaÃ­z",
   "Fique",
-  "Otros productos agrícolas",
+  "Otros productos agrÃ­colas",
 ];
 
 const MUNICIPIOS = [
@@ -34,7 +34,7 @@ const MUNICIPIOS = [
   "Tarqui",
   "Suaza",
   "Palestina",
-  "Elías",
+  "ElÃ­as",
   "Saladoblanco",
   "Isnos",
 ];
@@ -106,6 +106,17 @@ export default function CompletarPerfil() {
     longitud: null,
   });
 
+  const totalChecks = 6;
+  const checksCompletados = [
+    form.nombreempresa.trim(),
+    form.direccion.trim(),
+    form.telefono.trim(),
+    form.servicios.length > 0,
+    form.municipio.trim(),
+    Number.isFinite(form.latitud) && Number.isFinite(form.longitud),
+  ].filter(Boolean).length;
+  const progresoPerfil = Math.round((checksCompletados / totalChecks) * 100);
+
   useEffect(() => {
     let activo = true;
 
@@ -125,7 +136,7 @@ export default function CompletarPerfil() {
           });
 
           if (!response.ok) {
-            throw new Error("No hay sesión válida");
+            throw new Error("No hay sesiÃ³n vÃ¡lida");
           }
 
           const userData = await response.json();
@@ -213,13 +224,13 @@ export default function CompletarPerfil() {
   };
 
   const validarNombreEmpresa = (nombre) => {
-    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.&]+$/;
+    const soloLetras = /^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“ÃšÃ±Ã‘Ã¼Ãœ\s.&]+$/;
     return soloLetras.test(nombre.trim());
   };
 
   const usarMiUbicacion = () => {
     if (!navigator.geolocation) {
-      setError("Tu navegador no permite obtener la ubicación");
+      setError("Tu navegador no permite obtener la ubicaciÃ³n");
       return;
     }
 
@@ -236,7 +247,7 @@ export default function CompletarPerfil() {
         setUbicandoMapa(false);
       },
       () => {
-        setError("No pudimos obtener tu ubicación exacta");
+        setError("No pudimos obtener tu ubicaciÃ³n exacta");
         setUbicandoMapa(false);
       },
       { enableHighAccuracy: true, timeout: 12000 }
@@ -256,11 +267,11 @@ export default function CompletarPerfil() {
       return;
     }
     if (!form.direccion.trim()) {
-      setError("La dirección es obligatoria");
+      setError("La direcciÃ³n es obligatoria");
       return;
     }
     if (!form.telefono.trim()) {
-      setError("El teléfono es obligatorio");
+      setError("El telÃ©fono es obligatorio");
       return;
     }
     if (form.servicios.length === 0) {
@@ -303,27 +314,27 @@ export default function CompletarPerfil() {
       return {
         icono: "!",
         titulo: "Solicitud rechazada",
-        descripcion: "El admin revisó tu empresa y dejó observaciones antes de aprobarla.",
-        detalle: "Revisa el motivo registrado y coordina la corrección con el equipo administrador.",
+        descripcion: "El admin revisÃ³ tu empresa y dejÃ³ observaciones antes de aprobarla.",
+        detalle: "Revisa el motivo registrado y coordina la correcciÃ³n con el equipo administrador.",
         color: "bg-red-100 text-red-600",
       };
     }
 
     if (estadoRevisionActual === "aprobado") {
       return {
-        icono: "✓",
+        icono: "âœ“",
         titulo: "Perfil aprobado",
         descripcion: "Tu empresa ya fue aprobada y tu cuenta puede operar como comprador.",
-        detalle: "Si sigues viendo esta pantalla, vuelve a iniciar sesión para refrescar tu acceso.",
+        detalle: "Si sigues viendo esta pantalla, vuelve a iniciar sesiÃ³n para refrescar tu acceso.",
         color: "bg-green-100 text-green-600",
       };
     }
 
     return {
-      icono: "✓",
-      titulo: "Perfil en revisión",
+      icono: "âœ“",
+      titulo: "Perfil en revisiÃ³n",
       descripcion: "Tu perfil empresarial ya fue enviado al administrador.",
-      detalle: "Cuando se apruebe, tu cuenta pasará a activa y podrás entrar como comprador.",
+      detalle: "Cuando se apruebe, tu cuenta pasarÃ¡ a activa y podrÃ¡s entrar como comprador.",
       color: "bg-amber-100 text-amber-700",
     };
   })();
@@ -343,14 +354,14 @@ export default function CompletarPerfil() {
   if (success || perfilExistente) {
     return (
       <div className="min-h-screen bg-[#3D1F0F] flex items-center justify-center px-4">
-        <div className="bg-[#FAF7F2] rounded-3xl p-8 sm:p-10 max-w-xl w-full shadow-2xl">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-black text-[#3B1F0A] mb-3">Perfil en revisión</h2>
+        <div className="bg-[#FAF7F2] rounded-3xl p-8 sm:p-10 max-w-xl w-full shadow-[0_24px_60px_rgba(0,0,0,0.22)] border border-white/60">
+          <div className="text-6xl mb-4">âœ…</div>
+          <h2 className="text-2xl font-black text-[#3B1F0A] mb-3">Perfil en revisiÃ³n</h2>
           <p className="text-sm text-gray-500 leading-relaxed mb-2">
             Tu perfil empresarial ya fue enviado al administrador.
           </p>
           <p className="text-xs text-gray-400 mb-8">
-            Cuando se apruebe, tu cuenta pasará a activa y podrás entrar como comprador.
+            Cuando se apruebe, tu cuenta pasarÃ¡ a activa y podrÃ¡s entrar como comprador.
           </p>
           <div className={`rounded-2xl px-4 py-4 mb-6 flex items-start gap-3 border ${resumenEstadoPerfil.color}`}>
             <div className="w-10 h-10 rounded-xl bg-white/70 flex items-center justify-center text-lg font-black shrink-0">
@@ -362,7 +373,7 @@ export default function CompletarPerfil() {
             </div>
           </div>
           {perfilComprador && (
-            <div className="bg-white border border-[#E8D8BF] rounded-2xl p-5 space-y-4 mb-6">
+            <div className="bg-white border border-[#E8D8BF] rounded-[24px] p-5 space-y-4 mb-6 shadow-[0_10px_28px_rgba(77,48,24,0.06)]">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-xs font-bold text-[#8B6B45] uppercase">Resumen enviado al admin</span>
                 <span className="text-[11px] px-3 py-1 rounded-full bg-[#F5ECD7] text-[#7A4020] font-semibold">
@@ -379,11 +390,11 @@ export default function CompletarPerfil() {
                   <p className="text-[#2C1A0E] font-semibold">{perfilComprador.municipio || "El Pital"}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs">Teléfono</p>
+                  <p className="text-gray-400 text-xs">TelÃ©fono</p>
                   <p className="text-[#2C1A0E] font-semibold">{perfilComprador.telefono || "No registrado"}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs">Ubicación exacta</p>
+                  <p className="text-gray-400 text-xs">UbicaciÃ³n exacta</p>
                   <p className="text-[#2C1A0E] font-semibold">
                     {Number.isFinite(perfilComprador.latitud) && Number.isFinite(perfilComprador.longitud)
                       ? "Mapa exacto enviado"
@@ -392,23 +403,23 @@ export default function CompletarPerfil() {
                 </div>
               </div>
               {perfilComprador.motivoRevision && (
-                <div className="rounded-xl bg-[#FFF4F1] border border-red-100 px-4 py-3 text-left">
-                  <p className="text-xs font-bold text-red-500 uppercase mb-1">Observación del admin</p>
+                <div className="rounded-2xl bg-[#FFF4F1] border border-red-100 px-4 py-3 text-left">
+                  <p className="text-xs font-bold text-red-500 uppercase mb-1">ObservaciÃ³n del admin</p>
                   <p className="text-sm text-[#6B3A2A]">{perfilComprador.motivoRevision}</p>
                 </div>
               )}
               <div className="grid sm:grid-cols-3 gap-3 text-xs text-left">
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
                   <p className="font-bold text-[#7A4020] mb-1">1. Registro</p>
-                  <p className="text-gray-500">Tus datos básicos ya quedaron creados y verificados.</p>
+                  <p className="text-gray-500">Tus datos bÃ¡sicos ya quedaron creados y verificados.</p>
                 </div>
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
                   <p className="font-bold text-[#7A4020] mb-1">2. Perfil empresa</p>
-                  <p className="text-gray-500">El admin ya recibió empresa, dirección y punto de compra.</p>
+                  <p className="text-gray-500">El admin ya recibiÃ³ empresa, direcciÃ³n y punto de compra.</p>
                 </div>
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
-                  <p className="font-bold text-[#7A4020] mb-1">3. Decisión</p>
-                  <p className="text-gray-500">Solo aparecerás en la plataforma cuando la solicitud quede aprobada.</p>
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                  <p className="font-bold text-[#7A4020] mb-1">3. DecisiÃ³n</p>
+                  <p className="text-gray-500">Solo aparecerÃ¡s en la plataforma cuando tu perfil quede aprobado.</p>
                 </div>
               </div>
             </div>
@@ -418,7 +429,7 @@ export default function CompletarPerfil() {
             className="w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg"
             style={{ background: "linear-gradient(135deg, #C8814A, #7A4020)" }}
           >
-            Volver al inicio de sesión
+            Volver al inicio de sesiÃ³n
           </button>
         </div>
       </div>
@@ -438,34 +449,34 @@ export default function CompletarPerfil() {
         />
 
         <div className="flex items-center gap-3 mb-16 relative z-10">
-          <div className="w-12 h-12 bg-[#C8814A] rounded-xl flex items-center justify-center text-2xl shadow-lg">☕</div>
+          <div className="w-12 h-12 bg-[#C8814A] rounded-xl flex items-center justify-center text-2xl shadow-lg">â˜•</div>
           <span className="text-5xl font-black text-white" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
         </div>
 
         <h1 className="text-6xl font-black text-white leading-tight mb-5 relative z-10" style={{ fontFamily: "Georgia, serif" }}>
           Casi listo <br />
-          <span className="text-[#E8A870] italic text-5xl">para comprar café</span>
+          <span className="text-[#E8A870] italic text-5xl">para comprar cafÃ©</span>
         </h1>
 
         <p className="text-white/65 text-xl leading-relaxed max-w-sm mb-10 relative z-10">
-          Completa los datos de tu empresa para que el administrador pueda validarla con más confianza.
+          Completa los datos de tu empresa para que el administrador pueda validarla con mÃ¡s confianza.
         </p>
 
         <div className="flex flex-col gap-3 relative z-10">
           <div className="bg-[#C8814A]/20 rounded-2xl px-5 py-4 border border-[#C8814A]/30">
             <p className="text-white/60 text-xs mb-1">Estado de tu cuenta</p>
-            <p className="text-[#E8A870] font-bold text-sm">Pendiente de aprobación del admin</p>
+            <p className="text-[#E8A870] font-bold text-sm">Pendiente de aprobaciÃ³n del admin</p>
           </div>
           <div className="bg-white/10 rounded-2xl px-5 py-4 border border-white/10">
-            <p className="text-white/60 text-xs mb-1">Qué revisará el admin</p>
-            <p className="text-white font-semibold text-sm">Empresa, dirección, contacto, servicios y ubicación exacta del punto de compra</p>
+            <p className="text-white/60 text-xs mb-1">QuÃ© revisarÃ¡ el admin</p>
+            <p className="text-white font-semibold text-sm">Empresa, direcciÃ³n, contacto, servicios y ubicaciÃ³n exacta del punto de compra</p>
           </div>
         </div>
       </div>
 
       <div className="w-full lg:w-1/2 bg-[#FAF7F2] flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 overflow-y-auto">
         <div className="flex items-center gap-3 mb-8 lg:hidden">
-          <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl">☕</div>
+          <div className="w-10 h-10 bg-[#C8814A] rounded-xl flex items-center justify-center text-xl">â˜•</div>
           <span className="text-3xl font-black text-[#3B1F0A]" style={{ fontFamily: "Georgia, serif" }}>CoffePrice</span>
         </div>
 
@@ -477,8 +488,34 @@ export default function CompletarPerfil() {
           Datos de tu empresa
         </h2>
         <p className="text-sm text-gray-400 mb-8 leading-relaxed">
-          Esta información se enviará al administrador para revisión. Hasta que apruebe tu cuenta, no aparecerás en el mapa, precios ni perfiles públicos.
+          Esta informaciÃ³n se enviarÃ¡ al administrador para revisiÃ³n. Hasta que apruebe tu cuenta, no aparecerÃ¡s en el mapa, precios ni perfiles pÃºblicos.
         </p>
+
+        <div className="mb-8 rounded-[24px] border border-[#E8D8BF] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(77,48,24,0.06)]">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8B6B45]">Avance del perfil</p>
+              <p className="text-sm text-[#3B1F0A] font-semibold mt-1">{checksCompletados} de {totalChecks} puntos listos</p>
+            </div>
+            <span className="rounded-full bg-[#FCF3E6] px-3 py-1 text-xs font-bold text-[#C8814A]">
+              {progresoPerfil}%
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-[#F3E6D4] overflow-hidden mb-3">
+            <div className="h-full rounded-full bg-linear-to-r from-[#C8814A] to-[#7A4020]" style={{ width: `${progresoPerfil}%` }} />
+          </div>
+          <div className="grid sm:grid-cols-3 gap-2 text-xs">
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Empresa, municipio y direcciÃƒÂ³n
+            </div>
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Contacto, horarios y servicios
+            </div>
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Punto exacto en mapa para revisiÃƒÂ³n
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -534,7 +571,7 @@ export default function CompletarPerfil() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Dirección del punto físico *</label>
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">DirecciÃ³n del punto fÃ­sico *</label>
             <input
               type="text"
               required
@@ -545,22 +582,22 @@ export default function CompletarPerfil() {
             />
           </div>
 
-          <div className="rounded-2xl border border-[#C8A96E]/30 p-4 bg-[#FCF8F1]">
+          <div className="rounded-[24px] border border-[#C8A96E]/30 p-4 bg-[#FCF8F1] shadow-[0_10px_24px_rgba(77,48,24,0.05)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
               <div>
-                <p className="text-xs font-semibold text-[#3B1F0A]">Ubicación exacta en el mapa</p>
-                <p className="text-[11px] text-gray-500 mt-1">Haz clic en el mapa o arrastra el pin hasta tu ubicación real.</p>
+                <p className="text-xs font-semibold text-[#3B1F0A]">UbicaciÃ³n exacta en el mapa</p>
+                <p className="text-[11px] text-gray-500 mt-1">Haz clic en el mapa o arrastra el pin hasta tu ubicaciÃ³n real.</p>
               </div>
               <button
                 type="button"
                 onClick={usarMiUbicacion}
                 className="px-3 py-2 rounded-xl bg-[#F5ECD7] text-[#7A4020] text-xs font-semibold hover:bg-[#E8D8BF] transition-colors"
               >
-                {ubicandoMapa ? "Ubicando..." : "Usar mi ubicación exacta"}
+                {ubicandoMapa ? "Ubicando..." : "Usar mi ubicaciÃ³n exacta"}
               </button>
             </div>
 
-            <div className="rounded-xl overflow-hidden border border-[#E8D8BF]" style={{ height: "280px" }}>
+            <div className="rounded-2xl overflow-hidden border border-[#E8D8BF] shadow-[0_8px_22px_rgba(77,48,24,0.08)]" style={{ height: "280px" }}>
               <MapContainer center={posicionMapa} zoom={tieneUbicacionExacta ? 17 : 15} style={{ height: "100%", width: "100%" }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -577,15 +614,15 @@ export default function CompletarPerfil() {
             <div className="mt-3 flex flex-col gap-1 text-xs">
               <span className="text-[#3B1F0A] font-semibold">
                 {tieneUbicacionExacta
-                  ? `Lat: ${form.latitud} · Lng: ${form.longitud}`
-                  : "Aún no has fijado una ubicación exacta"}
+                  ? `Lat: ${form.latitud} Â· Lng: ${form.longitud}`
+                  : "AÃºn no has fijado una ubicaciÃ³n exacta"}
               </span>
-              <span className="text-gray-500">Si no marcas el punto, el sistema usará una ubicación aproximada basada en dirección y municipio.</span>
+              <span className="text-gray-500">Si no marcas el punto, el sistema usarÃ¡ una ubicaciÃ³n aproximada basada en direcciÃ³n y municipio.</span>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Teléfono *</label>
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">TelÃ©fono *</label>
             <input
               type="tel"
               required
@@ -597,7 +634,7 @@ export default function CompletarPerfil() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Horario de atención *</label>
+            <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Horario de atenciÃ³n *</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Apertura</label>
@@ -643,10 +680,10 @@ export default function CompletarPerfil() {
 
           <div>
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">
-              Descripción <span className="text-gray-400 font-normal">(opcional)</span>
+              DescripciÃ³n <span className="text-gray-400 font-normal">(opcional)</span>
             </label>
             <textarea
-              placeholder="Cuéntale al admin sobre tu empresa, experiencia o lo que te diferencia..."
+              placeholder="CuÃ©ntale al admin sobre tu empresa, experiencia o lo que te diferencia..."
               value={form.descripcion}
               onChange={(e) => handleChange("descripcion", e.target.value)}
               maxLength={300}
@@ -657,7 +694,7 @@ export default function CompletarPerfil() {
           </div>
 
           {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">
+            <div className="px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold shadow-[0_8px_18px_rgba(185,28,28,0.08)]">
               {error}
             </div>
           )}
@@ -668,10 +705,11 @@ export default function CompletarPerfil() {
             className="w-full py-3.5 rounded-xl text-white text-sm font-bold shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-60"
             style={{ background: "linear-gradient(135deg, #3D1F0F, #7A4020)" }}
           >
-            {loading ? "Enviando..." : "Enviar para aprobación"}
+            {loading ? "Enviando..." : "Enviar para aprobaciÃ³n"}
           </button>
         </form>
       </div>
     </div>
   );
 }
+

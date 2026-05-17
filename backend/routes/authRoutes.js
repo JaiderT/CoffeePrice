@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import jwt from "jsonwebtoken";
 import session from "express-session";
 import {
@@ -51,7 +51,7 @@ router.get("/me", authMiddleware, async (req, res) => {
       return res.status(200).json(user);
     }
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
 
     res.json(user);
@@ -75,10 +75,10 @@ router.post("/generate-token", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
     }
     if (user.estado === "suspendido") {
-      return res.status(403).json({ message: "Tu cuenta estÃ¡ suspendida." });
+      return res.status(403).json({ message: "Tu cuenta está suspendida." });
     }
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
 
     const token = jwt.sign(
@@ -112,12 +112,12 @@ router.post("/logout", (req, res) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
-  res.json({ message: "SesiÃ³n cerrada exitosamente" });
+  res.json({ message: "Sesión cerrada exitosamente" });
 });
 
 function responderGoogleNoDisponible(res) {
   return res.status(503).json({
-    message: "El inicio de sesiÃ³n con Google no estÃ¡ configurado en este entorno.",
+    message: "El inicio de sesión con Google no está configurado en este entorno.",
   });
 }
 
@@ -155,3 +155,5 @@ router.get(
 );
 
 export default router;
+
+

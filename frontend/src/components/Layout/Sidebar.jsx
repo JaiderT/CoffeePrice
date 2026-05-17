@@ -59,8 +59,8 @@ function Sidebar() {
 
   return (
     <>
-      <div className="fixed left-0 top-0 z-50 flex h-screen w-16 flex-col items-center gap-2 bg-[#2C1A0E] py-4">
-        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#C8A96E] text-xl">
+      <div className="fixed inset-x-0 bottom-0 z-50 flex h-18 items-center gap-2 overflow-x-auto border-t border-white/10 bg-[#2C1A0E]/98 px-3 py-2 backdrop-blur md:inset-x-auto md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-16 md:flex-col md:justify-start md:gap-2 md:overflow-visible md:border-r md:border-t-0 md:px-0 md:py-4">
+        <div className="hidden md:mb-4 md:flex md:h-10 md:w-10 md:items-center md:justify-center md:rounded-xl md:bg-[#C8A96E] md:text-xl">
           ☕
         </div>
 
@@ -68,7 +68,7 @@ function Sidebar() {
           <Link
             key={i}
             to={item.path}
-            className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
+            className={`group relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200 md:h-10 md:w-10 ${
               location.pathname === item.path
                 ? 'bg-[#C8A96E] text-white'
                 : 'text-gray-400 hover:bg-[#3D1F0F] hover:text-white'
@@ -82,7 +82,7 @@ function Sidebar() {
               </span>
             )}
 
-            <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="pointer-events-none absolute bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 md:bottom-auto md:left-14 md:translate-x-0">
               {item.label}
               {item.esAlertas && alertasDisparadas.length > 0 && (
                 <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] text-white">
@@ -94,7 +94,16 @@ function Sidebar() {
         ))}
 
         {usuario && (
-          <div className="mt-auto flex flex-col items-center gap-2">
+          <button
+            onClick={() => setMostrarModal(true)}
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 hover:bg-red-900 hover:text-red-300 md:hidden"
+          >
+            <i className="fa-solid fa-right-from-bracket text-sm" />
+          </button>
+        )}
+
+        {usuario && (
+          <div className="hidden md:mt-auto md:flex md:flex-col md:items-center md:gap-2">
             <div className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[#C8A96E] text-sm font-bold text-white transition-colors hover:bg-[#B8994E]">
               {iniciales}
               <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -116,10 +125,10 @@ function Sidebar() {
 
       {usuario && mostrarModal && (
         <div
-          className="fixed inset-0 z-2000 flex items-center justify-center"
+          className="fixed inset-0 z-2000 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}
         >
-          <div className="w-80 rounded-2xl bg-white p-8 text-center shadow-xl">
+          <div className="w-full max-w-80 rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF8E7]">
               <i className="fa-solid fa-right-from-bracket text-2xl text-[#C8A96E]" />
             </div>

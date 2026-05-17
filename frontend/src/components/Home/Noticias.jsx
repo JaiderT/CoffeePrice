@@ -10,10 +10,10 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const CATEGORIAS = [
   { value: 'todas', label: 'Todas' },
-  { value: 'mercado', label: 'Precios del cafe' },
+  { value: 'mercado', label: 'Precios del café' },
   { value: 'internacional', label: 'Mercado internacional' },
   { value: 'clima', label: 'Clima y cosechas' },
-  { value: 'produccion', label: 'Produccion' },
+  { value: 'produccion', label: 'Producción' },
 ];
 
 const categoriaBadgeColors = {
@@ -104,8 +104,8 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       if (canalesSeleccionados.push) {
         new Notification('Alertas activadas', {
           body: categoriasSeleccionadas.length > 0
-            ? `Recibiras noticias de: ${categoriasSeleccionadas.join(', ')}`
-            : 'Recibiras todas las noticias del cafe',
+            ? `Recibirás noticias de: ${categoriasSeleccionadas.join(', ')}`
+            : 'Recibirás todas las noticias del café',
           icon: '/favicon.ico',
         });
       }
@@ -137,14 +137,14 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="relative w-full max-w-md overflow-y-auto rounded-3xl bg-white shadow-2xl max-h-[90vh]">
         <div className="bg-[#3D1F0F] px-6 pt-6 pb-8">
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-xl leading-none">×</button>
           <div className="text-4xl mb-3">🔔</div>
           <h3 className="text-white text-xl font-bold">Alertas de noticias</h3>
-          <p className="text-gray-400 text-sm mt-1">Enterate al instante cuando haya novedades del cafe</p>
+          <p className="text-gray-400 text-sm mt-1">Entérate al instante cuando haya novedades del café</p>
         </div>
         <div className="px-6 py-6">
           {paso === 'seleccion' && (
@@ -154,7 +154,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
                   {error}
                 </div>
               )}
-              <p className="text-[#2C1A0E] text-sm font-semibold mb-4">Sobre que quieres recibir alertas?</p>
+              <p className="text-[#2C1A0E] text-sm font-semibold mb-4">¿Sobre qué quieres recibir alertas?</p>
               <div className="space-y-2 mb-5">
                 {categorias.map((categoria) => {
                   const activa = categoriasSeleccionadas.includes(categoria.value);
@@ -174,8 +174,8 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
               </div>
               <div className="space-y-2 mb-4">
                 {[
-                  { key: 'push', label: 'Notificacion push', desc: 'En el navegador cuando estes en la app' },
-                  { key: 'email', label: 'Correo electronico', desc: 'Te enviaremos un correo con la noticia' },
+                  { key: 'push', label: 'Notificación push', desc: 'En el navegador cuando estés en la app' },
+                  { key: 'email', label: 'Correo electrónico', desc: 'Te enviaremos un correo con la noticia' },
                 ].map((canal) => (
                   <label key={canal.key} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${canalesSeleccionados[canal.key] ? 'border-[#C8A96E] bg-[#FFF8E7]' : 'border-gray-200 bg-gray-50'}`}>
                     <div>
@@ -205,7 +205,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
             <div className="text-center py-4">
               <div className="text-5xl mb-4">✅</div>
               <h4 className="text-[#2C1A0E] font-bold text-lg mb-2">Alertas activadas</h4>
-              <p className="text-gray-500 text-sm mb-2">Te avisaremos cuando haya noticias importantes del cafe.</p>
+              <p className="text-gray-500 text-sm mb-2">Te avisaremos cuando haya noticias importantes del café.</p>
               <button onClick={onClose} className="w-full bg-[#C8A96E] text-white py-3 rounded-full font-semibold text-sm hover:bg-[#B8994E] transition-colors">
                 Perfecto, cerrar
               </button>
@@ -413,7 +413,7 @@ export default function Noticias() {
       {!cargandoAuth && usuario ? (
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="ml-16 flex-1">{contenido}</div>
+          <div className="flex-1 pb-20 md:ml-16 md:pb-0">{contenido}</div>
         </div>
       ) : !cargandoAuth && !usuario ? (
         <div className="bg-[#2C1A0E]">

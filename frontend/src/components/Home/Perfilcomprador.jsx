@@ -15,6 +15,39 @@ L.Icon.Default.mergeOptions({
 
 const CENTRO_PITAL = [2.266205, -75.805401];
 
+const TIPOS_EMPRESA = [
+  { value: 'cooperativa', label: 'Cooperativa' },
+  { value: 'trilladora', label: 'Trilladora' },
+  { value: 'independiente', label: 'Independiente' },
+  { value: 'exportadora', label: 'Exportadora' },
+  { value: 'otro', label: 'Otro' },
+];
+
+const MUNICIPIOS = [
+  'El Pital',
+  'Pitalito',
+  'Acevedo',
+  'La Argentina',
+  'Tarqui',
+  'Suaza',
+  'Palestina',
+  'Elías',
+  'Saladoblanco',
+  'Isnos',
+];
+
+const SERVICIOS_OPCIONES = [
+  'Café pergamino seco',
+  'Café especial',
+  'Café orgánico',
+  'Café verde',
+  'Pasilla',
+  'Cacao',
+  'Maíz',
+  'Fique',
+  'Otros productos agrícolas',
+];
+
 function ActualizarVistaMapa({ centro }) {
   const map = useMap();
 
@@ -65,10 +98,14 @@ export default function PerfilComprador() {
   const [datos, setDatos] = useState({ nombre: '', apellido: '', celular: '' });
   const [empresa, setEmpresa] = useState({
     nombreempresa: '',
+    tipoempresa: 'independiente',
+    municipio: 'El Pital',
     direccion: '',
     telefono: '',
     horarioApertura: '08:00',
     horarioCierre: '17:00',
+    descripcion: '',
+    servicios: [],
     latitud: null,
     longitud: null,
   });
@@ -96,10 +133,14 @@ export default function PerfilComprador() {
         setComprador(data);
         setEmpresa({
           nombreempresa: data.nombreempresa || '',
+          tipoempresa: data.tipoempresa || 'independiente',
+          municipio: data.municipio || 'El Pital',
           direccion: data.direccion || '',
           telefono: data.telefono || '',
           horarioApertura: data.horarioApertura || '08:00',
           horarioCierre: data.horarioCierre || '17:00',
+          descripcion: data.descripcion || '',
+          servicios: Array.isArray(data.servicios) ? data.servicios : [],
           latitud: Number.isFinite(data.latitud) ? data.latitud : null,
           longitud: Number.isFinite(data.longitud) ? data.longitud : null,
         });
@@ -152,10 +193,14 @@ export default function PerfilComprador() {
       setComprador(data);
       setEmpresa({
         nombreempresa: data.nombreempresa || '',
+        tipoempresa: data.tipoempresa || 'independiente',
+        municipio: data.municipio || 'El Pital',
         direccion: data.direccion || '',
         telefono: data.telefono || '',
         horarioApertura: data.horarioApertura || '08:00',
         horarioCierre: data.horarioCierre || '17:00',
+        descripcion: data.descripcion || '',
+        servicios: Array.isArray(data.servicios) ? data.servicios : [],
         latitud: Number.isFinite(data.latitud) ? data.latitud : null,
         longitud: Number.isFinite(data.longitud) ? data.longitud : null,
       });
@@ -235,6 +280,15 @@ export default function PerfilComprador() {
     );
   };
 
+  const toggleServicio = (servicio) => {
+    setEmpresa((prev) => ({
+      ...prev,
+      servicios: prev.servicios.includes(servicio)
+        ? prev.servicios.filter((item) => item !== servicio)
+        : [...prev.servicios, servicio],
+    }));
+  };
+
   const iniciales = usuario
     ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
@@ -243,25 +297,65 @@ export default function PerfilComprador() {
   const posicionMapa = tieneUbicacionExacta
     ? [empresa.latitud, empresa.longitud]
     : CENTRO_PITAL;
+  const cardBase = 'bg-white rounded-[24px] border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)] overflow-hidden';
 
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-[#2C1A0E] text-2xl font-bold">Mi perfil</h1>
+          <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">Mi perfil</h1>
           <p className="text-gray-500 text-sm mt-1">Gestiona tu información y la de tu empresa</p>
         </div>
 
+        {comprador && (
+          <div className={`mb-6 rounded-[24px] border px-5 py-4 shadow-[0_10px_28px_rgba(77,48,24,0.06)] ${
+            comprador.estadoRevision === 'aprobado'
+              ? 'border-green-200 bg-green-50'
+              : comprador.estadoRevision === 'rechazado'
+                ? 'border-red-200 bg-red-50'
+                : 'border-amber-200 bg-amber-50'
+          }`}>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8B6B45]">Estado comercial</p>
+                <p className="mt-1 text-sm font-semibold text-[#2C1A0E]">
+                  {comprador.estadoRevision === 'aprobado'
+                    ? 'Perfil aprobado y visible'
+                    : comprador.estadoRevision === 'rechazado'
+                      ? 'Perfil con ajustes pendientes'
+                      : 'Perfil en revisión'}
+                </p>
+                <p className="mt-1 text-xs text-[#6B5A4D]">
+                  {comprador.estadoRevision === 'aprobado'
+                    ? 'Los productores ya pueden verte como comprador activo.'
+                    : comprador.estadoRevision === 'rechazado'
+                      ? (comprador.motivoRevision || 'Actualiza tu perfil para volver a revisión.')
+                      : 'El administrador está validando tu empresa, ubicación y datos de contacto.'}
+                </p>
+              </div>
+              <span className={`self-start rounded-full px-3 py-1 text-xs font-semibold ${
+                comprador.estadoRevision === 'aprobado'
+                  ? 'bg-green-100 text-green-700'
+                  : comprador.estadoRevision === 'rechazado'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-amber-100 text-amber-700'
+              }`}>
+                {comprador.estadoRevision || 'enRevision'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {mensaje && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div className={`mb-6 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
             {mensaje.tipo === 'exito' ? 'OK' : 'Error'} {mensaje.texto}
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div className={`${cardBase} mb-6`}>
           <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#C8A96E] relative">
             <div className="absolute -bottom-8 left-8">
-              <div className="w-16 h-16 rounded-2xl bg-[#2C1A0E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
+              <div className="w-16 h-16 rounded-2xl bg-[#2C1A0E] flex items-center justify-center text-white text-2xl font-bold shadow-[0_12px_30px_rgba(44,26,14,0.18)] border-4 border-white">
                 {iniciales}
               </div>
             </div>
@@ -270,7 +364,7 @@ export default function PerfilComprador() {
           <div className="pt-12 px-8 pb-8">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-[#2C1A0E] text-xl font-bold">{usuario?.nombre} {usuario?.apellido}</h2>
+                <h2 className="text-[#2C1A0E] text-xl font-black tracking-tight">{usuario?.nombre} {usuario?.apellido}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="bg-[#F5ECD7] text-[#7A4020] text-xs px-3 py-1 rounded-full font-semibold">🏪 Comprador</span>
                   <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold">● Activo</span>
@@ -322,7 +416,7 @@ export default function PerfilComprador() {
         </div>
 
         {/* Card empresa */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div className={`${cardBase} mb-6`}>
           <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="text-[#2C1A0E] font-bold">Datos de la empresa</h3>
@@ -341,10 +435,14 @@ export default function PerfilComprador() {
             {modo !== 'empresa' ? (
               <div className="space-y-4">
                 <Campo label="Nombre de la empresa" valor={comprador?.nombreempresa || '—'} />
+                <Campo label="Tipo de empresa" valor={TIPOS_EMPRESA.find((item) => item.value === comprador?.tipoempresa)?.label || 'No definido'} />
+                <Campo label="Municipio" valor={comprador?.municipio || 'No definido'} />
                 <Campo label="Dirección" valor={comprador?.direccion || '—'} />
                 <Campo label="Teléfono" valor={comprador?.telefono || 'No registrado'} />
                 <Campo label="Hora de apertura" valor={comprador?.horarioApertura || '08:00'} />
                 <Campo label="Hora de cierre" valor={comprador?.horarioCierre || '17:00'} />
+                <Campo label="Descripción" valor={comprador?.descripcion || 'Sin descripción'} />
+                <Campo label="Servicios" valor={comprador?.servicios?.length ? comprador.servicios.join(', ') : 'Sin servicios registrados'} />
                 <Campo
                   label="Ubicación exacta"
                   valor={Number.isFinite(comprador?.latitud) && Number.isFinite(comprador?.longitud)
@@ -355,8 +453,45 @@ export default function PerfilComprador() {
             ) : (
               <form onSubmit={handleGuardarEmpresa} className="space-y-4">
                 <InputField label="Nombre de la empresa" value={empresa.nombreempresa} onChange={(v) => setEmpresa({ ...empresa, nombreempresa: v })} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Tipo de empresa</label>
+                    <select
+                      value={empresa.tipoempresa}
+                      onChange={(e) => setEmpresa({ ...empresa, tipoempresa: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50"
+                    >
+                      {TIPOS_EMPRESA.map((tipo) => (
+                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Municipio</label>
+                    <select
+                      value={empresa.municipio}
+                      onChange={(e) => setEmpresa({ ...empresa, municipio: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50"
+                    >
+                      {MUNICIPIOS.map((municipio) => (
+                        <option key={municipio} value={municipio}>{municipio}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 <InputField label="Dirección" value={empresa.direccion} onChange={(v) => setEmpresa({ ...empresa, direccion: v })} />
                 <InputField label="Teléfono" value={empresa.telefono} onChange={(v) => setEmpresa({ ...empresa, telefono: v })} placeholder="+57 300 000 0000" />
+                <div>
+                  <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Descripción comercial</label>
+                  <textarea
+                    value={empresa.descripcion}
+                    onChange={(e) => setEmpresa({ ...empresa, descripcion: e.target.value })}
+                    rows={3}
+                    maxLength={300}
+                    className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 bg-white text-sm text-[#3B1F0A] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]/50 resize-none"
+                    placeholder="Cuéntale al productor qué compras o cómo trabajas."
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -379,7 +514,26 @@ export default function PerfilComprador() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#C8A96E]/30 p-4 bg-[#FCF8F1]">
+                <div className="rounded-[24px] border border-[#C8A96E]/30 p-4 bg-[#FCF8F1] shadow-[0_10px_24px_rgba(77,48,24,0.05)]">
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-[#3B1F0A] mb-2">Servicios o productos que compras</p>
+                    <div className="flex flex-wrap gap-2">
+                      {SERVICIOS_OPCIONES.map((servicio) => (
+                        <button
+                          key={servicio}
+                          type="button"
+                          onClick={() => toggleServicio(servicio)}
+                          className={`px-3 py-2 rounded-full text-xs font-semibold border transition-colors ${
+                            empresa.servicios.includes(servicio)
+                              ? 'border-[#C8A96E] bg-[#FFF3DE] text-[#7A4020]'
+                              : 'border-[#E0D0B0] bg-white text-[#8B7355] hover:border-[#C8A96E]'
+                          }`}
+                        >
+                          {servicio}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
                     <div>
                       <p className="text-xs font-semibold text-[#3B1F0A]">Ubicación exacta en el mapa</p>
@@ -394,7 +548,7 @@ export default function PerfilComprador() {
                     </button>
                   </div>
 
-                  <div className="rounded-xl overflow-hidden border border-[#E8D8BF]" style={{ height: '280px' }}>
+                  <div className="rounded-2xl overflow-hidden border border-[#E8D8BF] shadow-[0_8px_22px_rgba(77,48,24,0.08)]" style={{ height: '280px' }}>
                     <MapContainer center={posicionMapa} zoom={tieneUbicacionExacta ? 17 : 15} style={{ height: '100%', width: '100%' }}>
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -425,7 +579,7 @@ export default function PerfilComprador() {
         </div>
 
         {/* Zona de cuenta */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className={cardBase}>
           <div className="px-8 py-5 border-b border-gray-100">
             <h3 className="text-[#2C1A0E] font-bold">Gestión de cuenta</h3>
             <p className="text-gray-400 text-xs mt-0.5">Opciones para suspender o eliminar tu cuenta</p>
@@ -457,9 +611,9 @@ export default function PerfilComprador() {
 
       {/* Modal suspender */}
       {modalAccion === 'suspender' && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-[24px] border border-[#E7D9BF] bg-white p-6 text-center shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-pause text-yellow-500 text-2xl"></i>
             </div>
@@ -467,7 +621,7 @@ export default function PerfilComprador() {
             <p className="text-gray-400 text-sm mb-6">
               Tu cuenta quedará inactiva. Para reactivarla deberás contactar al administrador.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalAccion(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -483,9 +637,9 @@ export default function PerfilComprador() {
 
       {/* Modal eliminar */}
       {modalAccion === 'eliminar' && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-[24px] border border-[#E7D9BF] bg-white p-6 text-center shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
             </div>
@@ -493,7 +647,7 @@ export default function PerfilComprador() {
             <p className="text-gray-400 text-sm mb-6">
               Esta acción no se puede deshacer. Perderás acceso permanentemente a tu cuenta.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalAccion(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
