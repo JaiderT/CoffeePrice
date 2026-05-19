@@ -194,7 +194,7 @@ function PanelDetalles({
         <div className="flex items-start gap-3 text-sm">
           <span className="text-xl">📍</span>
           <div>
-            <span className="text-gray-700">{comprador.direccion}</span>
+            <span className="text-gray-700">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicacion general disponible'}</span>
             {comprador.municipio && <p className="mt-1 text-xs font-semibold text-[#8B7355]">{comprador.municipio}</p>}
             {comprador.coordenadasEstimadas && (
               <p className="mt-1 text-[11px] text-amber-600">Ubicacion aproximada segun direccion y municipio</p>
@@ -405,7 +405,7 @@ export default function MapaCompradores() {
   const compradoresFiltrados = compradores.filter((comprador) => {
     const matchBusqueda =
       comprador.nombreempresa?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      comprador.direccion?.toLowerCase().includes(busqueda.toLowerCase());
+      (comprador.ubicacionGeneral || comprador.direccion || '').toLowerCase().includes(busqueda.toLowerCase());
 
     if (!matchBusqueda) return false;
 
@@ -711,7 +711,7 @@ export default function MapaCompradores() {
                           {comprador.esFavorito ? '★' : '☆'}
                         </button>
                       </div>
-                      <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">{comprador.direccion}</p>
+                      <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicacion general disponible'}</p>
                       {comprador.coordenadasEstimadas && <p className="mt-1 text-[10px] font-medium text-amber-600">Ubicacion aproximada</p>}
                       <div className="mt-3 flex items-end justify-between gap-3">
                         <div>

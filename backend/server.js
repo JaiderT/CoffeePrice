@@ -28,9 +28,15 @@ import chatbotRoutes from './routes/chatbot.js';
 import alertaNoticia from './routes/alertaNoticia.js';
 import configuracionRoutes from "./routes/configuracion.js";
 import precioFNCRoutes from "./routes/precioFNC.js";
-import actividadRoutes from "./routes/actividad.js"; // ← NUEVO
+import actividadRoutes from "./routes/actividad.js"; // Nuevo
 
 const app = express();
+
+// Railway y otros proveedores pasan HTTPS a traves de un proxy.
+// Esto permite que cookies/sesiones seguras funcionen correctamente en produccion.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -131,7 +137,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/alertas-noticias', alertaNoticia);
 app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/precio-fnc', precioFNCRoutes);
-app.use('/api/actividad', actividadRoutes); // ← NUEVO
+app.use('/api/actividad', actividadRoutes); // Nuevo
 
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${req.method} ${req.url}:`, err.message);

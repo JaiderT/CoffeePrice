@@ -33,7 +33,7 @@ router.put("/perfil", authMiddleware, async (req, res) => {
       req.user.id,
       { nombre, apellido, celular },
       { new: true, runValidators: true }
-    ).select("-password");
+    ).select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpira");
     if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(usuario);
   } catch (error) {

@@ -105,19 +105,36 @@ def aplicar_ajuste_presion_mercado(
     ultimo_precio_fnc: float,
     kc_change_pct: float,
     trm_change_pct: float,
-) -> tuple[float, float, float]:
+    variaciones_modelo: list[float],
+) -> tuple[float, float, float, float]:
     # KC tiene mayor peso porque la FNC parte del Contrato C; TRM compensa, pero no debe tapar una caida fuerte de KC.
     presion_mercado = (0.72 * kc_change_pct) + (0.28 * trm_change_pct)
-    ajuste_pct = max(-0.028, min(0.028, presion_mercado * 0.45 / 100))
+    direccion_presion = 1 if presion_mercado > 0 else -1 if presion_mercado < 0 else 0
+    variaciones_relevantes = [v for v in variaciones_modelo if abs(v) >= 0.35]
+    variaciones_alineadas = [v for v in variaciones_relevantes if direccion_presion and (v * direccion_presion) > 0]
+    variaciones_opuestas = [v for v in variaciones_relevantes if direccion_presion and (v * direccion_presion) < 0]
+
+    if not variaciones_relevantes:
+        factor_presion = 0.25
+    else:
+        factor_presion = 0.25 + (0.75 * (len(variaciones_alineadas) / len(variaciones_relevantes)))
+
+    promedio_modelos = sum(variaciones_modelo) / len(variaciones_modelo) if variaciones_modelo else 0.0
+    if direccion_presion and (promedio_modelos * direccion_presion) < 0.5:
+        factor_presion = min(factor_presion, 0.45)
+    if variaciones_opuestas:
+        factor_presion = max(0.20, factor_presion - 0.20)
+
+    ajuste_pct = max(-0.022, min(0.022, presion_mercado * 0.34 * factor_presion / 100))
     precio_por_presion = ultimo_precio_fnc * (1 + ajuste_pct)
 
     if abs(presion_mercado) < 1.2:
-        return selected_raw, presion_mercado, precio_por_presion
+        return selected_raw, presion_mercado, precio_por_presion, factor_presion
 
     if presion_mercado < 0:
-        return min(selected_raw, precio_por_presion), presion_mercado, precio_por_presion
+        return min(selected_raw, precio_por_presion), presion_mercado, precio_por_presion, factor_presion
 
-    return max(selected_raw, precio_por_presion), presion_mercado, precio_por_presion
+    return max(selected_raw, precio_por_presion), presion_mercado, precio_por_presion, factor_presion
 
 
 print("\n1. Cargando artefactos...")
@@ -204,18 +221,26 @@ selected_raw = (
 if best_strategy in {"prophet", "hybrid", "formula"} and signal_strength < 0.25:
     selected_raw = (0.7 * selected_raw) + (0.3 * forecast_candidates[best_strategy])
 
-selected_raw, presion_mercado, precio_por_presion = aplicar_ajuste_presion_mercado(
+prophet_variacion = ((prophet_yhat - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+hybrid_value = forecast_candidates["hybrid"]
+hybrid_variacion = ((hybrid_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+formula_value = forecast_candidates["formula"]
+formula_variacion = ((formula_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+selected_variacion_pre_presion = ((selected_raw - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+
+selected_raw, presion_mercado, precio_por_presion, factor_presion = aplicar_ajuste_presion_mercado(
     selected_raw,
     ultimo_precio_fnc,
     kc_change_pct,
     trm_change_pct,
+    [prophet_variacion, hybrid_variacion, formula_variacion, selected_variacion_pre_presion],
 )
 
 es_fin_de_semana = fecha_prediccion.weekday() >= 5
 if es_fin_de_semana:
     selected_raw = ultimo_precio_fnc
 
-limite_cambio = max(recent_change_limit, 0.025 if abs(presion_mercado) >= 3.0 else recent_change_limit)
+limite_cambio = max(recent_change_limit, 0.025 if abs(presion_mercado) >= 3.0 and factor_presion >= 0.55 else recent_change_limit)
 minimo_seguro = ultimo_precio_fnc * (1 - limite_cambio)
 maximo_seguro = ultimo_precio_fnc * (1 + limite_cambio)
 precio_estimado = max(min(selected_raw, maximo_seguro), minimo_seguro)
@@ -230,6 +255,7 @@ applied_strategy = "ensemble_ponderado"
 holdout_key = "mape_ensemble" if "mape_ensemble" in holdout else base_holdout_key
 mae_key = "mae_ensemble" if "mae_ensemble" in holdout else base_mae_key
 mae_holdout = float(holdout.get(mae_key, 0.0) or 0.0)
+mae_holdout = mae_holdout * (1 + (0.35 * (1 - factor_presion)))
 
 if best_strategy == "prophet":
     precio_minimo = max(float(prophet_forecast["yhat_lower"]), precio_estimado - mae_holdout)
@@ -244,12 +270,6 @@ if es_fin_de_semana:
     precio_minimo = precio_estimado
     precio_maximo = precio_estimado
 
-prophet_variacion = ((prophet_yhat - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-hybrid_value = forecast_candidates["hybrid"]
-hybrid_variacion = ((hybrid_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-formula_value = forecast_candidates["formula"]
-formula_variacion = ((formula_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-
 if es_fin_de_semana:
     explicacion = (
         "Fin de semana: la FNC no publica nuevo precio porque no opera la Bolsa de Nueva York, "
@@ -261,10 +281,16 @@ elif se_salto_fin_semana:
         "La prediccion apunta al lunes con las ultimas senales disponibles de KC/TRM."
     )
 elif presion_mercado <= -2.0:
-    explicacion = (
-        "La salida fue ajustada por presion bajista de mercado: KC cae con mas fuerza que el soporte de TRM, "
-        "por eso el modelo reduce la proyeccion final."
-    )
+    if factor_presion < 0.55:
+        explicacion = (
+            "KC muestra presion bajista, pero formula, Prophet e hibrido no confirman una baja fuerte; "
+            "por eso el ajuste se amortigua para evitar sobre-reaccionar."
+        )
+    else:
+        explicacion = (
+            "La salida fue ajustada por presion bajista de mercado: KC cae con mas fuerza que el soporte de TRM, "
+            "por eso el modelo reduce la proyeccion final."
+        )
 elif presion_mercado >= 2.0:
     explicacion = (
         "La salida fue ajustada por presion alcista de mercado: KC/TRM muestran impulso suficiente "
@@ -322,6 +348,7 @@ payload = {
         "trm_edad_dias": int(trm_edad_dias),
         "presion_mercado": round(float(presion_mercado), 2),
         "precio_por_presion": redondear_cop(precio_por_presion),
+        "factor_presion": round(float(factor_presion), 3),
         "limite_cambio_pct": round(float(limite_cambio * 100), 2),
         "fuerza_senal": round(float(signal_strength), 3),
         "pesos_ensamble": dynamic_weights,
@@ -353,6 +380,7 @@ history_row = {
     "estrategia_base": best_strategy,
     "salto_fin_semana": int(se_salto_fin_semana),
     "presion_mercado": round(float(presion_mercado), 2),
+    "factor_presion": round(float(factor_presion), 3),
     "holdout_mape": holdout.get(holdout_key),
     "holdout_mae": round(mae_holdout, 2),
 }

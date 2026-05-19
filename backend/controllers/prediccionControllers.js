@@ -8,6 +8,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PREDICCION_FNC_PATH = path.resolve(__dirname, "../datos/predicciones_fnc.json");
 const HISTORIAL_PREDICCIONES_FNC_PATH = path.resolve(__dirname, "../datos/historial_predicciones_fnc.csv");
+const CAMPOS_PREDICCION_FNC = [
+    "fecha_prediccion",
+    "precio_estimado",
+    "precio_minimo",
+    "precio_maximo",
+    "tendencia",
+];
+const CAMPOS_HISTORIAL_FNC = [
+    "fecha_prediccion",
+    "precio_estimado",
+    "precio_minimo",
+    "precio_maximo",
+];
 
 function obtenerFechaBogota(offsetDias = 0) {
     const partes = new Intl.DateTimeFormat("en-CA", {
@@ -131,18 +144,55 @@ function normalizarPrediccionFncHistorica(prediccion) {
     };
 }
 
-function parseCsvSimple(contenido) {
+export function parseCsvSimple(contenido) {
     const lineas = contenido.trim().split(/\r?\n/).filter(Boolean);
     if (lineas.length < 2) return [];
 
     const encabezados = lineas[0].split(",").map((item) => item.trim());
+    if (!CAMPOS_HISTORIAL_FNC.every((campo) => encabezados.includes(campo))) {
+        return [];
+    }
+
     return lineas.slice(1).map((linea) => {
         const valores = linea.split(",");
+        if (valores.length < encabezados.length) {
+            return null;
+        }
         return encabezados.reduce((registro, encabezado, index) => {
             registro[encabezado] = valores[index] ?? "";
             return registro;
         }, {});
-    });
+    }).filter(Boolean);
+}
+
+function esFechaIsoSimple(value) {
+    return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function esNumeroFinito(value) {
+    return Number.isFinite(Number(value));
+}
+
+export function esPrediccionFncValida(prediccion) {
+    if (!prediccion || typeof prediccion !== "object") return false;
+    if (!CAMPOS_PREDICCION_FNC.every((campo) => campo in prediccion)) return false;
+    if (!esFechaIsoSimple(prediccion.fecha_prediccion)) return false;
+    if (!["sube", "baja", "estable"].includes(prediccion.tendencia)) return false;
+    return (
+        esNumeroFinito(prediccion.precio_estimado) &&
+        esNumeroFinito(prediccion.precio_minimo) &&
+        esNumeroFinito(prediccion.precio_maximo)
+    );
+}
+
+export function esPrediccionHistoricaValida(prediccion) {
+    if (!prediccion || typeof prediccion !== "object") return false;
+    if (!esFechaIsoSimple(prediccion.fecha_prediccion)) return false;
+    return (
+        esNumeroFinito(prediccion.precio_estimado) &&
+        esNumeroFinito(prediccion.precio_minimo) &&
+        esNumeroFinito(prediccion.precio_maximo)
+    );
 }
 
 async function leerPrediccionFnc() {
@@ -150,7 +200,8 @@ async function leerPrediccionFnc() {
         const contenido = await readFile(PREDICCION_FNC_PATH, "utf8");
         const prediccion = JSON.parse(contenido);
 
-        if (!prediccion?.fecha_prediccion || typeof prediccion?.precio_estimado !== "number") {
+        if (!esPrediccionFncValida(prediccion)) {
+            console.warn("predicciones_fnc.json invalido o incompleto. Se omite su lectura.");
             return null;
         }
 
@@ -168,7 +219,7 @@ async function leerHistorialPrediccionesFnc() {
     try {
         const contenido = await readFile(HISTORIAL_PREDICCIONES_FNC_PATH, "utf8");
         return parseCsvSimple(contenido)
-            .filter((item) => item.fecha_prediccion && item.precio_estimado)
+            .filter(esPrediccionHistoricaValida)
             .map(normalizarPrediccionFncHistorica);
     } catch (error) {
         if (error.code !== "ENOENT") {
@@ -203,6 +254,13 @@ function fechaCoincide(fechaA, fechaB) {
     return fechaA && fechaB && fechaA === fechaB;
 }
 
+function filtroModeloFncHibrido(extra = {}) {
+    return {
+        modelVersion: "fnc_hibrido",
+        ...extra,
+    };
+}
+
 export const getPredicciones = async (req, res) => {
     try {
         const prediccionesFnc = await leerPrediccionesFncDisponibles();
@@ -210,7 +268,7 @@ export const getPredicciones = async (req, res) => {
             return res.json(prediccionesFnc);
         }
 
-        const predicciones = await Prediccion.find().sort({ fecha: -1 }).lean();
+        const predicciones = await Prediccion.find(filtroModeloFncHibrido()).sort({ fecha: -1 }).lean();
         res.json(predicciones.map(serializarPrediccion));
     } catch (error) {
         res.status(500).json({ message: "Error al obtener predicciones", error: error.message });
@@ -222,7 +280,7 @@ export const getUltimaPrediccion = async (req, res) => {
         const prediccionFnc = await leerPrediccionFnc();
         if (prediccionFnc) return res.json(prediccionFnc);
 
-        const prediccion = await Prediccion.findOne().sort({ fecha: -1 }).lean();
+        const prediccion = await Prediccion.findOne(filtroModeloFncHibrido()).sort({ fecha: -1 }).lean();
         if (!prediccion) return res.status(404).json({ message: "No hay predicciones disponibles" });
         res.json(serializarPrediccion(prediccion));
     } catch (error) {
@@ -237,12 +295,12 @@ export const getResumenPredicciones = async (req, res) => {
         const manana = obtenerFechaBogota(1);
         const pasadoManana = obtenerFechaBogota(2);
 
-        const prediccion = await Prediccion.findOne({
+        const prediccion = await Prediccion.findOne(filtroModeloFncHibrido({
             fecha: {
                 $gte: manana,
                 $lt: pasadoManana
             }
-        }).sort({ fecha: 1 }).lean();
+        })).sort({ fecha: 1 }).lean();
 
 
         if (!prediccion) {
@@ -315,9 +373,9 @@ export const getPrediccionesPorRango = async (req, res) => {
 
         const hoy = obtenerFechaBogota(0);
 
-        const predicciones = await Prediccion.find({
+        const predicciones = await Prediccion.find(filtroModeloFncHibrido({
             fecha: { $gte: hoy }
-        })
+        }))
             .sort({ fecha: 1 })
             .limit(dias)
             .lean();
@@ -372,12 +430,12 @@ export const getPrediccionPorDia = async (req, res) => {
         const fechaFin = new Date(fechaInicio);
         fechaFin.setUTCDate(fechaFin.getUTCDate() + 1);
 
-        const prediccion = await Prediccion.findOne({
+        const prediccion = await Prediccion.findOne(filtroModeloFncHibrido({
             fecha: {
                 $gte: fechaInicio,
                 $lt: fechaFin
             }
-        }).lean();
+        })).lean();
 
 
         if (!prediccion) {
@@ -431,12 +489,12 @@ export const getPrediccionPorFecha = async (req, res) => {
         const fechaFin = new Date(fechaInicio);
         fechaFin.setUTCDate(fechaFin.getUTCDate() + 1);
 
-        const prediccion = await Prediccion.findOne({
+        const prediccion = await Prediccion.findOne(filtroModeloFncHibrido({
             fecha: {
                 $gte: fechaInicio,
                 $lt: fechaFin
             }
-        }).lean();
+        })).lean();
 
         if (!prediccion) {
             return res.status(404).json({
@@ -504,7 +562,7 @@ export const updatePrediccion = async (req, res) => {
         );
 
         if (!prediccion) return res.status(404).json({ message: "Prediccion no encontrada" });
-        res.json(prediccion); // âœ… era res.jason
+        res.json(prediccion); // Correccion: antes usaba res.jason
     } catch (error) {
         res.status(400).json({ message: "Error al actualizar prediccion", error: error.message });
     }

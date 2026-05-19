@@ -15,7 +15,7 @@ const TAGS = [
 ];
 
 const LABELS_PRODUCTO = {
-  pergamino_seco: { label: 'Pergamino seco', emoji: 'â˜•', color: 'bg-amber-50 border-amber-200 text-amber-800' },
+  pergamino_seco: { label: 'Pergamino seco', emoji: '☕', color: 'bg-amber-50 border-amber-200 text-amber-800' },
   verde: { label: 'Café verde / mojado', emoji: '🌿', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
   especial: { label: 'Café especial', emoji: '✨', color: 'bg-purple-50 border-purple-200 text-purple-800' },
   organico: { label: 'Café orgánico', emoji: '🌱', color: 'bg-green-50 border-green-200 text-green-800' },
@@ -40,7 +40,7 @@ function Estrellas({ valor, onChange }) {
               ? 'bg-[#FFF8E7] border-[#C8A96E] text-[#C8A96E]'
               : 'bg-white border-gray-200 text-gray-300'
           } ${onChange ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}>
-          â˜…
+          ★
         </button>
       ))}
     </div>
@@ -51,8 +51,8 @@ function renderEstrellas(n) {
   const llenas = Math.round(n);
   return (
     <span className="text-[#C8A96E]">
-      {'â˜…'.repeat(llenas)}
-      <span className="text-gray-300">{'â˜…'.repeat(5 - llenas)}</span>
+      {'★'.repeat(llenas)}
+      <span className="text-gray-300">{'★'.repeat(5 - llenas)}</span>
     </span>
   );
 }
@@ -121,7 +121,7 @@ function Calculadora({ precios }) {
               className={`flex-1 py-2 text-xs font-semibold transition-colors ${
                 unidad === 'kg' ? 'bg-[#2C1A0E] text-white' : 'bg-white text-[#8B7355] hover:bg-[#F7F1E3]'
               }`}>
-              âš–ï¸ Kilogramos
+              ⚖️ Kilogramos
             </button>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function PerfilPublicoComprador() {
   const handleEnviarreseña = async (e) => {
     e.preventDefault();
     if (calificacion === 0) {
-      setMensaje({ tipo: 'error', texto: 'Debes seleccionar una calificacion' });
+      setMensaje({ tipo: 'error', texto: 'Debes seleccionar una calificación' });
       setTimeout(() => setMensaje(null), 3000);
       return;
     }
@@ -268,7 +268,7 @@ export default function PerfilPublicoComprador() {
         canales: { push: true, email: false, whatsapp: false },
       }, { withCredentials: true });
       setAlertaGuardada(true);
-      setMensajeAlerta({ tipo: 'exito', texto: 'Alerta activada. La veras en tu seccion de alertas.' });
+      setMensajeAlerta({ tipo: 'exito', texto: 'Alerta activada. La verás en tu sección de alertas.' });
     } catch {
       setMensajeAlerta({ tipo: 'error', texto: 'Error al activar la alerta' });
     } finally {
@@ -280,12 +280,13 @@ export default function PerfilPublicoComprador() {
   const iniciales = (nombre) =>
     nombre ? nombre.split(' ').map((word) => word[0]).join('').slice(0, 2).toUpperCase() : '?';
 
-  const TeléfonoPlano = (comprador?.Teléfono || '').replace(/\D/g, '');
-  const TeléfonoWhatsapp = TeléfonoPlano.startsWith('57') ? TeléfonoPlano : `57${TeléfonoPlano}`;
-  const whatsappLink = TeléfonoPlano ? `https://wa.me/${TeléfonoWhatsapp}` : null;
-  const direccionMapa = comprador?.Dirección
+  const telefonoPlano = (comprador?.telefono || '').replace(/\D/g, '');
+  const telefonoWhatsapp = telefonoPlano.startsWith('57') ? telefonoPlano : `57${telefonoPlano}`;
+  const whatsappLink = telefonoPlano ? `https://wa.me/${telefonoWhatsapp}` : null;
+  const direccionMapa = comprador?.direccion
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${comprador.direccion}${comprador.municipio ? `, ${comprador.municipio}` : ''}`)}`
     : null;
+  const ubicacionVisible = comprador?.ubicacionGeneral || comprador?.direccion || 'Ubicación general disponible';
 
   const copiarTexto = async (texto, etiqueta) => {
     if (!texto) return;
@@ -309,7 +310,7 @@ export default function PerfilPublicoComprador() {
     { label: 'Teléfono activo', ok: Boolean(comprador?.telefono) },
     { label: 'WhatsApp disponible', ok: Boolean(whatsappLink) },
     { label: 'Horario registrado', ok: Boolean(comprador?.horarioApertura && comprador?.horarioCierre) },
-    { label: 'Ubicación lista', ok: Boolean(comprador?.direccion || direccionMapa) },
+    { label: 'Ubicación lista', ok: Boolean(comprador?.ubicacionGeneral || comprador?.direccion || direccionMapa) },
   ];
   const canalesActivos = señalesContacto.filter((item) => item.ok).length;
   const tieneContactoCompleto = canalesActivos >= 3;
@@ -351,7 +352,7 @@ export default function PerfilPublicoComprador() {
                 <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">{comprador.nombreempresa}</h1>
                 <p className="text-[#8B7355] text-sm mt-1">
                   <i className="fa-solid fa-location-dot mr-1"></i>
-                  {comprador.direccion || 'Ubicacion no registrada'}
+                  {ubicacionVisible}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {comprador.tipoempresa && (
@@ -396,7 +397,7 @@ export default function PerfilPublicoComprador() {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-[#2C1A0E] text-lg font-bold">â˜… {Number(promedio).toFixed(1)}</p>
+                <p className="text-[#2C1A0E] text-lg font-bold">★ {Number(promedio).toFixed(1)}</p>
                 <p className="text-[#8B7355] text-xs">{reseñas.length} reseñas</p>
               </div>
               <div className="text-center">
@@ -483,7 +484,7 @@ export default function PerfilPublicoComprador() {
             {/* reseñas */}
             <div className={`${cardBase} p-5`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[#2C1A0E] font-bold text-base">â­ reseñas de caficultores</h2>
+                <h2 className="text-[#2C1A0E] font-bold text-base">⭐ reseñas de caficultores</h2>
                 {usuario?.rol === 'productor' && (
                   <button onClick={() => document.getElementById('form-resena')?.scrollIntoView({ behavior: 'smooth' })}
                     className="bg-[#C8A96E] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#B8994E] transition-colors">
@@ -494,7 +495,7 @@ export default function PerfilPublicoComprador() {
               {reseñas.length === 0 ? (
                 <div className="text-center py-8 rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">
                   <i className="fa-solid fa-star text-gray-200 text-4xl mb-3"></i>
-                  <p className="text-[#8B7355] text-sm">Aun no hay reseñas</p>
+                  <p className="text-[#8B7355] text-sm">Aún no hay reseñas</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -566,14 +567,14 @@ export default function PerfilPublicoComprador() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D8C7A8]">Contacto directo</p>
-                  <p className="mt-2 text-lg font-black">{comprador.telefono || 'Contacto pendiente'}</p>
+                  <p className="mt-2 text-lg font-black">{comprador.contactoRestringido ? 'Contacto protegido' : (comprador.telefono || 'Contacto pendiente')}</p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${tieneContactoCompleto ? 'bg-green-500/15 text-green-100 ring-1 ring-green-300/30' : 'bg-white/10 text-[#F3E3CD]'}`}>
                   {canalesActivos}/4 listo
                 </span>
               </div>
               <p className="mt-1 text-sm text-[#E7D6C0]">
-                Confirma precio, horario y dirección antes de desplazarte.
+                Confirma precio, horario y ubicación antes de desplazarte.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {señalesContacto.map((item) => (
@@ -669,12 +670,12 @@ export default function PerfilPublicoComprador() {
             <div className={`${cardBase} p-5`}>
               <h3 className="text-[#2C1A0E] font-bold text-sm mb-4">Información</h3>
               <div className="space-y-3">
-                {comprador.direccion && (
+                {ubicacionVisible && (
                   <div className="flex items-start gap-3">
                     <i className="fa-solid fa-location-dot text-[#C8A96E] mt-0.5"></i>
                     <div>
-                      <p className="text-[#2C1A0E] text-sm">{comprador.direccion}</p>
-                      <p className="text-[#8B7355] text-xs">Dirección</p>
+                      <p className="text-[#2C1A0E] text-sm">{ubicacionVisible}</p>
+                      <p className="text-[#8B7355] text-xs">{comprador.contactoRestringido ? 'Ubicación general' : 'Dirección'}</p>
                     </div>
                   </div>
                 )}
@@ -702,6 +703,15 @@ export default function PerfilPublicoComprador() {
                     <div>
                       <p className="text-[#2C1A0E] text-sm">{comprador.telefono}</p>
                       <p className="text-[#8B7355] text-xs">Teléfono</p>
+                    </div>
+                  </div>
+                )}
+                {comprador.contactoRestringido && (
+                  <div className="flex items-start gap-3">
+                    <i className="fa-solid fa-shield-halved text-[#C8A96E] mt-0.5"></i>
+                    <div>
+                      <p className="text-[#2C1A0E] text-sm">La dirección exacta y el teléfono no se muestran en el perfil público.</p>
+                      <p className="text-[#8B7355] text-xs">Privacidad</p>
                     </div>
                   </div>
                 )}
@@ -796,6 +806,9 @@ export default function PerfilPublicoComprador() {
               <div>
                 <h3 className="text-[#2C1A0E] font-bold text-lg">Contactar comprador</h3>
                 <p className="text-[#8B7355] text-sm mt-1">{comprador.nombreempresa}</p>
+                {comprador.contactoRestringido && (
+                  <p className="text-amber-700 text-xs mt-2">El perfil publico protege telefono y direccion exacta.</p>
+                )}
               </div>
               <button onClick={() => setModalContacto(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
                 <i className="fa-solid fa-xmark text-lg"></i>
@@ -847,7 +860,7 @@ export default function PerfilPublicoComprador() {
                 <div className="rounded-2xl border border-[#E7D9BF] bg-white p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8B7355] mb-2">Información útil</p>
                   <p className="text-sm text-[#6B5A4D]">{comprador.municipio || 'El Pital'} · {comprador.tipoempresa || 'Comprador'}</p>
-                  <p className="text-sm text-[#6B5A4D] mt-1">{comprador.direccion || 'Sin dirección registrada'}</p>
+                  <p className="text-sm text-[#6B5A4D] mt-1">{ubicacionVisible}</p>
                   {comprador.horarioApertura && (
                     <p className="text-sm text-[#6B5A4D] mt-1">Horario: {comprador.horarioApertura} - {comprador.horarioCierre}</p>
                   )}

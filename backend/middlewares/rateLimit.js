@@ -57,3 +57,13 @@ export const publicLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    message: 'Demasiados mensajes enviados. Intenta nuevamente mas tarde.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
