@@ -129,6 +129,7 @@ function FilaCafe({ tipo, tiposCafe, setTiposCafe, guardarConfig }) {
 function Configuracion() {
   const API_URL = import.meta.env.VITE_API_URL;
   useAuth();
+  const surfaceCard = 'bg-white rounded-[24px] p-6 border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)]';
 
   const [stats, setStats] = useState({ usuarios: 0, compradores: 0, productores: 0, alertas: 0, precios: 0, noticias: 0 });
   const [cargando, setCargando] = useState(true);
@@ -263,7 +264,7 @@ function Configuracion() {
 
       {/* Mensaje */}
       {mensaje && (
-        <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
@@ -293,34 +294,34 @@ function Configuracion() {
         {/* GENERAL */}
         {pestana === 'general' && (
           <div className="space-y-5">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-5">⚙️ Parámetros de precios</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio mínimo (COP)</label>
                   <input type="number" value={params.precioMinimo}
                     onChange={e => setParams({ ...params, precioMinimo: Number(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
                   <p className="text-xs text-gray-400 mt-1">Precio mínimo que puede publicar un comprador</p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Precio máximo (COP)</label>
                   <input type="number" value={params.precioMaximo}
                     onChange={e => setParams({ ...params, precioMaximo: Number(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
                   <p className="text-xs text-gray-400 mt-1">Precio máximo que puede publicar un comprador</p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#2C1A0E] uppercase mb-2">Días de historial visible</label>
                   <input type="number" value={params.diasHistorial} min={7} max={365}
                     onChange={e => setParams({ ...params, diasHistorial: Number(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
                   <p className="text-xs text-gray-400 mt-1">Cuántos días atrás puede ver el historial</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-5">🔒 Control de acceso</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-3 border-b border-[#F7F1E3]">
@@ -358,7 +359,7 @@ function Configuracion() {
         {/* MUNICIPIOS */}
         {pestana === 'municipios' && (
           <div className="space-y-5">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-2">🏘️ Municipios activos</h3>
               <p className="text-gray-400 text-xs mb-5">Los municipios donde opera CoffePrice en el sur del Huila</p>
               <div className="flex gap-3 mb-5">
@@ -366,7 +367,7 @@ function Configuracion() {
                   onChange={e => setNuevoMunicipio(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAgregarMunicipio()}
                   placeholder="Nombre del municipio"
-                  className="flex-1 px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+                  className="flex-1 px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
                 <button onClick={handleAgregarMunicipio}
                   className="bg-[#C8A96E] text-white px-5 py-3 rounded-xl text-sm font-semibold hover:bg-[#B8994E] transition-colors">
                   + Agregar
@@ -394,7 +395,7 @@ function Configuracion() {
         {/* TIPOS DE CAFÉ */}
         {pestana === 'cafes' && (
           <div className="space-y-5">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-2">☕ Tipos de café</h3>
               <p className="text-gray-400 text-xs mb-5">Gestiona los tipos de café disponibles en la plataforma</p>
               <NuevoCafe tiposCafe={tiposCafe} setTiposCafe={setTiposCafe} guardarConfig={guardarConfig} mostrarMsg={mostrarMsg} />
@@ -423,7 +424,7 @@ function Configuracion() {
                 { label: 'Noticias', valor: stats.noticias, icon: '📰' },
                 { label: 'Alertas', valor: stats.alertas, icon: '🔔' },
               ].map((s, i) => (
-                <div key={i} className={`rounded-2xl p-5 shadow-sm ${s.dark ? 'bg-[#2C1A0E]' : 'bg-white border border-[#E7D9BF]'}`}>
+                <div key={i} className={`rounded-[22px] p-5 shadow-[0_10px_28px_rgba(77,48,24,0.06)] ${s.dark ? 'bg-[#2C1A0E]' : 'bg-white border border-[#E7D9BF]'}`}>
                   <p className={`text-xs uppercase font-semibold mb-2 ${s.dark ? 'text-[#D8C7A8]' : 'text-gray-400'}`}>
                     {s.icon} {s.label}
                   </p>
@@ -438,7 +439,7 @@ function Configuracion() {
               ))}
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-4">📈 Distribución de usuarios</h3>
               <div className="space-y-3">
                 <div>
@@ -473,7 +474,7 @@ function Configuracion() {
         {/* MANTENIMIENTO */}
         {pestana === 'mantenimiento' && (
           <div className="space-y-5">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E7D9BF]">
+            <div className={surfaceCard}>
               <h3 className="text-[#2C1A0E] font-bold text-base mb-2">🔧 Herramientas de mantenimiento</h3>
               <p className="text-gray-400 text-xs mb-5">Acciones administrativas del sistema.</p>
               <div className="space-y-3">
@@ -510,7 +511,7 @@ function Configuracion() {
               </div>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+            <div className="bg-red-50 border border-red-200 rounded-[24px] p-6 shadow-[0_10px_24px_rgba(185,28,28,0.06)]">
               <h3 className="text-red-700 font-bold text-base mb-2">⚠️ Zona de peligro</h3>
               <p className="text-red-500 text-xs mb-4">Estas acciones son irreversibles.</p>
               <div className="space-y-3">
@@ -544,5 +545,4 @@ function Configuracion() {
 }
 
 export default Configuracion;
-
 

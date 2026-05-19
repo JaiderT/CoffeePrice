@@ -251,6 +251,8 @@ export default function DashboardAdmin() {
     <div className={`${h} bg-[#E8D5B0]/40 rounded-2xl animate-pulse ${extra}`} />
   );
 
+  const surfaceCard = 'bg-white rounded-[22px] p-5 border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)]';
+
   const categoriaEmoji = {
     mercado: '📈', internacional: '🌎', clima: '🌧️',
     fnc: '🏛️', produccion: '🌱', consejos: '💡',
@@ -278,7 +280,7 @@ export default function DashboardAdmin() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-[#2C1A0E] rounded-2xl p-5 shadow-sm relative overflow-hidden">
+          <div className="bg-[#2C1A0E] rounded-[22px] p-5 shadow-[0_14px_34px_rgba(44,26,14,0.16)] relative overflow-hidden">
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">👥</div>
             <p className="text-[#C8A96E] text-[10px] uppercase tracking-widest mb-2">Usuarios registrados</p>
             {cargandoUsuarios
@@ -290,7 +292,7 @@ export default function DashboardAdmin() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF] relative overflow-hidden">
+          <div className={`${surfaceCard} relative overflow-hidden`}>
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">🏛️</div>
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Precio FNC hoy</p>
             {cargandoFNC
@@ -305,7 +307,7 @@ export default function DashboardAdmin() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Precio más alto hoy</p>
             {cargandoPrecios
               ? <div className="h-8 w-28 bg-[#F5ECD7] rounded animate-pulse" />
@@ -326,7 +328,7 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF] relative overflow-hidden">
+          <div className={`${surfaceCard} relative overflow-hidden`}>
             <div className="absolute right-3 bottom-2 opacity-10 text-6xl select-none">📰</div>
             <p className="text-[#8B7355] text-[10px] uppercase tracking-widest mb-2">Noticias publicadas</p>
             {cargandoNoticias
@@ -338,7 +340,7 @@ export default function DashboardAdmin() {
         </div>
 
         {/* Alertas del sistema */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+        <div className={surfaceCard}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-[#2C1A0E] font-bold text-sm">⚡ Alertas del sistema</p>
             <span className="text-[10px] text-gray-400">se actualizan con cada carga</span>
@@ -348,7 +350,7 @@ export default function DashboardAdmin() {
           ) : (
             <div className="flex flex-col gap-2">
               {alertasSistema.map((a, i) => (
-                <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-xl ${
+                <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-2xl shadow-[0_8px_18px_rgba(77,48,24,0.04)] ${
                   a.tipo === 'ok'   ? 'bg-green-50 border border-green-200' :
                   a.tipo === 'warn' ? 'bg-amber-50 border border-amber-200' :
                                       'bg-red-50 border border-red-200'
@@ -370,7 +372,7 @@ export default function DashboardAdmin() {
 
         {/* Fila media */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-[#2C1A0E] font-bold text-sm">🏪 Compraventas activas</p>
               <span className="text-xs text-gray-400">{compraventasUnicas.length} con precios publicados</span>
@@ -399,7 +401,7 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-[#2C1A0E] font-bold text-sm">🆕 Registros recientes</p>
               <span className="text-xs text-gray-400">{totalUsuarios} total</span>
@@ -437,7 +439,7 @@ export default function DashboardAdmin() {
 
         {/* Fila inferior */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🏆 Mejores precios hoy</p>
             {cargandoPrecios ? (
               <div className="flex flex-col gap-2">
@@ -464,7 +466,7 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          <div className="bg-[#2C1A0E] rounded-2xl p-5 shadow-sm">
+          <div className="bg-[#2C1A0E] rounded-[22px] p-5 shadow-[0_14px_34px_rgba(44,26,14,0.16)]">
             <p className="text-[#C8A96E] font-bold text-sm mb-4">👥 Desglose de usuarios</p>
             {cargandoUsuarios ? (
               <div className="flex flex-col gap-3">
@@ -511,7 +513,7 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🗞️ Noticias recientes</p>
             {cargandoNoticias ? (
               <div className="flex flex-col gap-3">
@@ -539,7 +541,7 @@ export default function DashboardAdmin() {
 
         {/* Actividad + Buscador + Acciones rápidas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">🕐 Actividad reciente</p>
             {cargandoActividad ? (
               <div className="flex flex-col gap-2">
@@ -572,7 +574,7 @@ export default function DashboardAdmin() {
               placeholder="Nombre, correo o rol..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-xs focus:outline-none focus:border-[#C8A96E] bg-[#FDFAF5] mb-3"
+              className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-xs focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40 bg-[#FDFAF5] mb-3"
             />
             <div className="flex gap-1.5 mb-3 flex-wrap">
               {[
@@ -630,7 +632,7 @@ export default function DashboardAdmin() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+          <div className={surfaceCard}>
             <p className="text-[#2C1A0E] font-bold text-sm mb-4">⚙️ Acciones rápidas</p>
             <div className="flex flex-col gap-2.5">
               <button

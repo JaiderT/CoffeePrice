@@ -26,6 +26,66 @@ const BADGE_COLORS = {
 
 const esPorKg = (tipo) => ['pasilla', 'cacao', 'limon'].includes(tipo);
 
+const TIPOS_EMPRESA = [
+  { value: 'cooperativa', label: 'Cooperativa' },
+  { value: 'trilladora', label: 'Trilladora' },
+  { value: 'independiente', label: 'Independiente' },
+  { value: 'exportadora', label: 'Exportadora' },
+  { value: 'otro', label: 'Otro' },
+];
+
+const MUNICIPIOS = [
+  'El Pital',
+  'Pitalito',
+  'Acevedo',
+  'La Argentina',
+  'Tarqui',
+  'Suaza',
+  'Palestina',
+  'Elías',
+  'Saladoblanco',
+  'Isnos',
+];
+
+const SERVICIOS_OPCIONES = [
+  'Café pergamino seco',
+  'Café especial',
+  'Café orgánico',
+  'Café verde',
+  'Pasilla',
+  'Cacao',
+  'Maíz',
+  'Fique',
+  'Otros productos agrícolas',
+];
+
+const ESTADO_REVISION_UI = {
+  perfilIncompleto: {
+    label: 'Perfil incompleto',
+    badge: 'bg-gray-100 text-gray-600',
+    panel: 'border-gray-200 bg-gray-50 text-gray-600',
+    hint: 'Completa más datos de tu empresa para que tu perfil se vea más confiable.',
+  },
+  enRevision: {
+    label: 'En revisión',
+    badge: 'bg-amber-100 text-amber-700',
+    panel: 'border-amber-200 bg-amber-50 text-amber-700',
+    hint: 'Tu empresa está siendo revisada por el administrador.',
+  },
+  aprobado: {
+    label: 'Aprobado',
+    badge: 'bg-green-100 text-green-700',
+    panel: 'border-green-200 bg-green-50 text-green-700',
+    hint: 'Tu perfil está activo y visible para productores.',
+  },
+  rechazado: {
+    label: 'Requiere cambios',
+    badge: 'bg-red-100 text-red-700',
+    panel: 'border-red-200 bg-red-50 text-red-700',
+    hint: 'Revisa las observaciones del administrador y ajusta tu perfil.',
+  },
+};
+
 // ✅ Configuración global de axios para siempre enviar cookies
 const api = axios.create({ withCredentials: true });
 
@@ -46,7 +106,17 @@ function DashboardComprador() {
   const [precioEliminar, setPrecioEliminar] = useState(null);
   const [nuevoPrecio, setNuevoPrecio] = useState({ preciocarga: '', tipocafe: 'pergamino_seco' });
   const [horarioForm, setHorarioForm] = useState({ horarioApertura: '07:00', horarioCierre: '17:00' });
-  const [formPerfil, setFormPerfil] = useState({ nombreempresa: '', direccion: '', telefono: '', horarioApertura: '07:00', horarioCierre: '17:00' });
+  const [formPerfil, setFormPerfil] = useState({
+    nombreempresa: '',
+    tipoempresa: 'independiente',
+    municipio: 'El Pital',
+    direccion: '',
+    telefono: '',
+    horarioApertura: '07:00',
+    horarioCierre: '17:00',
+    descripcion: '',
+    servicios: [],
+  });
   const [mensaje, setMensaje] = useState(null);
   const [publicandoPrecio, setPublicandoPrecio] = useState(false);
   const [sinPerfil, setSinPerfil] = useState(false);
@@ -90,6 +160,17 @@ function DashboardComprador() {
           horarioApertura: data.horarioApertura || '07:00',
           horarioCierre: data.horarioCierre || '17:00',
         });
+        setFormPerfil({
+          nombreempresa: data.nombreempresa || '',
+          tipoempresa: data.tipoempresa || 'independiente',
+          municipio: data.municipio || 'El Pital',
+          direccion: data.direccion || '',
+          telefono: data.telefono || '',
+          horarioApertura: data.horarioApertura || '07:00',
+          horarioCierre: data.horarioCierre || '17:00',
+          descripcion: data.descripcion || '',
+          servicios: Array.isArray(data.servicios) ? data.servicios : [],
+        });
 
         await obtenerPrecios(data._id);
 
@@ -128,6 +209,17 @@ function DashboardComprador() {
       const { data } = await api.post(`${API_URL}/api/comprador`, formPerfil);
       // ✅ Usar actualizarComprador para sincronizar ref y estado
       actualizarComprador(data.comprador);
+      setFormPerfil({
+        nombreempresa: data.comprador.nombreempresa || '',
+        tipoempresa: data.comprador.tipoempresa || 'independiente',
+        municipio: data.comprador.municipio || 'El Pital',
+        direccion: data.comprador.direccion || '',
+        telefono: data.comprador.telefono || '',
+        horarioApertura: data.comprador.horarioApertura || '07:00',
+        horarioCierre: data.comprador.horarioCierre || '17:00',
+        descripcion: data.comprador.descripcion || '',
+        servicios: Array.isArray(data.comprador.servicios) ? data.comprador.servicios : [],
+      });
       setSinPerfil(false);
       setHorarioForm({
         horarioApertura: data.comprador.horarioApertura || '07:00',
@@ -215,6 +307,15 @@ function DashboardComprador() {
     }
   };
 
+  const toggleServicio = (servicio) => {
+    setFormPerfil((prev) => ({
+      ...prev,
+      servicios: prev.servicios.includes(servicio)
+        ? prev.servicios.filter((item) => item !== servicio)
+        : [...prev.servicios, servicio],
+    }));
+  };
+
   const mostrarMsg = (tipo, texto) => {
     setMensaje({ tipo, texto });
     setTimeout(() => setMensaje(null), 3000);
@@ -232,7 +333,21 @@ function DashboardComprador() {
     precio: h.preciocarga,
   }));
 
+  const estadoRevision = ESTADO_REVISION_UI[comprador?.estadoRevision] || ESTADO_REVISION_UI.perfilIncompleto;
+  const perfilCompletoScore = [
+    comprador?.nombreempresa,
+    comprador?.direccion,
+    comprador?.telefono,
+    comprador?.municipio,
+    comprador?.descripcion,
+    comprador?.servicios?.length > 0,
+  ].filter(Boolean).length;
+  const perfilCompletoPct = Math.round((perfilCompletoScore / 6) * 100);
+
   const categoriaEmoji = { mercado: '📈', internacional: '🌎', clima: '🌧️', fnc: '🏛️', produccion: '🌱', consejos: '💡', el_pital: '⛰️' };
+  const cardBase = 'rounded-[22px] border border-[#E7D9BF] bg-white shadow-[0_10px_30px_rgba(77,48,24,0.06)]';
+  const metricCard = `${cardBase} p-4`;
+  const sectionTitle = 'text-[#2C1A0E] font-bold tracking-tight';
 
   const SelectProducto = ({ value, onChange }) => (
     <select value={value} onChange={onChange}
@@ -255,9 +370,9 @@ function DashboardComprador() {
 
       {/* Sin perfil */}
       {sinPerfil && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-[#E7D9BF] bg-white p-5 shadow-[0_24px_60px_rgba(44,26,14,0.20)] md:p-8">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-[#FFF8E7] rounded-full flex items-center justify-center mx-auto mb-4">
                 <i className="fa-solid fa-store text-[#C8A96E] text-2xl"></i>
@@ -271,39 +386,91 @@ function DashboardComprador() {
               </div>
             )}
             <form onSubmit={handleCrearPerfil} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Nombre de la empresa</label>
-                <input type="text" required value={formPerfil.nombreempresa}
-                  onChange={e => setFormPerfil({ ...formPerfil, nombreempresa: e.target.value })}
-                  placeholder="Ej: Cooperativa El Huila"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Dirección</label>
-                <input type="text" required value={formPerfil.direccion}
-                  onChange={e => setFormPerfil({ ...formPerfil, direccion: e.target.value })}
-                  placeholder="Ej: Calle 5 #3-20, El Pital, Huila"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Teléfono</label>
-                <input type="text" required value={formPerfil.telefono}
-                  onChange={e => setFormPerfil({ ...formPerfil, telefono: e.target.value })}
-                  placeholder="Ej: 3142233974"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Nombre de la empresa</label>
+                  <input type="text" required value={formPerfil.nombreempresa}
+                    onChange={e => setFormPerfil({ ...formPerfil, nombreempresa: e.target.value })}
+                    placeholder="Ej: Cooperativa El Huila"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Tipo de empresa</label>
+                  <select
+                    value={formPerfil.tipoempresa}
+                    onChange={e => setFormPerfil({ ...formPerfil, tipoempresa: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40"
+                  >
+                    {TIPOS_EMPRESA.map((tipo) => (
+                      <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Municipio</label>
+                  <select
+                    value={formPerfil.municipio}
+                    onChange={e => setFormPerfil({ ...formPerfil, municipio: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40"
+                  >
+                    {MUNICIPIOS.map((municipio) => (
+                      <option key={municipio} value={municipio}>{municipio}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Dirección</label>
+                  <input type="text" required value={formPerfil.direccion}
+                    onChange={e => setFormPerfil({ ...formPerfil, direccion: e.target.value })}
+                    placeholder="Ej: Calle 5 #3-20, El Pital, Huila"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Teléfono</label>
+                  <input type="text" required value={formPerfil.telefono}
+                    onChange={e => setFormPerfil({ ...formPerfil, telefono: e.target.value })}
+                    placeholder="Ej: 3142233974"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Descripción breve</label>
+                  <input type="text" value={formPerfil.descripcion}
+                    onChange={e => setFormPerfil({ ...formPerfil, descripcion: e.target.value })}
+                    placeholder="Ej: Compra café pergamino y especial"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora apertura</label>
                   <input type="time" value={formPerfil.horarioApertura}
                     onChange={e => setFormPerfil({ ...formPerfil, horarioApertura: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Hora cierre</label>
                   <input type="time" value={formPerfil.horarioCierre}
                     onChange={e => setFormPerfil({ ...formPerfil, horarioCierre: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E]" />
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Servicios o productos que compras</label>
+                <div className="flex flex-wrap gap-2 rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] p-3">
+                  {SERVICIOS_OPCIONES.map((servicio) => (
+                    <button
+                      key={servicio}
+                      type="button"
+                      onClick={() => toggleServicio(servicio)}
+                      className={`px-3 py-2 rounded-full text-xs font-semibold border transition-colors ${
+                        formPerfil.servicios.includes(servicio)
+                          ? 'border-[#C8A96E] bg-[#FFF3DE] text-[#7A4020]'
+                          : 'border-[#E0D0B0] bg-white text-[#8B7355] hover:border-[#C8A96E]'
+                      }`}
+                    >
+                      {servicio}
+                    </button>
+                  ))}
                 </div>
               </div>
               <button type="submit"
@@ -316,10 +483,13 @@ function DashboardComprador() {
       )}
 
       {/* Header */}
-      <div className="bg-[#F5ECD7] px-6 md:px-8 py-5 flex items-center justify-between border-b border-[#E0D0B0] flex-wrap gap-3">
+      <div className="bg-[#F5ECD7] px-5 md:px-8 py-5 md:py-6 flex items-center justify-between border-b border-[#E0D0B0] flex-wrap gap-3">
         <div>
-          <h1 className="text-[#2C1A0E] text-2xl font-bold">Panel del Comprador</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A67C43]">
+            Resumen del negocio
+          </p>
+          <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">Panel del Comprador</h1>
+          <p className="text-gray-500 text-sm mt-1">
             Bienvenido, <span className="text-[#C8A96E] font-semibold">{usuario?.nombre} {usuario?.apellido}</span>
             {comprador && <span className="text-gray-400"> · {comprador.nombreempresa}</span>}
           </p>
@@ -347,13 +517,13 @@ function DashboardComprador() {
 
       {/* Mensaje */}
       {mensaje && !sinPerfil && (
-        <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div className={`mx-5 md:mx-8 mt-4 px-4 py-3 rounded-2xl border text-sm font-semibold shadow-sm ${mensaje.tipo === 'exito' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
 
       {/* Pestañas */}
-      <div className="px-6 md:px-8 pt-5 flex gap-2 border-b border-[#E0D0B0]">
+      <div className="px-5 md:px-8 pt-5 flex gap-2 border-b border-[#E0D0B0]">
         {[
           { key: 'dashboard', label: '📊 Dashboard' },
           { key: 'precios', label: '💰 Mis precios' },
@@ -361,7 +531,7 @@ function DashboardComprador() {
           <button key={p.key} onClick={() => setPestana(p.key)}
             className={`px-4 py-2 text-sm font-semibold rounded-t-xl transition-colors -mb-px ${
               pestana === p.key
-                ? 'bg-white border border-b-white border-[#E0D0B0] text-[#2C1A0E]'
+                ? 'bg-white border border-b-white border-[#E0D0B0] text-[#2C1A0E] shadow-sm'
                 : 'text-gray-400 hover:text-[#2C1A0E]'
             }`}>
             {p.label}
@@ -371,35 +541,85 @@ function DashboardComprador() {
 
       {/* PESTAÑA DASHBOARD */}
       {pestana === 'dashboard' && (
-        <div className="px-6 md:px-8 py-6 space-y-6">
+        <div className="px-5 md:px-8 py-5 md:py-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className={`lg:col-span-2 ${cardBase} p-5`}>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <p className={`${sectionTitle} text-sm`}>🏢 Estado de mi empresa</p>
+                  <p className="text-xs text-gray-500 mt-1">Así ve el sistema tu perfil comercial hoy.</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${estadoRevision.badge}`}>
+                  {estadoRevision.label}
+                </span>
+              </div>
+              <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${estadoRevision.panel}`}>
+                {estadoRevision.hint}
+                {comprador?.motivoRevision && (
+                  <p className="mt-2 text-xs font-semibold">{comprador.motivoRevision}</p>
+                )}
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-[#8B7355]">Perfil empresarial completo</span>
+                  <span className="font-semibold text-[#2C1A0E]">{perfilCompletoPct}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-[#F3E6D4] overflow-hidden">
+                  <div className="h-full rounded-full bg-linear-to-r from-[#C8A96E] to-[#2C1A0E]" style={{ width: `${perfilCompletoPct}%` }} />
+                </div>
+              </div>
+              <div className="mt-4 grid sm:grid-cols-3 gap-3 text-xs">
+                <div className="rounded-2xl bg-[#FCF8F1] border border-[#E7D9BF] p-3">
+                  <p className="text-[#8B7355] mb-1">Tipo</p>
+                  <p className="font-semibold text-[#2C1A0E]">{TIPOS_EMPRESA.find((item) => item.value === comprador?.tipoempresa)?.label || 'Sin definir'}</p>
+                </div>
+                <div className="rounded-2xl bg-[#FCF8F1] border border-[#E7D9BF] p-3">
+                  <p className="text-[#8B7355] mb-1">Municipio</p>
+                  <p className="font-semibold text-[#2C1A0E]">{comprador?.municipio || 'Sin definir'}</p>
+                </div>
+                <div className="rounded-2xl bg-[#FCF8F1] border border-[#E7D9BF] p-3">
+                  <p className="text-[#8B7355] mb-1">Servicios</p>
+                  <p className="font-semibold text-[#2C1A0E]">{comprador?.servicios?.length || 0} registrados</p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${cardBase} p-5`}>
+              <p className={`${sectionTitle} text-sm mb-4`}>⚡ Acciones del rol</p>
+              <div className="space-y-3">
+                <Link to="/comprador/perfil" className="flex items-center justify-between rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] px-4 py-3 text-sm font-semibold text-[#2C1A0E] transition-colors hover:bg-[#FFF3DE]">
+                  Completar perfil empresarial
+                  <i className="fa-solid fa-chevron-right text-xs text-[#A67C43]"></i>
+                </Link>
+                <button onClick={() => setMostrarFormulario(true)} className="flex w-full items-center justify-between rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] px-4 py-3 text-sm font-semibold text-[#2C1A0E] transition-colors hover:bg-[#FFF3DE]">
+                  Publicar nuevo precio
+                  <i className="fa-solid fa-tag text-xs text-[#A67C43]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[#2C1A0E] rounded-2xl p-4 shadow-sm">
+            <div className="bg-[#2C1A0E] rounded-[22px] p-4 shadow-[0_16px_36px_rgba(44,26,14,0.18)]">
               <p className="text-[#D8C7A8] text-xs uppercase font-semibold">Precio actual</p>
-              <p className="text-[#F8F2E8] text-2xl font-bold mt-2">{precioActual.toLocaleString() || '---'}</p>
+              <p className="text-[#F8F2E8] text-2xl font-black tracking-tight mt-2">{precioActual.toLocaleString() || '---'}</p>
               <p className="text-[#D8C7A8] text-xs mt-1">COP/carga</p>
             </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
+            <div className={metricCard}>
               <p className="text-gray-400 text-xs uppercase font-semibold">Reseñas</p>
-              <p className="text-[#2C1A0E] text-2xl font-bold mt-2">⭐ {Number(promedio).toFixed(1)}</p>
+              <p className="text-[#2C1A0E] text-2xl font-black tracking-tight mt-2">⭐ {Number(promedio).toFixed(1)}</p>
               <p className="text-gray-400 text-xs mt-1">{resenas.length} reseñas</p>
             </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
+            <div className={metricCard}>
               <p className="text-gray-400 text-xs uppercase font-semibold">Precios publicados</p>
-              <p className="text-[#2C1A0E] text-2xl font-bold mt-2">{precios.length}</p>
+              <p className="text-[#2C1A0E] text-2xl font-black tracking-tight mt-2">{precios.length}</p>
               <p className="text-gray-400 text-xs mt-1">productos</p>
-            </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#E7D9BF]">
-              <p className="text-gray-400 text-xs uppercase font-semibold">Posición mercado</p>
-              <p className={`text-2xl font-bold mt-2 ${porEncima ? 'text-green-600' : 'text-red-500'}`}>
-                {porEncima ? '▲ Arriba' : '▼ Abajo'}
-              </p>
-              <p className="text-gray-400 text-xs mt-1">vs promedio</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <p className="text-[#2C1A0E] font-bold text-sm mb-4">📈 Evolución de mis precios</p>
+            <div className={`lg:col-span-2 ${cardBase} p-5`}>
+              <p className={`${sectionTitle} text-sm mb-4`}>📈 Evolución de mis precios</p>
               {datosGrafica.length > 1 ? (
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -413,14 +633,14 @@ function DashboardComprador() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+                <div className="h-48 flex items-center justify-center rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1] text-gray-500 text-sm">
                   Publica más precios para ver la evolución
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
-              <p className="text-[#2C1A0E] font-bold text-sm mb-4">📊 Vs. mercado hoy</p>
+            <div className={`${cardBase} p-5`}>
+              <p className={`${sectionTitle} text-sm mb-4`}>📊 Vs. mercado hoy</p>
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-xs mb-1">
@@ -452,21 +672,21 @@ function DashboardComprador() {
                   </div>
                 </div>
               </div>
-              <div className={`mt-4 rounded-xl p-3 text-center text-xs font-semibold ${porEncima ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+              <div className={`mt-4 rounded-2xl border p-3 text-center text-xs font-semibold ${porEncima ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
                 {porEncima ? '▲ Tu precio está por encima del promedio' : '▼ Tu precio está por debajo del promedio'}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className={`${cardBase} p-5`}>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[#2C1A0E] font-bold text-sm">⭐ Reseñas recientes</p>
+                <p className={`${sectionTitle} text-sm`}>⭐ Reseñas recientes</p>
               </div>
               {resenas.length === 0 ? (
-                <div className="text-center py-6">
+                <div className="text-center py-6 rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">
                   <i className="fa-solid fa-star text-gray-200 text-3xl mb-2"></i>
-                  <p className="text-gray-400 text-sm">Aún no hay reseñas</p>
+                  <p className="text-gray-500 text-sm">Aún no hay reseñas</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -485,15 +705,15 @@ function DashboardComprador() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className={`${cardBase} p-5`}>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[#2C1A0E] font-bold text-sm">📰 Últimas noticias</p>
-                <a href="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas →</a>
+                <p className={`${sectionTitle} text-sm`}>📰 Últimas noticias</p>
+                <a href="/noticias" className="text-xs font-semibold text-[#C8A96E] transition-colors hover:text-[#A67C43]">Ver todas →</a>
               </div>
               {noticias.length === 0 ? (
-                <div className="text-center py-6">
+                <div className="text-center py-6 rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">
                   <i className="fa-solid fa-newspaper text-gray-200 text-3xl mb-2"></i>
-                  <p className="text-gray-400 text-sm">No hay noticias recientes</p>
+                  <p className="text-gray-500 text-sm">No hay noticias recientes</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -517,21 +737,21 @@ function DashboardComprador() {
 
       {/* PESTAÑA MIS PRECIOS */}
       {pestana === 'precios' && (
-        <div className="px-6 md:px-8 py-6">
+        <div className="px-5 md:px-8 py-5 md:py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className={`${cardBase} p-5`}>
               <p className="text-gray-400 text-xs uppercase font-semibold">Productos publicados</p>
-              <p className="text-[#2C1A0E] text-3xl font-bold mt-1">{precios.length}</p>
+              <p className="text-[#2C1A0E] text-3xl font-black tracking-tight mt-1">{precios.length}</p>
             </div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className={`${cardBase} p-5`}>
               <p className="text-gray-400 text-xs uppercase font-semibold">Mejor precio café</p>
-              <p className="text-[#C8A96E] text-3xl font-bold mt-1">
+              <p className="text-[#C8A96E] text-3xl font-black tracking-tight mt-1">
                 {precios.find(p => p.tipocafe === 'pergamino_seco')?.preciocarga?.toLocaleString() || '---'}
               </p>
             </div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className={`${cardBase} p-5`}>
               <p className="text-gray-400 text-xs uppercase font-semibold">Precio por kilo</p>
-              <p className="text-[#2C1A0E] text-3xl font-bold mt-1">
+              <p className="text-[#2C1A0E] text-3xl font-black tracking-tight mt-1">
                 {precios.find(p => p.tipocafe === 'pergamino_seco')?.preciokg?.toLocaleString() || '---'}
               </p>
             </div>
@@ -546,14 +766,14 @@ function DashboardComprador() {
           </div>
 
           {cargando ? (
-            <div className="text-center py-12 text-gray-400">Cargando...</div>
+            <div className="rounded-[22px] border border-dashed border-[#E7D9BF] bg-[#FCF8F1] py-12 text-center text-gray-500">Cargando...</div>
           ) : precios.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">No hay precios publicados aún</div>
+            <div className="rounded-[22px] border border-dashed border-[#E7D9BF] bg-[#FCF8F1] py-12 text-center text-gray-500">No hay precios publicados aún</div>
           ) : (
             precios.map((item, i) => {
               const tipo = TIPOS_PRODUCTO.find(t => t.value === item.tipocafe);
               return (
-                <div key={i} className="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 py-4 bg-white rounded-xl mb-3 items-center hover:shadow-md transition-shadow border border-[#E7D9BF]">
+                <div key={i} className="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 py-4 bg-white rounded-2xl mb-3 items-center hover:shadow-[0_10px_26px_rgba(77,48,24,0.08)] transition-shadow border border-[#E7D9BF]">
                   <div>
                     <span className={`text-xs px-2 py-1 rounded-full font-semibold ${BADGE_COLORS[item.tipocafe] || 'bg-gray-100 text-gray-700'}`}>
                       {tipo?.label || item.tipocafe?.replace(/_/g, ' ')}
@@ -591,8 +811,8 @@ function DashboardComprador() {
 
       {/* Modal publicar precio */}
       {mostrarFormulario && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl md:p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Publicar precio del día</h3>
               <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">
@@ -618,7 +838,7 @@ function DashboardComprador() {
                   {esPorKg(nuevoPrecio.tipocafe) ? 'Ingresa el precio por kilogramo' : 'Ingresa el precio por carga de 125 kg'}
                 </p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => setMostrarFormulario(false)}
                   className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar
@@ -638,8 +858,8 @@ function DashboardComprador() {
 
       {/* Modal editar precio */}
       {mostrarEditar && precioEditar && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl md:p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Editar precio</h3>
               <button onClick={() => setMostrarEditar(false)} className="text-gray-400 hover:text-gray-600">
@@ -663,7 +883,7 @@ function DashboardComprador() {
                   {esPorKg(precioEditar.tipocafe) ? 'Ingresa el precio por kilogramo' : 'Ingresa el precio por carga de 125 kg'}
                 </p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => setMostrarEditar(false)}
                   className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar
@@ -680,8 +900,8 @@ function DashboardComprador() {
 
       {/* Modal eliminar precio */}
       {mostrarEliminar && precioEliminar && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-500 text-2xl"></i>
             </div>
@@ -689,7 +909,7 @@ function DashboardComprador() {
             <p className="text-gray-400 text-sm mb-1">Vas a eliminar el precio de</p>
             <p className="text-[#2C1A0E] font-bold text-base mb-1">${precioEliminar.preciocarga?.toLocaleString()} COP</p>
             <p className="text-gray-400 text-xs mb-6">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => { setMostrarEliminar(false); setPrecioEliminar(null); }}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -705,8 +925,8 @@ function DashboardComprador() {
 
       {/* Modal horario */}
       {mostrarHorario && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-96 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl md:p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Configurar horario</h3>
               <button onClick={() => setMostrarHorario(false)} className="text-gray-400 hover:text-gray-600">
@@ -729,7 +949,7 @@ function DashboardComprador() {
               <p className="text-xs text-gray-400 mb-4 text-center">
                 Horario actual: {horarioForm.horarioApertura} – {horarioForm.horarioCierre}
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => setMostrarHorario(false)}
                   className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar

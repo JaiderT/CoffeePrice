@@ -198,7 +198,7 @@ export default function Contacto() {
       {usuario ? (
         <div className="flex min-h-screen">
           <Sidebar />
-          <div className="ml-16 flex-1">{contenido}</div>
+          <div className="flex-1 pb-20 md:ml-16 md:pb-0">{contenido}</div>
         </div>
       ) : (
         <>

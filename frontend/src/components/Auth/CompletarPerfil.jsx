@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -105,6 +105,17 @@ export default function CompletarPerfil() {
     latitud: null,
     longitud: null,
   });
+
+  const totalChecks = 6;
+  const checksCompletados = [
+    form.nombreempresa.trim(),
+    form.direccion.trim(),
+    form.telefono.trim(),
+    form.servicios.length > 0,
+    form.municipio.trim(),
+    Number.isFinite(form.latitud) && Number.isFinite(form.longitud),
+  ].filter(Boolean).length;
+  const progresoPerfil = Math.round((checksCompletados / totalChecks) * 100);
 
   useEffect(() => {
     let activo = true;
@@ -343,7 +354,7 @@ export default function CompletarPerfil() {
   if (success || perfilExistente) {
     return (
       <div className="min-h-screen bg-[#3D1F0F] flex items-center justify-center px-4">
-        <div className="bg-[#FAF7F2] rounded-3xl p-8 sm:p-10 max-w-xl w-full shadow-2xl">
+        <div className="bg-[#FAF7F2] rounded-3xl p-8 sm:p-10 max-w-xl w-full shadow-[0_24px_60px_rgba(0,0,0,0.22)] border border-white/60">
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-2xl font-black text-[#3B1F0A] mb-3">Perfil en revisión</h2>
           <p className="text-sm text-gray-500 leading-relaxed mb-2">
@@ -362,7 +373,7 @@ export default function CompletarPerfil() {
             </div>
           </div>
           {perfilComprador && (
-            <div className="bg-white border border-[#E8D8BF] rounded-2xl p-5 space-y-4 mb-6">
+            <div className="bg-white border border-[#E8D8BF] rounded-[24px] p-5 space-y-4 mb-6 shadow-[0_10px_28px_rgba(77,48,24,0.06)]">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-xs font-bold text-[#8B6B45] uppercase">Resumen enviado al admin</span>
                 <span className="text-[11px] px-3 py-1 rounded-full bg-[#F5ECD7] text-[#7A4020] font-semibold">
@@ -392,23 +403,23 @@ export default function CompletarPerfil() {
                 </div>
               </div>
               {perfilComprador.motivoRevision && (
-                <div className="rounded-xl bg-[#FFF4F1] border border-red-100 px-4 py-3 text-left">
+                <div className="rounded-2xl bg-[#FFF4F1] border border-red-100 px-4 py-3 text-left">
                   <p className="text-xs font-bold text-red-500 uppercase mb-1">Observación del admin</p>
                   <p className="text-sm text-[#6B3A2A]">{perfilComprador.motivoRevision}</p>
                 </div>
               )}
               <div className="grid sm:grid-cols-3 gap-3 text-xs text-left">
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
                   <p className="font-bold text-[#7A4020] mb-1">1. Registro</p>
                   <p className="text-gray-500">Tus datos básicos ya quedaron creados y verificados.</p>
                 </div>
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
                   <p className="font-bold text-[#7A4020] mb-1">2. Perfil empresa</p>
                   <p className="text-gray-500">El admin ya recibió empresa, dirección y punto de compra.</p>
                 </div>
-                <div className="rounded-xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
+                <div className="rounded-2xl bg-[#FCF8F1] px-3 py-3 border border-[#E8D8BF]">
                   <p className="font-bold text-[#7A4020] mb-1">3. Decisión</p>
-                  <p className="text-gray-500">Solo aparecerás en la plataforma cuando la solicitud quede aprobada.</p>
+                  <p className="text-gray-500">Solo aparecerás en la plataforma cuando tu perfil quede aprobado.</p>
                 </div>
               </div>
             </div>
@@ -480,6 +491,32 @@ export default function CompletarPerfil() {
           Esta información se enviará al administrador para revisión. Hasta que apruebe tu cuenta, no aparecerás en el mapa, precios ni perfiles públicos.
         </p>
 
+        <div className="mb-8 rounded-[24px] border border-[#E8D8BF] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(77,48,24,0.06)]">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8B6B45]">Avance del perfil</p>
+              <p className="text-sm text-[#3B1F0A] font-semibold mt-1">{checksCompletados} de {totalChecks} puntos listos</p>
+            </div>
+            <span className="rounded-full bg-[#FCF3E6] px-3 py-1 text-xs font-bold text-[#C8814A]">
+              {progresoPerfil}%
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-[#F3E6D4] overflow-hidden mb-3">
+            <div className="h-full rounded-full bg-linear-to-r from-[#C8814A] to-[#7A4020]" style={{ width: `${progresoPerfil}%` }} />
+          </div>
+          <div className="grid sm:grid-cols-3 gap-2 text-xs">
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Empresa, municipio y dirección
+            </div>
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Contacto, horarios y servicios
+            </div>
+            <div className="rounded-2xl border border-[#E8D8BF] bg-[#FCF8F1] px-3 py-2.5 text-[#6B5A4D]">
+              Punto exacto en mapa para revisión
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Nombre de la empresa *</label>
@@ -545,7 +582,7 @@ export default function CompletarPerfil() {
             />
           </div>
 
-          <div className="rounded-2xl border border-[#C8A96E]/30 p-4 bg-[#FCF8F1]">
+          <div className="rounded-[24px] border border-[#C8A96E]/30 p-4 bg-[#FCF8F1] shadow-[0_10px_24px_rgba(77,48,24,0.05)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
               <div>
                 <p className="text-xs font-semibold text-[#3B1F0A]">Ubicación exacta en el mapa</p>
@@ -560,7 +597,7 @@ export default function CompletarPerfil() {
               </button>
             </div>
 
-            <div className="rounded-xl overflow-hidden border border-[#E8D8BF]" style={{ height: "280px" }}>
+            <div className="rounded-2xl overflow-hidden border border-[#E8D8BF] shadow-[0_8px_22px_rgba(77,48,24,0.08)]" style={{ height: "280px" }}>
               <MapContainer center={posicionMapa} zoom={tieneUbicacionExacta ? 17 : 15} style={{ height: "100%", width: "100%" }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -657,7 +694,7 @@ export default function CompletarPerfil() {
           </div>
 
           {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold">
+            <div className="px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold shadow-[0_8px_18px_rgba(185,28,28,0.08)]">
               {error}
             </div>
           )}
@@ -675,3 +712,4 @@ export default function CompletarPerfil() {
     </div>
   );
 }
+

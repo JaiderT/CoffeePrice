@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/useAuth.js';
 
@@ -103,6 +103,7 @@ function Alertas() {
 
   const alertasActivas = alertas.filter((alerta) => alerta.activa);
   const alertasInactivas = alertas.filter((alerta) => !alerta.activa);
+  const surfaceCard = 'bg-white rounded-[22px] border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)]';
 
   return (
     <div className="min-h-screen bg-[#F7F1E3]">
@@ -130,21 +131,21 @@ function Alertas() {
 
       <div className="px-5 md:px-8 py-6">
         {mensaje && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div className={`mb-6 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
             {mensaje.tipo === 'exito' ? 'OK' : 'Error'} {mensaje.texto}
           </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="rounded-2xl bg-[#2C1A0E] p-4 shadow-sm">
+          <div className="rounded-[22px] bg-[#2C1A0E] p-4 shadow-[0_14px_34px_rgba(44,26,14,0.16)]">
             <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#D8C7A8]">Total alertas</p>
             <p className="mt-3 text-2xl font-bold text-[#F8F2E8]">{alertas.length}</p>
           </div>
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] p-4 shadow-sm">
+          <div className={`${surfaceCard} p-4`}>
             <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Activas</p>
             <p className="mt-3 text-2xl font-bold text-green-600">{alertasActivas.length}</p>
           </div>
-          <div className="rounded-2xl bg-white border border-[#E7D9BF] p-4 shadow-sm">
+          <div className={`${surfaceCard} p-4`}>
             <p className="text-[11px] uppercase tracking-[0.08em] font-bold text-[#8B7355]">Inactivas</p>
             <p className="mt-3 text-2xl font-bold text-gray-400">{alertasInactivas.length}</p>
           </div>
@@ -153,7 +154,7 @@ function Alertas() {
         {cargando ? (
           <div className="text-center py-12 text-[#8B7355]">Cargando alertas...</div>
         ) : alertas.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#E7D9BF] p-12 text-center shadow-sm">
+          <div className={`${surfaceCard} p-12 text-center`}>
             <i className="fa-solid fa-bell text-gray-200 text-5xl mb-4"></i>
             <p className="text-[#2C1A0E] font-semibold text-lg">No tienes alertas configuradas</p>
             <p className="text-[#8B7355] text-sm mt-2 mb-6">Crea una alerta y te avisamos cuando el precio suba</p>
@@ -167,7 +168,7 @@ function Alertas() {
         ) : (
           <div className="space-y-3">
             {alertas.map((alerta) => (
-              <div key={alerta._id} className={`rounded-2xl border p-5 shadow-sm transition-all ${alerta.activa ? 'bg-white border-[#E7D9BF]' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
+              <div key={alerta._id} className={`rounded-[22px] border p-5 shadow-[0_10px_24px_rgba(77,48,24,0.06)] transition-all ${alerta.activa ? 'bg-white border-[#E7D9BF]' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${alerta.activa ? 'bg-[#FFF8E7]' : 'bg-gray-100'}`}>
@@ -214,8 +215,8 @@ function Alertas() {
       </div>
 
       {mostrarForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[24px] border border-[#E7D9BF] bg-white p-5 shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[#2C1A0E] font-bold text-lg">Nueva alerta de precio</h3>
               <button onClick={() => setMostrarForm(false)} className="text-gray-400 hover:text-gray-600">
@@ -228,7 +229,7 @@ function Alertas() {
                 <select
                   value={form.comprador}
                   onChange={(e) => setForm({ ...form, comprador: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40"
                 >
                   <option value="">Todos los compradores</option>
                   {compradores.map((comprador) => (
@@ -244,13 +245,13 @@ function Alertas() {
                   value={form.precioMinimo}
                   onChange={(e) => setForm({ ...form, precioMinimo: e.target.value })}
                   placeholder="Ej: 2000000"
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
+                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] focus:ring-2 focus:ring-[#E8D3B0]/40"
                 />
               </div>
               <div className="space-y-2">
                 {[
-                  { key: 'push', label: 'Notificacion push', desc: 'En el navegador' },
-                  { key: 'email', label: 'Correo electronico', desc: usuario?.email },
+                  { key: 'push', label: 'Notificaci?n push', desc: 'En el navegador' },
+                  { key: 'email', label: 'Correo electrónico', desc: usuario?.email },
                   { key: 'whatsapp', label: 'WhatsApp', desc: usuario?.celular || 'Agrega tu celular en el perfil' },
                 ].map((canal) => (
                   <label key={canal.key} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${form.canales[canal.key] ? 'border-[#C8A96E] bg-[#FFF8E7]' : 'border-gray-200 bg-gray-50'}`}>
@@ -267,7 +268,7 @@ function Alertas() {
                   </label>
                 ))}
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                 <button type="button" onClick={() => setMostrarForm(false)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Cancelar
                 </button>
@@ -281,14 +282,14 @@ function Alertas() {
       )}
 
       {modalEliminar && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <div className="w-full max-w-sm rounded-[24px] border border-[#E7D9BF] bg-white p-6 text-center shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">Eliminar alerta</h3>
             <p className="text-gray-400 text-sm mb-6">Esta accion no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalEliminar(null)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
               </button>
@@ -304,3 +305,4 @@ function Alertas() {
 }
 
 export default Alertas;
+

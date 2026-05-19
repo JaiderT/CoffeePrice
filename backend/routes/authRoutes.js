@@ -1,5 +1,4 @@
-import express from "express";
-import jwt from "jsonwebtoken";
+﻿import express from "express";
 import session from "express-session";
 import {
   login,
@@ -36,7 +35,7 @@ router.post("/resend-verification", resendVerificationLimiter, resendVerificatio
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await Usuario.findById(req.user.id)
-      .select("-password -codigoVerificacion -codigoVerificacionExpira");
+      .select("-password -codigoVerificacion -codigoVerificacionExpira -codigoRecuperacion -codigoExpiracion");
 
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
@@ -47,61 +46,14 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (user.estado === "eliminado") {
       return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
     }
-    if (user.estado === "suspendido") {
-      return res.status(200).json(user);
-    }
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
 
     res.json(user);
   } catch (error) {
     console.error("Error en /me:", error);
     res.status(500).json({ message: "Error en el servidor" });
-  }
-});
-
-router.post("/generate-token", authMiddleware, async (req, res) => {
-  try {
-    const user = await Usuario.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    if (user.estado === "rechazado") {
-      return res.status(403).json({ message: "Cuenta rechazada" });
-    }
-    if (user.estado === "eliminado") {
-      return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
-    }
-    if (user.estado === "suspendido") {
-      return res.status(403).json({ message: "Tu cuenta estÃ¡ suspendida." });
-    }
-    if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificaciÃ³n" });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, rol: user.rol },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        nombre: user.nombre,
-        apellido: user.apellido,
-        email: user.email,
-        rol: user.rol,
-        celular: user.celular,
-        estado: user.estado,
-      },
-    });
-  } catch (error) {
-    console.error("Error generando token:", error);
-    res.status(500).json({ message: "Error generando token" });
   }
 });
 
@@ -112,12 +64,12 @@ router.post("/logout", (req, res) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
-  res.json({ message: "SesiÃ³n cerrada exitosamente" });
+  res.json({ message: "Sesión cerrada exitosamente" });
 });
 
 function responderGoogleNoDisponible(res) {
   return res.status(503).json({
-    message: "El inicio de sesiÃ³n con Google no estÃ¡ configurado en este entorno.",
+    message: "El inicio de sesión con Google no está configurado en este entorno.",
   });
 }
 
@@ -155,3 +107,5 @@ router.get(
 );
 
 export default router;
+
+

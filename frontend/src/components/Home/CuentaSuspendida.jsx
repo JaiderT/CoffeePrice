@@ -28,9 +28,9 @@ export default function CuentaSuspendida() {
 
   return (
     <div className="min-h-screen bg-[#F5ECD7] flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+      <div className="bg-white rounded-[24px] shadow-[0_18px_44px_rgba(44,26,14,0.14)] border border-[#E7D9BF] p-8 max-w-md w-full text-center">
 
-        <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6 shadow-lg">
+        <div className="w-20 h-20 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6 shadow-[0_12px_30px_rgba(77,48,24,0.18)]">
           {iniciales}
         </div>
 
@@ -38,7 +38,7 @@ export default function CuentaSuspendida() {
           <i className="fa-solid fa-pause text-orange-500 text-2xl"></i>
         </div>
 
-        <h1 className="text-[#2C1A0E] text-xl font-bold mb-2">Cuenta suspendida</h1>
+        <h1 className="text-[#2C1A0E] text-xl font-black tracking-tight mb-2">Cuenta suspendida</h1>
 
         <p className="text-gray-400 text-sm mb-2">
           Hola <span className="font-semibold text-[#2C1A0E]">{usuario?.nombre}</span>, suspendiste tu cuenta temporalmente.

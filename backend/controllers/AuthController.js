@@ -2,6 +2,7 @@ import Usuario from "../models/usuario.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { randomInt } from "crypto";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,12 +40,20 @@ function fijarCookieAuth(res, token, maxAge = 7 * 24 * 60 * 60 * 1000) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: '/',
+    path: "/",
     maxAge,
   });
 }
 
-async function enviarCodigoVerificacion(email, nombre, codigo) {
+function generarCodigoSeisDigitos() {
+  return String(randomInt(100000, 1000000));
+}
+
+async function generarHashCodigo(codigo) {
+  return bcrypt.hash(codigo, 10);
+}
+
+export async function enviarCodigoVerificacion(email, nombre, codigo) {
   await transporter.sendMail({
     from: `"support.coffeprice@gmail.com" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -74,13 +83,32 @@ async function enviarCodigoVerificacion(email, nombre, codigo) {
   });
 }
 
+let enviarCodigoVerificacionActual = enviarCodigoVerificacion;
+
+export function __setEnviarCodigoVerificacionForTests(fn) {
+  enviarCodigoVerificacionActual = fn || enviarCodigoVerificacion;
+}
+
+export async function reenviarCodigoVerificacionUsuario(usuario) {
+  const codigo = generarCodigoSeisDigitos();
+  const expiracion = new Date(Date.now() + 10 * 60 * 1000);
+
+  usuario.codigoVerificacion = await generarHashCodigo(codigo);
+  usuario.codigoVerificacionExpira = expiracion;
+  await usuario.save();
+
+  await enviarCodigoVerificacionActual(usuario.email, usuario.nombre, codigo);
+
+  return { codigo, expiracion };
+}
+
 export const register = async (req, res) => {
   try {
     const { nombre, apellido, email, password, celular, rol } = req.body;
 
     if (!nombre || !apellido || !email || !password || !rol) {
       return res.status(400).json({
-        message: "Nombre, apellido, correo, contraseña y rol son obligatorios",
+        message: "Nombre, apellido, correo, contrasena y rol son obligatorios",
       });
     }
 
@@ -88,36 +116,36 @@ export const register = async (req, res) => {
     const rolesPermitidos = ["productor", "comprador"];
 
     if (!rolesPermitidos.includes(rol)) {
-      return res.status(400).json({ message: "Rol no válido" });
+      return res.status(400).json({ message: "Rol no valido" });
     }
 
     if (!EMAIL_REGEX.test(emailNormalizado)) {
-      return res.status(400).json({ message: "Correo electrónico no válido" });
+      return res.status(400).json({ message: "Correo electronico no valido" });
     }
 
     if (!PASSWORD_REGEX.test(password)) {
       return res.status(400).json({
-        message: "La contraseña debe tener mínimo 10 caracteres, una mayúscula, una minúscula y un número",
+        message: "La contrasena debe tener minimo 10 caracteres, una mayuscula, una minuscula y un numero",
       });
     }
 
     const existeUsuario = await Usuario.findOne({ email: emailNormalizado });
     if (existeUsuario) {
       if (existeUsuario.codigoVerificacion) {
-        const codigoPendiente = Math.floor(100000 + Math.random() * 900000).toString();
-        existeUsuario.codigoVerificacion = codigoPendiente;
+        const codigoPendiente = generarCodigoSeisDigitos();
+        existeUsuario.codigoVerificacion = await generarHashCodigo(codigoPendiente);
         existeUsuario.codigoVerificacionExpira = new Date(Date.now() + 10 * 60 * 1000);
         await existeUsuario.save();
         await enviarCodigoVerificacion(emailNormalizado, existeUsuario.nombre, codigoPendiente);
         return res.status(200).json({
-          message: "Ya existe una cuenta pendiente. Te reenviamos el código de verificación.",
+          message: "Ya existe una cuenta pendiente. Te reenviamos el codigo de verificacion.",
         });
       }
-      return res.status(400).json({ message: "El correo ya está registrado" });
+      return res.status(400).json({ message: "El correo ya esta registrado" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    const codigo = generarCodigoSeisDigitos();
     const expiracion = new Date(Date.now() + 10 * 60 * 1000);
 
     const newUsuario = new Usuario({
@@ -128,14 +156,14 @@ export const register = async (req, res) => {
       celular,
       rol,
       estado: "pendiente",
-      codigoVerificacion: codigo,
+      codigoVerificacion: await generarHashCodigo(codigo),
       codigoVerificacionExpira: expiracion,
     });
 
     await newUsuario.save();
     await enviarCodigoVerificacion(emailNormalizado, nombre.trim(), codigo);
 
-    res.status(201).json({ message: "Código de verificación enviado al correo." });
+    res.status(201).json({ message: "Codigo de verificacion enviado al correo." });
   } catch (error) {
     console.error("Error en register:", error);
     res.status(500).json({ message: "Error en el servidor" });
@@ -147,7 +175,7 @@ export const verifyEmailCodigo = async (req, res) => {
     const { email, code } = req.body;
 
     if (!email || !code) {
-      return res.status(400).json({ message: "Correo y código son obligatorios" });
+      return res.status(400).json({ message: "Correo y codigo son obligatorios" });
     }
 
     const emailNormalizado = email.trim().toLowerCase();
@@ -162,15 +190,16 @@ export const verifyEmailCodigo = async (req, res) => {
     }
 
     if (!usuario.codigoVerificacion || !usuario.codigoVerificacionExpira) {
-      return res.status(400).json({ message: "No hay código pendiente. Solicita uno nuevo." });
+      return res.status(400).json({ message: "No hay codigo pendiente. Solicita uno nuevo." });
     }
 
     if (new Date() > usuario.codigoVerificacionExpira) {
-      return res.status(400).json({ message: "El código expiró. Solicita uno nuevo." });
+      return res.status(400).json({ message: "El codigo expiro. Solicita uno nuevo." });
     }
 
-    if (usuario.codigoVerificacion !== code.trim()) {
-      return res.status(400).json({ message: "Código incorrecto" });
+    const codigoValido = await bcrypt.compare(code.trim(), usuario.codigoVerificacion);
+    if (!codigoValido) {
+      return res.status(400).json({ message: "Codigo incorrecto" });
     }
 
     usuario.codigoVerificacion = null;
@@ -184,7 +213,7 @@ export const verifyEmailCodigo = async (req, res) => {
       fijarCookieAuth(res, token);
 
       return res.status(200).json({
-        message: "Correo verificado. Completa tu perfil empresarial para enviarlo a revisión.",
+        message: "Correo verificado. Completa tu perfil empresarial para enviarlo a revision.",
         pendiente: true,
         user: construirSesionUsuario(usuario),
         role: usuario.rol,
@@ -245,20 +274,14 @@ export const resendVerification = async (req, res) => {
 
     if (tiempoRestante > 9 * 60 * 1000) {
       return res.status(429).json({
-        message: "Espera un momento antes de solicitar otro código",
+        message: "Espera un momento antes de solicitar otro codigo",
       });
     }
 
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiracion = new Date(Date.now() + 10 * 60 * 1000);
+    usuario.email = emailNormalizado;
+    await reenviarCodigoVerificacionUsuario(usuario);
 
-    usuario.codigoVerificacion = codigo;
-    usuario.codigoVerificacionExpira = expiracion;
-    await usuario.save();
-
-    await enviarCodigoVerificacion(emailNormalizado, usuario.nombre, codigo);
-
-    res.status(200).json({ message: "Código reenviado exitosamente" });
+    res.status(200).json({ message: "Codigo reenviado exitosamente" });
   } catch (error) {
     console.error("Error en resendVerification:", error);
     res.status(500).json({ message: "Error en el servidor" });
@@ -270,23 +293,23 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Correo y contraseña son obligatorios" });
+      return res.status(400).json({ message: "Correo y contrasena son obligatorios" });
     }
 
     const emailNormalizado = email.trim().toLowerCase();
 
     if (!EMAIL_REGEX.test(emailNormalizado)) {
-      return res.status(400).json({ message: "Correo electrónico no válido" });
+      return res.status(400).json({ message: "Correo electronico no valido" });
     }
 
     const user = await Usuario.findOne({ email: emailNormalizado });
     if (!user) {
-      return res.status(401).json({ message: "Credenciales inválidas" });
+      return res.status(401).json({ message: "Credenciales invalidas" });
     }
 
     if (!user.password) {
       return res.status(400).json({
-        message: "Esta cuenta usa Google. Inicia sesión con Google.",
+        message: "Esta cuenta usa Google. Inicia sesion con Google.",
       });
     }
 
@@ -298,7 +321,7 @@ export const login = async (req, res) => {
 
     if (user.estado === "pendiente") {
       return res.status(403).json({
-        message: "Debes verificar tu correo electrónico antes de iniciar sesión.",
+        message: "Debes verificar tu correo electronico antes de iniciar sesion.",
       });
     }
 
@@ -308,9 +331,15 @@ export const login = async (req, res) => {
       });
     }
 
+    if (user.estado === "suspendido") {
+      return res.status(403).json({
+        message: "Tu cuenta esta suspendida. Reactivala o contacta al administrador.",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Credenciales inválidas" });
+      return res.status(401).json({ message: "Credenciales invalidas" });
     }
 
     await Usuario.findByIdAndUpdate(user._id, { ultimaConexion: new Date() });
@@ -343,6 +372,11 @@ export const googleCallback = (req, res) => {
     if (req.user.estado === "eliminado") {
       return res.redirect(
         `${process.env.FRONTEND_URL}/login?error=cuenta_eliminada`
+      );
+    }
+    if (req.user.estado === "suspendido") {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=cuenta_suspendida`
       );
     }
     const token = generarToken(req.user);

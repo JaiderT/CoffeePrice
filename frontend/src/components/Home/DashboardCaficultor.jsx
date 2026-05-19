@@ -49,12 +49,12 @@ function SincronizarMapa() {
 // Mini mapa de compradores para el dashboard
 function MiniMapaCompradores({ compradores, onVerMapa }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+    <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[#2C1A0E] font-bold text-sm">📍 Compradores cerca</p>
         <button
           onClick={onVerMapa}
-          className="text-xs text-[#C8A96E] hover:underline"
+          className="text-xs font-semibold text-[#C8A96E] transition-colors hover:text-[#A67C43]"
         >
           Ver mapa completo 
         </button>
@@ -97,7 +97,7 @@ function MiniMapaCompradores({ compradores, onVerMapa }) {
 
         {/* Overlay leyenda */}
         <div className="absolute bottom-2 left-2 z-400 flex gap-2 pointer-events-none">
-          <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/85 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-[10px] text-gray-600 bg-white/90 px-2 py-0.5 rounded-full shadow-sm">
             <span className="w-2 h-2 bg-[#C8A96E] rounded-full inline-block" />Compradores
           </span>
         </div>
@@ -358,36 +358,36 @@ export default function DashboardProductor() {
     : 0;
 
   const SkeletonBox = ({ h = 'h-52', extra = '' }) => (
-    <div className={`${h} bg-[#2C1A0E]/10 rounded-2xl animate-pulse ${extra}`} />
+    <div className={`${h} bg-gradient-to-br from-[#F8F1E2] to-[#EFE3CC] rounded-[22px] border border-[#E7D9BF]/70 animate-pulse ${extra}`} />
   );
 
   return (
     <div className="min-h-screen bg-[#F5ECD7]">
 
       {/* Header */}
-      <div className="bg-[#F5ECD7] px-6 md:px-8 py-5 flex items-center justify-between border-b border-[#E0D0B0] flex-wrap gap-3">
+      <div className="bg-[#F5ECD7] px-5 md:px-8 py-5 md:py-6 flex items-center justify-between border-b border-[#E0D0B0] flex-wrap gap-3">
         <div>
-          <h1 className="text-[#2C1A0E] text-2xl font-bold">Panel del Caficultor</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">Panel del Caficultor</h1>
+          <p className="text-gray-500 text-sm mt-1">
             Bienvenido,{' '}
             <span className="text-[#C8A96E] font-semibold">{usuario?.nombre} {usuario?.apellido}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-green-50 border border-green-300 px-3 py-1.5 rounded-full">
+        <div className="flex items-center gap-2 bg-green-50 border border-green-300 px-3 py-1.5 rounded-full shadow-sm">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
           <span className="text-green-700 text-xs font-semibold">En vivo</span>
         </div>
       </div>
 
       {mensaje && (
-        <div className={`mx-6 md:mx-8 mt-4 px-4 py-3 rounded-xl text-sm font-semibold ${
-          mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        <div className={`mx-5 md:mx-8 mt-4 px-4 py-3 rounded-2xl border text-sm font-semibold shadow-sm ${
+          mensaje.tipo === 'exito' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
         }`}>
           {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
 
-      <div className="px-6 md:px-8 py-6">
+      <div className="px-5 md:px-8 py-5 md:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* ═══ Columna izquierda (2/3) ═══ */}
@@ -398,18 +398,18 @@ export default function DashboardProductor() {
 
               {/* Tarjeta Precio FNC */}
               {cargandoFNC ? <SkeletonBox /> : (
-                <div className="bg-[#2C1A0E] rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                <div className="bg-[#2C1A0E] rounded-[26px] p-5 md:p-6 shadow-[0_16px_36px_rgba(44,26,14,0.18)] relative overflow-hidden">
                   <div className="absolute right-4 bottom-4 opacity-10 text-8xl select-none pointer-events-none">☕</div>
-                  <p className="text-[#C8A96E] text-xs uppercase font-semibold tracking-wide mb-3">
+                  <p className="text-[#C8A96E] text-xs uppercase font-semibold tracking-[0.22em] mb-3">
                     🏛️ Precio FNC hoy
                   </p>
-                  <p className="text-[#F8F2E8] font-bold leading-none mb-2" style={{ fontSize: 36 }}>
+                  <p className="text-[#F8F2E8] font-black leading-none tracking-tight mb-2" style={{ fontSize: 36 }}>
                     {precioFNC ? precioFNC.toLocaleString('es-CO') : '---'}
                     <span className="text-[#D8C7A8] text-lg font-normal ml-2">COP / carga</span>
                   </p>
 
                   <div className="flex items-center gap-2 mt-2 mb-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                    <span className={`text-[11px] px-2.5 py-1 rounded-full font-semibold shadow-sm ${
                       fuenteFNC === 'fnc-directo'
                         ? 'bg-green-700 text-green-100'
                         : 'bg-yellow-700 text-yellow-100'
@@ -420,7 +420,7 @@ export default function DashboardProductor() {
 
                   {Number(varPct) !== 0 && (
                     <div className="flex gap-2 mt-1 flex-wrap">
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      <span className={`text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm ${
                         Number(varPct) >= 0 ? 'bg-green-700 text-green-100' : 'bg-red-800 text-red-100'
                       }`}>
                         {Number(varPct) >= 0 ? '▲' : '▼'} {Math.abs(varPct)}% precio local vs FNC
@@ -442,8 +442,8 @@ export default function DashboardProductor() {
 
               {/* Clima */}
               {cargandoClima ? <SkeletonBox extra="bg-[#1B3A4B]/20" /> : (
-                <div className="bg-[#1B3A4B] rounded-2xl p-6 shadow-sm text-white">
-                  <p className="text-blue-300 text-xs uppercase font-semibold tracking-wide mb-3">
+                <div className="bg-[#1B3A4B] rounded-[26px] p-5 md:p-6 shadow-[0_16px_36px_rgba(27,58,75,0.18)] text-white">
+                  <p className="text-blue-300 text-xs uppercase font-semibold tracking-[0.22em] mb-3">
                     🌤 Clima en tu zona
                   </p>
                   {clima?.actual ? (
@@ -461,15 +461,15 @@ export default function DashboardProductor() {
                           </p>
                         </div>
                       </div>
-                      <p className="text-blue-100 text-xs mt-3 mb-4 leading-relaxed">
+                      <p className="text-blue-100 text-xs md:text-[13px] mt-3 mb-4 leading-relaxed">
                         {obtenerRecomendacionClima()}
                       </p>
                       <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-white/10 rounded-xl p-3">
+                        <div className="bg-white/10 rounded-2xl border border-white/5 p-3">
                           <p className="text-blue-300 text-xs uppercase font-semibold">Humedad</p>
                           <p className="text-white text-xl font-bold mt-1">{clima.actual.humedad ?? 68}%</p>
                         </div>
-                        <div className="bg-white/10 rounded-xl p-3">
+                        <div className="bg-white/10 rounded-2xl border border-white/5 p-3">
                           <p className="text-blue-300 text-xs uppercase font-semibold">Lluvia hoy</p>
                           <p className="text-white text-xl font-bold mt-1">
                             {clima.actual.lluvia ?? clima.actual.precipitacion ?? 0} mm
@@ -482,7 +482,7 @@ export default function DashboardProductor() {
                           <div className="flex gap-2 flex-wrap">
                             {clima.pronostico.slice(0, 4).map((dia) => (
                               <div key={dia.fecha}
-                                className="flex flex-col items-center gap-1 bg-white/10 rounded-xl px-3 py-2"
+                                className="flex flex-col items-center gap-1 bg-white/10 rounded-2xl border border-white/5 px-3 py-2"
                                 title={dia.descripcion}>
                                 <span className="text-[10px] text-blue-300 capitalize">{formatearDiaCorto(dia.fecha)}</span>
                                 <span className="text-xl">{dia.icono || '🌤️'}</span>
@@ -506,7 +506,7 @@ export default function DashboardProductor() {
 
             {/* Alerta de precio */}
             {cargandoAlerta ? <SkeletonBox h="h-40" extra="bg-green-100" /> : (
-              <div className="bg-[#F0F7E8] border border-green-200 rounded-2xl p-5">
+              <div className="bg-[#F0F7E8] border border-green-200 rounded-[22px] p-5 shadow-[0_10px_30px_rgba(76,118,56,0.07)]">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🎯</span>
@@ -515,14 +515,14 @@ export default function DashboardProductor() {
                     </p>
                   </div>
                   {alertaActiva && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                    <span className={`text-[11px] px-2.5 py-1 rounded-full font-semibold ${
                       alertaActiva.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
                       {alertaActiva.activa ? '● Activa' : '○ Inactiva'}
                     </span>
                   )}
                 </div>
-                <p className="text-[#2C1A0E] font-bold mb-1" style={{ fontSize: 32 }}>
+                <p className="text-[#2C1A0E] font-black tracking-tight mb-1" style={{ fontSize: 32 }}>
                   {alertaPrecio.toLocaleString('es-CO')}
                 </p>
                 <p className="text-gray-500 text-sm mb-4">Te avisamos cuando el precio supere este valor</p>
@@ -561,9 +561,9 @@ export default function DashboardProductor() {
 
             {/* Gráfica tendencia */}
             {cargandoHistorial ? <SkeletonBox h="h-64" extra="bg-white border border-[#E7D9BF]" /> : (
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+              <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                  <p className="text-[#2C1A0E] font-bold text-base">Tendencia del precio</p>
+                  <p className="text-[#2C1A0E] font-bold tracking-tight text-base">Tendencia del precio</p>
                   <div className="flex gap-2">
                     {["7D", "30D", "90D", "1A"].map(r => (
                       <button key={r} onClick={() => setRangoGrafica(r)}
@@ -613,17 +613,17 @@ export default function DashboardProductor() {
 
             {/* Noticias */}
             {cargandoNoticias ? <SkeletonBox h="h-32" extra="bg-white border border-[#E7D9BF]" /> : (
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+              <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-[#2C1A0E] font-bold text-sm">🗞 Noticias del sector</p>
                   <Link to="/noticias" className="text-xs text-[#C8A96E] hover:underline">Ver todas →</Link>
                 </div>
                 {noticias.length === 0 ? (
-                  <div className="text-center py-6 text-gray-400 text-sm">No hay noticias recientes</div>
+                  <div className="text-center py-6 text-gray-500 text-sm rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">No hay noticias recientes</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {noticias.map((n, i) => (
-                      <div key={i} className="flex flex-col gap-2">
+                      <div key={i} className="flex flex-col gap-2 rounded-2xl border border-[#EFE3CD] bg-[#FFFCF7] p-4 transition-colors hover:bg-[#FFF7EA]">
                         <div className="w-10 h-10 bg-[#F5ECD7] rounded-xl flex items-center justify-center text-xl">
                           {categoriaEmoji[n.categoria] || '📰'}
                         </div>
@@ -654,10 +654,10 @@ export default function DashboardProductor() {
 
             {/* Mejores precios hoy */}
             {cargandoPrecios ? <SkeletonBox extra="bg-white border border-[#E7D9BF]" /> : (
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+              <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
                 <p className="text-[#2C1A0E] font-bold text-sm mb-4">🏆 Mejores precios hoy</p>
                 {topCompradores.length === 0 ? (
-                  <div className="text-center py-4 text-gray-400 text-sm">No hay precios publicados aún</div>
+                  <div className="text-center py-4 text-gray-500 text-sm rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FCF8F1]">No hay precios publicados aún</div>
                 ) : (
                   <div className="space-y-3">
                     {topCompradores.map((c, i) => (
@@ -684,7 +684,7 @@ export default function DashboardProductor() {
             )}
 
             {/* Calculadora rápida */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E7D9BF]">
+            <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora rápida</p>
               <p className="text-gray-400 text-xs mb-4">¿Cuánto recibirías si vendes hoy?</p>
               <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Cargas</label>
@@ -693,7 +693,7 @@ export default function DashboardProductor() {
                 onChange={e => setCargas(Math.max(1, Number(e.target.value)))}
                 className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#FDFAF5] mb-4"
               />
-              <div className="bg-[#2C1A0E] rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-[#2C1A0E] rounded-2xl p-4 flex items-center justify-between shadow-[0_10px_24px_rgba(44,26,14,0.14)]">
                 <p className="text-[#D8C7A8] text-xs leading-tight">
                   Con el mejor<br />precio
                 </p>

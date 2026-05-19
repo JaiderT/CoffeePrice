@@ -1,5 +1,5 @@
 import express from "express";
-import jwt from "jsonwebtoken"; // ← NUEVO
+import jwt from "jsonwebtoken";
 import CompradorModel from "../models/comprador.js";
 import PrecioModel from "../models/precio.js";
 import Usuario from "../models/usuario.js";
@@ -17,27 +17,27 @@ import roleMiddleware from "../middlewares/rolMiddleware.js";
 const router = express.Router();
 
 const CENTROS_MUNICIPIO = {
-    'el pital': [2.266205, -75.805401],
-    'pitalito': [1.8537, -76.0517],
-    'acevedo': [1.8043, -75.8893],
-    'la argentina': [2.1962, -75.9805],
-    'tarqui': [2.1107, -75.8238],
-    'suaza': [1.9767, -75.7947],
-    'palestina': [1.7238, -76.1347],
-    'elias': [2.0131, -75.9395],
-    'saladoblanco': [1.9933, -76.0457],
-    'isnos': [1.927, -76.2148],
+    "el pital": [2.266205, -75.805401],
+    "pitalito": [1.8537, -76.0517],
+    "acevedo": [1.8043, -75.8893],
+    "la argentina": [2.1962, -75.9805],
+    "tarqui": [2.1107, -75.8238],
+    "suaza": [1.9767, -75.7947],
+    "palestina": [1.7238, -76.1347],
+    "elias": [2.0131, -75.9395],
+    "saladoblanco": [1.9933, -76.0457],
+    "isnos": [1.927, -76.2148],
 };
 
-function normalizarClaveMunicipio(valor = '') {
+function normalizarClaveMunicipio(valor = "") {
     return valor
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim();
 }
 
-function hashDeterministico(texto = '') {
+function hashDeterministico(texto = "") {
     let hash = 0;
     for (let i = 0; i < texto.length; i += 1) {
         hash = ((hash << 5) - hash) + texto.charCodeAt(i);
@@ -47,9 +47,9 @@ function hashDeterministico(texto = '') {
 }
 
 function generarCoordenadasAproximadas(comprador = {}) {
-    const claveMunicipio = normalizarClaveMunicipio(comprador.municipio || '');
-    const centro = CENTROS_MUNICIPIO[claveMunicipio] || CENTROS_MUNICIPIO['el pital'];
-    const semilla = hashDeterministico(`${comprador.nombreempresa || ''}|${comprador.direccion || ''}|${comprador.municipio || ''}`);
+    const claveMunicipio = normalizarClaveMunicipio(comprador.municipio || "");
+    const centro = CENTROS_MUNICIPIO[claveMunicipio] || CENTROS_MUNICIPIO["el pital"];
+    const semilla = hashDeterministico(`${comprador.nombreempresa || ""}|${comprador.direccion || ""}|${comprador.municipio || ""}`);
     const offsetLat = ((semilla % 1000) / 1000 - 0.5) * 0.018;
     const offsetLng = (((Math.floor(semilla / 1000)) % 1000) / 1000 - 0.5) * 0.018;
 
@@ -60,17 +60,45 @@ function generarCoordenadasAproximadas(comprador = {}) {
     };
 }
 
-// ← NUEVO: middleware opcional que no bloquea si no hay token
+function construirUbicacionGeneral(comprador = {}) {
+    if (comprador.municipio) {
+        return `Zona de ${comprador.municipio}`;
+    }
+    return "Ubicacion general disponible";
+}
+
+export function sanitizarCompradorPublico(comprador = {}, extras = {}) {
+    const coords = generarCoordenadasAproximadas(comprador);
+    return {
+        _id: comprador._id,
+        nombreempresa: comprador.nombreempresa,
+        tipoempresa: comprador.tipoempresa || "independiente",
+        municipio: comprador.municipio || null,
+        ubicacionGeneral: construirUbicacionGeneral(comprador),
+        direccion: null,
+        telefono: null,
+        horarioApertura: comprador.horarioApertura || null,
+        horarioCierre: comprador.horarioCierre || null,
+        descripcion: comprador.descripcion || null,
+        servicios: Array.isArray(comprador.servicios) ? comprador.servicios : [],
+        contactoRestringido: true,
+        ...coords,
+        ...extras,
+    };
+}
+
 const authOpcional = (req, res, next) => {
     let token = req.cookies?.auth_token;
     if (!token) {
-        token = req.headers.authorization?.split(' ')[1];
+        token = req.headers.authorization?.split(" ")[1];
     }
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = decoded;
-        } catch { /* token inválido → anónimo */ }
+        } catch {
+            req.user = null;
+        }
     }
     next();
 };
@@ -81,15 +109,15 @@ router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
 router.get("/mapa", async (req, res) => {
     try {
         const compradoresConUsuario = await CompradorModel.find({
-        $or: [
-            { estadoRevision: ESTADOS_REVISION_COMPRADOR.APROBADO },
-            { estadoRevision: { $exists: false } },
-            { estadoRevision: null },
-        ],
+            $or: [
+                { estadoRevision: ESTADOS_REVISION_COMPRADOR.APROBADO },
+                { estadoRevision: { $exists: false } },
+                { estadoRevision: null },
+            ],
         })
-        .populate("usuario", "estado")
-        .select("nombreempresa direccion telefono horarioApertura horarioCierre latitud longitud tipoempresa municipio descripcion servicios estadoRevision usuario")
-        .lean();
+            .populate("usuario", "estado")
+            .select("nombreempresa direccion horarioApertura horarioCierre latitud longitud tipoempresa municipio descripcion servicios estadoRevision usuario")
+            .lean();
 
         const compradores = compradoresConUsuario.filter((comprador) =>
             esCompradorAprobado(comprador.usuario, comprador)
@@ -120,28 +148,17 @@ router.get("/mapa", async (req, res) => {
             preciosRecientes.map((precio) => [precio._id?.toString(), precio])
         );
 
-        const respuesta = compradores
-            .map((comprador) => {
-                const precio = preciosPorComprador.get(comprador._id.toString());
-                const tieneCoordsReales = Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud);
-                const coords = tieneCoordsReales
-                    ? {
-                        latitud: comprador.latitud,
-                        longitud: comprador.longitud,
-                        coordenadasEstimadas: false,
-                    }
-                    : generarCoordenadasAproximadas(comprador);
-                return {
-                    ...comprador,
-                    ...coords,
-                    tipo: comprador.tipoempresa || "independiente",
-                    precioReferencia: precio?.preciocarga ?? null,
-                    precioKgReferencia: precio?.preciokg ?? null,
-                    tipocafe: precio?.tipocafe ?? null,
-                    unidadPrecio: precio?.unidad ?? "carga",
-                    precioActualizadoAt: precio?.updatedAt ?? null,
-                };
+        const respuesta = compradores.map((comprador) => {
+            const precio = preciosPorComprador.get(comprador._id.toString());
+            return sanitizarCompradorPublico(comprador, {
+                tipo: comprador.tipoempresa || "independiente",
+                precioReferencia: precio?.preciocarga ?? null,
+                precioKgReferencia: precio?.preciokg ?? null,
+                tipocafe: precio?.tipocafe ?? null,
+                unidadPrecio: precio?.unidad ?? "carga",
+                precioActualizadoAt: precio?.updatedAt ?? null,
             });
+        });
 
         res.json(respuesta);
     } catch (error) {
@@ -149,53 +166,35 @@ router.get("/mapa", async (req, res) => {
     }
 });
 
-router.get('/:id', authOpcional, async (req, res) => { // ← authOpcional agregado
-  try {
-    const comprador = await CompradorModel.findById(req.params.id).populate("usuario", "estado rol");
-    if (!comprador) return res.status(404).json({ message: 'Comprador no encontrado' });
+router.get("/:id", authOpcional, async (req, res) => {
+    try {
+        const comprador = await CompradorModel.findById(req.params.id).populate("usuario", "estado rol");
+        if (!comprador) return res.status(404).json({ message: "Comprador no encontrado" });
 
-    const compradorVisible = esCompradorAprobado(comprador.usuario, comprador);
+        const compradorVisible = esCompradorAprobado(comprador.usuario, comprador);
 
-    if (!req.user) {
-      if (!compradorVisible) {
-        return res.status(404).json({ message: 'Comprador no encontrado' });
-      }
-      return res.json({
-        _id: comprador._id,
-        nombreempresa: comprador.nombreempresa,
-        direccion: comprador.direccion,
-        telefono: comprador.telefono,
-        horarioApertura: comprador.horarioApertura,
-        horarioCierre: comprador.horarioCierre,
-        latitud: comprador.latitud,
-        longitud: comprador.longitud,
-      });
+        if (!req.user) {
+            if (!compradorVisible) {
+                return res.status(404).json({ message: "Comprador no encontrado" });
+            }
+            return res.json(sanitizarCompradorPublico(comprador));
+        }
+
+        const usuarioSolicitante = await Usuario.findById(req.user.id).select("rol");
+        const esAdmin = usuarioSolicitante?.rol === "admin";
+        const esPropietario = comprador.usuario?._id?.toString() === req.user.id;
+
+        if (!esAdmin && !esPropietario) {
+            if (!compradorVisible) {
+                return res.status(404).json({ message: "Comprador no encontrado" });
+            }
+            return res.json(sanitizarCompradorPublico(comprador));
+        }
+
+        return res.json(comprador);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener comprador" });
     }
-
-    const usuarioSolicitante = await Usuario.findById(req.user.id).select("rol");
-    const esAdmin = usuarioSolicitante?.rol === "admin";
-    const esPropietario = comprador.usuario?._id?.toString() === req.user.id;
-
-    if (!esAdmin && !esPropietario) {
-      if (!compradorVisible) {
-        return res.status(404).json({ message: 'Comprador no encontrado' });
-      }
-      return res.json({
-        _id: comprador._id,
-        nombreempresa: comprador.nombreempresa,
-        direccion: comprador.direccion,
-        telefono: comprador.telefono,
-        horarioApertura: comprador.horarioApertura,
-        horarioCierre: comprador.horarioCierre,
-        latitud: comprador.latitud,
-        longitud: comprador.longitud,
-      });
-    }
-
-    return res.json(comprador);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener comprador' });
-  }
 });
 
 router.put("/:id", authMiddleware, updatecomprador);

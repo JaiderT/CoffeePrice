@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -56,7 +55,7 @@ const TAGS = [
 export default function PerfilAdmin() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const surfaceCard = 'bg-white rounded-[24px] border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)] overflow-hidden';
 
   const [pestana, setPestana] = useState('perfil');
   const [modo, setModo] = useState('ver');
@@ -407,32 +406,14 @@ export default function PerfilAdmin() {
     setModalSolicitud({ usuario: u, comprador: comp || null });
   }, [compradores]);
 
-  useEffect(() => {
-    const solicitudId = searchParams.get('solicitud');
-    if (!solicitudId) return;
-    if (pestana !== 'gestion') {
-      setPestana('gestion');
-      return;
-    }
-    if (usuarios.length === 0) return;
-
-    const usuarioSolicitud = usuarios.find((u) => u._id === solicitudId);
-    if (!usuarioSolicitud) return;
-
-    abrirSolicitud(usuarioSolicitud);
-    const nuevosParams = new URLSearchParams(searchParams);
-    nuevosParams.delete('solicitud');
-    setSearchParams(nuevosParams, { replace: true });
-  }, [abrirSolicitud, pestana, searchParams, setSearchParams, usuarios]);
-
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-4 md:p-10">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="bg-[#2C1A0E] rounded-2xl p-4 md:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="bg-[#2C1A0E] rounded-[24px] p-4 md:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_16px_38px_rgba(44,26,14,0.16)]">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-[#C8A96E] flex items-center justify-center text-white text-xl font-bold shadow-lg shrink-0">
+            <div className="w-14 h-14 rounded-xl bg-[#C8A96E] flex items-center justify-center text-white text-xl font-bold shadow-[0_12px_30px_rgba(77,48,24,0.22)] shrink-0">
               {iniciales}
             </div>
             <div>
@@ -446,7 +427,7 @@ export default function PerfilAdmin() {
           <div className="flex flex-col gap-2 items-start sm:items-end">
             {compradoresPendientes.length > 0 && (
               <button
-                onClick={() => abrirSolicitud(compradoresPendientes[0])}
+                onClick={() => setPestana('gestion')}
                 className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs px-4 py-2 rounded-xl font-semibold hover:bg-yellow-500/30 transition-colors text-left"
               >
                 ⚠️ {compradoresPendientes.length} comprador(es) pendiente(s). Presiona para revisar.
@@ -462,7 +443,7 @@ export default function PerfilAdmin() {
 
         {/* Mensaje */}
         {mensaje && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-semibold ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div className={`mb-6 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
             {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
           </div>
         )}
@@ -503,7 +484,7 @@ export default function PerfilAdmin() {
 
         {/* PESTAÑA PERFIL */}
         {pestana === 'perfil' && (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className={surfaceCard}>
             <div className="px-6 md:px-8 py-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-[#2C1A0E] font-bold">Información personal</h3>
               {modo === 'ver' && (
@@ -596,9 +577,90 @@ export default function PerfilAdmin() {
         {pestana === 'gestion' && (
           <div className="space-y-6">
 
+            {false && (
+            <div className={surfaceCard}>
+              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-[#2C1A0E] font-bold">Actividad entre productor y comprador</h3>
+                  <p className="text-sm text-gray-500 mt-1">Aquí ves el flujo real entre los roles, no solo la aprobación de cuentas.</p>
+                </div>
+                <span className="rounded-full bg-[#F5ECD7] px-3 py-1 text-xs font-semibold text-[#7A4020]">
+                  {solicitudes.length} solicitudes registradas
+                </span>
+              </div>
+              <div className="p-4 md:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] px-4 py-4">
+                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#8B7355]">Abiertas</p>
+                    <p className="mt-1 text-3xl font-black text-[#2C1A0E]">{solicitudesAbiertas.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-4">
+                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-green-700">Respondidas</p>
+                    <p className="mt-1 text-3xl font-black text-green-700">{solicitudesRespondidas.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4">
+                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-yellow-700">Pendientes de comprador</p>
+                    <p className="mt-1 text-3xl font-black text-yellow-700">{solicitudesAbiertas.length}</p>
+                  </div>
+                </div>
+
+                {solicitudes.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FFFCF7] px-4 py-5 text-sm text-gray-500">
+                    Aún no hay solicitudes entre productores y compradores para revisar.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {solicitudes.slice(0, 5).map((item) => (
+                      <div key={item._id} className="rounded-2xl border border-[#EFE3CD] bg-[#FFFCF7] px-4 py-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-[#2C1A0E]">
+                              {item.productor?.nombre} {item.productor?.apellido} → {item.comprador?.nombreempresa}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {item.cantidadcargas} carga(s) · {(item.tipocafe || 'pergamino_seco').replaceAll('_', ' ')} · {new Date(item.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-[#7A4020] mt-1">
+                              {item.comprador?.municipio || 'El Pital'} · {item.comprador?.tipoempresa || item.comprador?.tipo || 'Comprador'}
+                            </p>
+                            {item.mensaje && (
+                              <p className="mt-2 text-sm text-[#6B5A4D]">{item.mensaje}</p>
+                            )}
+                            {item.respuestaComprador && (
+                              <div className="mt-2 rounded-xl bg-[#F0F7E8] px-3 py-2 text-sm text-[#2D6A4F]">
+                                Respuesta: {item.respuestaComprador}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-start gap-2 md:items-end">
+                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              item.estado === 'abierta'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : item.estado === 'respondida'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {item.estado}
+                            </span>
+                            {item.comprador?.estadoRevision && (
+                              <span className="text-[11px] font-semibold text-gray-500">
+                                Perfil comprador: {getEstadoRevisionLabel(item.comprador.estadoRevision)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            )}
+
             {/* Suspendidos */}
             {usuariosSuspendidos.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className={surfaceCard}>
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 flex-wrap">
                   <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full font-bold">
                     ⏸ Cuentas suspendidas
@@ -628,7 +690,7 @@ export default function PerfilAdmin() {
 
             {/* Pendientes */}
             {compradoresPendientes.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className={surfaceCard}>
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 flex-wrap">
                   <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-bold">
                     ⚠️ Pendientes de aprobación
@@ -661,7 +723,7 @@ export default function PerfilAdmin() {
                         <div className="flex gap-2 self-start sm:self-auto">
                           <button onClick={() => abrirSolicitud(u)}
                             className="bg-[#F5ECD7] text-[#7A4020] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#E0D0B0] transition-colors">
-                            Ver solicitud
+                            Revisar perfil
                           </button>
                           <button onClick={() => handleAprobarComprador(u._id)}
                             className="bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-green-600 transition-colors">
@@ -680,7 +742,7 @@ export default function PerfilAdmin() {
             )}
 
             {/* Todos los usuarios */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className={surfaceCard}>
               <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <h3 className="text-[#2C1A0E] font-bold">Todos los usuarios</h3>
                 <div className="flex gap-2 flex-wrap">
@@ -764,7 +826,7 @@ export default function PerfilAdmin() {
         {/* PESTAÑA RESEÑAS */}
         {pestana === 'resenas' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className={surfaceCard}>
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de compradores</h3>
                 <span className="bg-[#F5ECD7] text-[#2C1A0E] text-xs px-3 py-1 rounded-full font-semibold">
@@ -816,7 +878,7 @@ export default function PerfilAdmin() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className={surfaceCard}>
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-[#2C1A0E] font-bold">Reseñas de la plataforma</h3>
                 <div className="flex items-center gap-2">
@@ -955,10 +1017,10 @@ export default function PerfilAdmin() {
 
       {modalSolicitud && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[24px] border border-[#E7D9BF] bg-white shadow-[0_24px_60px_rgba(44,26,14,0.20)]">
             <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h3 className="text-[#2C1A0E] font-bold text-lg">Solicitud de comprador</h3>
+                <h3 className="text-[#2C1A0E] font-bold text-lg">Revisión de comprador</h3>
                 <p className="text-gray-400 text-sm mt-1">Revisa la información completa antes de aprobar o rechazar.</p>
               </div>
               <button onClick={() => setModalSolicitud(null)} className="text-gray-400 hover:text-gray-700">
@@ -1049,7 +1111,7 @@ export default function PerfilAdmin() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap justify-end gap-3">
+            <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:flex-wrap sm:justify-end">
               <button
                 onClick={() => setModalSolicitud(null)}
                 className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
@@ -1082,7 +1144,7 @@ export default function PerfilAdmin() {
 
       {modalRechazo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+          <div className="w-full max-w-lg rounded-[24px] border border-[#E7D9BF] bg-white shadow-[0_24px_60px_rgba(44,26,14,0.20)]">
             <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h3 className="text-[#2C1A0E] font-bold text-lg">Motivo de rechazo</h3>
@@ -1101,12 +1163,12 @@ export default function PerfilAdmin() {
                 value={motivoRechazo}
                 onChange={(e) => setMotivoRechazo(e.target.value)}
                 rows={5}
-                placeholder="Escribe con claridad por qué se rechaza la solicitud o qué debe corregir el comprador."
+                placeholder="Escribe con claridad por qué se rechaza el registro o qué debe corregir el comprador."
                 className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none"
               />
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+            <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
               <button
                 onClick={() => { setModalRechazo(null); setMotivoRechazo(''); }}
                 className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
@@ -1205,13 +1267,13 @@ export default function PerfilAdmin() {
       {modalEliminarUsuario && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar usuario?</h3>
             <p className="text-gray-400 text-sm mb-6">El usuario no podrá iniciar sesión. Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalEliminarUsuario(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -1229,13 +1291,13 @@ export default function PerfilAdmin() {
       {modalEliminarReseña && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalEliminarReseña(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -1253,13 +1315,13 @@ export default function PerfilAdmin() {
       {modalEliminarPlataforma && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalEliminarPlataforma(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -1277,13 +1339,13 @@ export default function PerfilAdmin() {
       {modalEliminarNoticia && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-newspaper text-red-400 text-2xl"></i>
             </div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar noticia?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalEliminarNoticia(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar

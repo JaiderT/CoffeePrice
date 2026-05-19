@@ -101,28 +101,29 @@ export default function PerfilProductor() {
   const iniciales = usuario
     ? `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase()
     : '?';
+  const cardBase = 'bg-white rounded-[24px] border border-[#E7D9BF] shadow-[0_10px_30px_rgba(77,48,24,0.06)] overflow-hidden';
 
   return (
     <div className="min-h-screen bg-[#F5ECD7] p-6 md:p-10">
       <div className="max-w-2xl mx-auto">
 
         <div className="mb-8">
-          <h1 className="text-[#2C1A0E] text-2xl font-bold">Mi perfil</h1>
+          <h1 className="text-[#2C1A0E] text-2xl md:text-[2rem] font-black tracking-tight">Mi perfil</h1>
           <p className="text-gray-500 text-sm mt-1">Gestiona tu información personal</p>
         </div>
 
         {mensaje && (
-          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-semibold ${
+          <div className={`mb-6 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${
             mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           }`}>
             {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className={cardBase}>
           <div className="h-24 bg-linear-to-r from-[#3D1F0F] to-[#7A4020] relative">
             <div className="absolute -bottom-8 left-8">
-              <div className="w-16 h-16 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold shadow-lg border-4 border-white">
+              <div className="w-16 h-16 rounded-2xl bg-[#C8A96E] flex items-center justify-center text-white text-2xl font-bold shadow-[0_12px_30px_rgba(77,48,24,0.18)] border-4 border-white">
                 {iniciales}
               </div>
             </div>
@@ -131,7 +132,7 @@ export default function PerfilProductor() {
           <div className="pt-12 px-8 pb-8">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-[#2C1A0E] text-xl font-bold">{usuario?.nombre} {usuario?.apellido}</h2>
+                <h2 className="text-[#2C1A0E] text-xl font-black tracking-tight">{usuario?.nombre} {usuario?.apellido}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="bg-[#F5ECD7] text-[#7A4020] text-xs px-3 py-1 rounded-full font-semibold">☕ Productor</span>
                   <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold">● Activo</span>
@@ -208,7 +209,7 @@ export default function PerfilProductor() {
         </div>
 
         {/* Zona de cuenta */}
-        <div className="mt-6 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className={`mt-6 ${cardBase}`}>
           <div className="px-8 py-5 border-b border-gray-100">
             <h3 className="text-[#2C1A0E] font-bold">Gestión de cuenta</h3>
             <p className="text-gray-400 text-xs mt-0.5">Opciones para suspender o eliminar tu cuenta</p>
@@ -240,9 +241,9 @@ export default function PerfilProductor() {
 
       {/* Modal suspender */}
       {modalAccion === 'suspender' && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-[24px] border border-[#E7D9BF] bg-white p-6 text-center shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-pause text-yellow-500 text-2xl"></i>
             </div>
@@ -250,7 +251,7 @@ export default function PerfilProductor() {
             <p className="text-gray-400 text-sm mb-6">
               Tu cuenta quedará inactiva. Para reactivarla deberás contactar al administrador.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalAccion(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -266,9 +267,9 @@ export default function PerfilProductor() {
 
       {/* Modal eliminar */}
       {modalAccion === 'eliminar' && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <div className="bg-white rounded-2xl p-8 w-80 shadow-xl text-center">
+          <div className="w-full max-w-sm rounded-[24px] border border-[#E7D9BF] bg-white p-6 text-center shadow-[0_20px_48px_rgba(44,26,14,0.18)] md:p-8">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
             </div>
@@ -276,7 +277,7 @@ export default function PerfilProductor() {
             <p className="text-gray-400 text-sm mb-6">
               Esta acción no se puede deshacer. Perderás acceso permanentemente a tu cuenta.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setModalAccion(null)}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
@@ -328,4 +329,3 @@ function InputField({ label, value, onChange, type = 'text', placeholder = '' })
     </div>
   );
 }
-

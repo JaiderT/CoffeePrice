@@ -6,7 +6,7 @@ import { enviarDecisionComprador } from "../services/emailService.js";
 
 export const getusuario = async (req, res) => {
     try {
-        const usuarios = await Usuario.find().select("-password");
+        const usuarios = await Usuario.find().select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpira");
         res.json(usuarios);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener usuarios", error: error.message });
@@ -28,7 +28,7 @@ export const updateusuario = async (req, res) => {
             req.params.id,
             datosActualizados,
             { new: true, runValidators: true }
-        ).select("-password");
+        ).select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpira");
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
         res.json(usuario);
     } catch (error) {
@@ -38,28 +38,25 @@ export const updateusuario = async (req, res) => {
 
 export const cambiarpassword = async (req, res) => {
     try {
-        const { passwordactual, passwordnueva } = req.body;
+        const { passwordnueva } = req.body;
         const usuario = await Usuario.findById(req.params.id);
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
-        const esValida = await bcrypt.compare(passwordactual, usuario.password);
-        if (!esValida) return res.status(400).json({ message: "Contraseña actual incorrecta" });
         const salt = await bcrypt.genSalt(10);
         usuario.password = await bcrypt.hash(passwordnueva, salt);
         await usuario.save();
-        res.json({ message: "Contraseña actualizada" });
+        res.json({ message: "Contrasena actualizada" });
     } catch (error) {
-        res.status(500).json({ message: "Error al cambiar la contraseña", error: error.message });
+        res.status(500).json({ message: "Error al cambiar la contrasena", error: error.message });
     }
 };
 
-// ✅ Borrado lógico — cambia estado a eliminado en vez de borrar de la BD
 export const eliminarusuario = async (req, res) => {
     try {
         const usuario = await Usuario.findByIdAndUpdate(
             req.params.id,
-            { estado: 'eliminado' },
+            { estado: "eliminado" },
             { new: true }
-        ).select("-password");
+        ).select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpira");
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
         res.json({ message: "Usuario eliminado correctamente" });
     } catch (error) {
@@ -71,15 +68,15 @@ export const eliminarMiCuenta = async (req, res) => {
     try {
         const usuario = await Usuario.findByIdAndUpdate(
             req.user.id,
-            { estado: 'eliminado' },
+            { estado: "eliminado" },
             { new: true }
         );
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
-        res.clearCookie('auth_token', {
+        res.clearCookie("auth_token", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/',
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/",
         });
         res.json({ message: "Tu cuenta fue eliminada correctamente" });
     } catch (error) {
@@ -87,12 +84,11 @@ export const eliminarMiCuenta = async (req, res) => {
     }
 };
 
-// ✅ Suspender NO limpia cookie — el usuario puede seguir logueado y ver pantalla de suspensión
 export const suspenderMiCuenta = async (req, res) => {
     try {
         const usuario = await Usuario.findByIdAndUpdate(
             req.user.id,
-            { estado: 'suspendido' },
+            { estado: "suspendido" },
             { new: true }
         );
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -105,7 +101,7 @@ export const suspenderMiCuenta = async (req, res) => {
 export const cambiarestado = async (req, res) => {
     try {
         const { estado, motivoRevision } = req.body;
-        const usuario = await Usuario.findById(req.params.id).select("-password");
+        const usuario = await Usuario.findById(req.params.id).select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpira");
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
 
         usuario.estado = estado;
@@ -119,7 +115,7 @@ export const cambiarestado = async (req, res) => {
                     comprador.motivoRevision = null;
                 } else if (estado === "rechazado") {
                     comprador.estadoRevision = ESTADOS_REVISION_COMPRADOR.RECHAZADO;
-                    comprador.motivoRevision = motivoRevision?.trim() || "La solicitud no cumple los criterios de validación actuales.";
+                    comprador.motivoRevision = motivoRevision?.trim() || "La solicitud no cumple los criterios de validacion actuales.";
                 } else if (estado === "pendiente") {
                     comprador.estadoRevision = ESTADOS_REVISION_COMPRADOR.EN_REVISION;
                     comprador.motivoRevision = null;

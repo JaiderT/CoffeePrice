@@ -15,6 +15,15 @@ const LABEL_TIPO = {
   limon: '🍋 Limón',
 };
 
+const tieneContactoListo = (comprador = {}) =>
+  Boolean(comprador?.telefono && comprador?.direccion && comprador?.horarioApertura && comprador?.horarioCierre);
+
+const formatearFechaCorta = (fecha) =>
+  new Date(fecha).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+  });
+
 function Precios() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario } = useAuth();
@@ -31,6 +40,7 @@ function Precios() {
 
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState('todos');
+  const surfaceCard = 'rounded-[28px] ring-1 ring-[#E7D6BF] shadow-[0_10px_24px_rgba(96,73,47,0.07)]';
 
   useEffect(() => {
     const obtenerPrecios = async () => {
@@ -180,10 +190,10 @@ function Precios() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F2E7D7_0%,#EADBC5_55%,#F6EFE5_100%)] text-[#2F241C]">
       <div className={`mx-auto max-w-7xl px-5 md:px-8 ${usuario ? 'py-8' : 'py-6 md:py-8'}`}>
-        <section className="overflow-hidden rounded-4xl bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8">
+        <section className="overflow-hidden rounded-[34px] bg-[linear-gradient(135deg,#2F241C_0%,#4A3426_55%,#6C4B34_100%)] px-6 py-8 text-[#F9F3EA] shadow-[0_24px_70px_rgba(47,36,28,0.28)] md:px-8 md:py-9">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8D8C1]">
+              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#E8D8C1]">
                 Pital, Huila
               </span>
 
@@ -196,7 +206,7 @@ function Precios() {
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm ring-1 ring-white/10">
                   <p className="text-[11px] uppercase tracking-[0.12em] text-[#D7C2A7]">
                     Mejor pago hoy
                   </p>
@@ -205,7 +215,7 @@ function Precios() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-[#DDBA83] px-4 py-3 text-[#2F241C]">
+                <div className="rounded-2xl bg-[#DDBA83] px-4 py-3 text-[#2F241C] shadow-[0_10px_22px_rgba(221,186,131,0.18)]">
                   <p className="text-[11px] uppercase tracking-[0.12em] text-[#6A4321]">
                     Compradores registrados
                   </p>
@@ -292,7 +302,7 @@ function Precios() {
           </article>
         </section>
 
-        <section className="mt-6 rounded-[28px] border border-[#E7D6BF] bg-[#FFF8EC] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.06)]">
+        <section className={`mt-6 bg-[#FFF8EC] p-5 ${surfaceCard}`}>
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A735B]">
             Kaffi recomienda
           </p>
@@ -305,13 +315,14 @@ function Precios() {
         <section className="mt-6 rounded-[28px] bg-[linear-gradient(180deg,#EAD9C2_0%,#E5D2BA_100%)] p-4 shadow-[0_12px_24px_rgba(96,73,47,0.08)] ring-1 ring-[#DEC7A7]/70">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full xl:max-w-md">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">🔍</span>
               <input
                 data-kaffi="precios-busqueda"
                 type="text"
                 placeholder="Busca por nombre del comprador"
                 value={busqueda}
                 onChange={(event) => setBusqueda(event.target.value)}
-                className="w-full rounded-2xl border border-[#D7C0A1] bg-[#F9F4EC] px-4 py-3 text-sm text-[#2F241C] outline-none placeholder:text-[#9B8775] focus:border-[#B78E59]"
+                className="w-full rounded-2xl border border-[#D7C0A1] bg-[#F9F4EC] py-3 pl-10 pr-4 text-sm text-[#2F241C] outline-none placeholder:text-[#9B8775] focus:border-[#B78E59] focus:ring-2 focus:ring-[#E6C89A]/40"
               />
             </div>
 
@@ -362,16 +373,17 @@ function Precios() {
               </p>
             </div>
           ) : (
-            <div data-kaffi="precios-lista" className="space-y-3">
+            <div data-kaffi="precios-lista" className="space-y-4">
               {preciosVisibles.map((item, index) => {
                 const porKg = esPorKg(item.tipocafe);
+                const contactoListo = tieneContactoListo(item.comprador);
                 return (
                   <article
                     key={index}
-                    className="rounded-[28px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)]"
+                    className="rounded-[30px] bg-[linear-gradient(180deg,#FBF6EE_0%,#F7EFE3_100%)] p-5 shadow-[0_10px_24px_rgba(96,73,47,0.07)] ring-1 ring-[#E7D6BF] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#FCF7F0_0%,#F3E7D8_100%)] hover:shadow-[0_16px_34px_rgba(96,73,47,0.10)]"
                   >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="min-w-0">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-lg font-black text-[#2F241C]">
                             {item.comprador?.nombreempresa || 'Sin nombre'}
@@ -379,9 +391,14 @@ function Precios() {
                           <span className="rounded-full bg-[#E8D8C1] px-3 py-1 text-xs font-semibold text-[#5D4A3D]">
                             {LABEL_TIPO[item.tipocafe] || item.tipocafe?.replace(/_/g, ' ')}
                           </span>
+                          {contactoListo && (
+                            <span className="rounded-full bg-[#E5F3E7] px-3 py-1 text-xs font-semibold text-[#2F7A45] ring-1 ring-[#B8E0C1]">
+                              Contacto listo
+                            </span>
+                          )}
                         </div>
 
-                        <p className="mt-2 text-sm text-[#746456]">
+                        <p className="mt-2 text-sm leading-relaxed text-[#746456]">
                           {item.comprador?.direccion || 'Dirección no disponible'}
                         </p>
 
@@ -394,8 +411,8 @@ function Precios() {
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 xl:gap-6">
-                        <div className="min-w-37.5 rounded-2xl bg-[#F3E5D3] px-4 py-3">
+                      <div className="flex flex-col gap-3 md:grid md:grid-cols-2 xl:flex xl:flex-row xl:items-center xl:gap-4">
+                          <div className="min-w-37.5 rounded-2xl bg-[#F3E5D3] px-4 py-3 ring-1 ring-[#E5D2B9]">
                           <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
                             {porKg ? 'Paga por kg' : 'Paga por carga'}
                           </p>
@@ -405,7 +422,7 @@ function Precios() {
                         </div>
 
                         {!porKg && (
-                          <div className="min-w-37.5 rounded-2xl bg-[#EFE4D4] px-4 py-3">
+                          <div className="min-w-37.5 rounded-2xl bg-[#EFE4D4] px-4 py-3 ring-1 ring-[#E1D3BF]">
                             <p className="text-[11px] uppercase tracking-[0.12em] text-[#8A735B]">
                               Paga por kilo
                             </p>
@@ -425,12 +442,17 @@ function Precios() {
                         )}
 
                         {usuario && (
-                          <Link
-                            to={`/comprador/${item.comprador?._id}`}
-                            className="inline-flex w-full items-center justify-center rounded-2xl bg-[#2F241C] px-4 py-3 text-sm font-semibold text-[#F7F1E8] transition hover:bg-[#443126] md:w-auto"
-                          >
-                            Ver detalles
-                          </Link>
+                          <div className="flex flex-col gap-1 md:col-span-2 xl:min-w-52">
+                            <Link
+                              to={`/comprador/${item.comprador?._id}`}
+                              className="inline-flex w-full items-center justify-center rounded-2xl bg-[#2F241C] px-4 py-3 text-sm font-semibold text-[#F7F1E8] transition hover:bg-[#443126]"
+                            >
+                              Ver detalles y contacto
+                            </Link>
+                            <p className="mt-2 text-center text-[11px] leading-relaxed text-[#8A735B] xl:text-left">
+                              En el detalle encontrarás teléfono, WhatsApp y datos útiles del comprador.
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -447,7 +469,7 @@ function Precios() {
                     Inicia sesión para ver todos los compradores
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[#E8DCCB]">
-                    También podrás consultar el precio por kilo y ver más detalles de cada comprador antes de vender.
+                    También podrás consultar el precio por kilo y ver más detalles de cada comprador antes de contactarlo.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Link

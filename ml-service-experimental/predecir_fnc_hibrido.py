@@ -18,6 +18,8 @@ from pipeline_fnc_hibrido import (
     compute_market_signal_strength,
     build_daily_base,
     build_supervised_frame,
+    load_clean_kc,
+    load_clean_trm,
     load_json,
     save_json,
 )
@@ -39,10 +41,12 @@ def redondear_cop(valor: float) -> int:
     return int(round(float(valor) / 100.0) * 100)
 
 
-def clasificar_tendencia(variacion_pct: float) -> str:
-    if variacion_pct >= 0.3:
+def clasificar_tendencia(variacion_pct: float, variacion_cop: float) -> str:
+    if abs(variacion_cop) < 25000 or abs(variacion_pct) < 0.6:
+        return "estable"
+    if variacion_pct >= 0.6:
         return "sube"
-    if variacion_pct <= -0.3:
+    if variacion_pct <= -0.6:
         return "baja"
     return "estable"
 
@@ -77,6 +81,60 @@ def obtener_fila_prediccion(
     fecha_base = pd.Timestamp(fila["ds"]).normalize()
     fecha_original = pd.Timestamp(fila["ds_target"]).normalize()
     return fila, fecha_base, fecha_prediccion, fecha_prediccion != fecha_original
+
+
+def calcular_retorno_mercado(df: pd.DataFrame, fecha_base: pd.Timestamp, columna_valor: str) -> tuple[float, int]:
+    df = df.copy()
+    df["ds"] = pd.to_datetime(df["ds"], format="mixed", errors="coerce").dt.normalize()
+    df[columna_valor] = pd.to_numeric(df[columna_valor], errors="coerce")
+    df = df.dropna(subset=["ds", columna_valor])
+    df = df[df["ds"] <= fecha_base].sort_values("ds").drop_duplicates(subset=["ds"], keep="last")
+
+    if len(df) < 2:
+        return 0.0, 999
+
+    ultimo = df.iloc[-1]
+    previo = df.iloc[-2]
+    retorno = ((float(ultimo[columna_valor]) - float(previo[columna_valor])) / float(previo[columna_valor])) * 100
+    edad_dias = int((fecha_base - pd.Timestamp(ultimo["ds"]).normalize()).days)
+    return float(retorno), edad_dias
+
+
+def aplicar_ajuste_presion_mercado(
+    selected_raw: float,
+    ultimo_precio_fnc: float,
+    kc_change_pct: float,
+    trm_change_pct: float,
+    variaciones_modelo: list[float],
+) -> tuple[float, float, float, float]:
+    # KC tiene mayor peso porque la FNC parte del Contrato C; TRM compensa, pero no debe tapar una caida fuerte de KC.
+    presion_mercado = (0.72 * kc_change_pct) + (0.28 * trm_change_pct)
+    direccion_presion = 1 if presion_mercado > 0 else -1 if presion_mercado < 0 else 0
+    variaciones_relevantes = [v for v in variaciones_modelo if abs(v) >= 0.35]
+    variaciones_alineadas = [v for v in variaciones_relevantes if direccion_presion and (v * direccion_presion) > 0]
+    variaciones_opuestas = [v for v in variaciones_relevantes if direccion_presion and (v * direccion_presion) < 0]
+
+    if not variaciones_relevantes:
+        factor_presion = 0.25
+    else:
+        factor_presion = 0.25 + (0.75 * (len(variaciones_alineadas) / len(variaciones_relevantes)))
+
+    promedio_modelos = sum(variaciones_modelo) / len(variaciones_modelo) if variaciones_modelo else 0.0
+    if direccion_presion and (promedio_modelos * direccion_presion) < 0.5:
+        factor_presion = min(factor_presion, 0.45)
+    if variaciones_opuestas:
+        factor_presion = max(0.20, factor_presion - 0.20)
+
+    ajuste_pct = max(-0.022, min(0.022, presion_mercado * 0.34 * factor_presion / 100))
+    precio_por_presion = ultimo_precio_fnc * (1 + ajuste_pct)
+
+    if abs(presion_mercado) < 1.2:
+        return selected_raw, presion_mercado, precio_por_presion, factor_presion
+
+    if presion_mercado < 0:
+        return min(selected_raw, precio_por_presion), presion_mercado, precio_por_presion, factor_presion
+
+    return max(selected_raw, precio_por_presion), presion_mercado, precio_por_presion, factor_presion
 
 
 print("\n1. Cargando artefactos...")
@@ -144,8 +202,12 @@ forecast_candidates = {
 }
 for candidate_name in forecast_candidates:
     base_weights.setdefault(candidate_name, 0.0)
-kc_change_pct = float(future_row.get("kc_retorno_1d", 0.0) or 0.0) * 100
-trm_change_pct = float(future_row.get("trm_retorno_1d", 0.0) or 0.0) * 100
+kc_change_pct_modelo = float(future_row.get("kc_retorno_1d", 0.0) or 0.0) * 100
+trm_change_pct_modelo = float(future_row.get("trm_retorno_1d", 0.0) or 0.0) * 100
+kc_change_pct_mercado, kc_edad_dias = calcular_retorno_mercado(load_clean_kc(), fecha_base, "kc_centavos")
+trm_change_pct_mercado, trm_edad_dias = calcular_retorno_mercado(load_clean_trm(), fecha_base, "trm")
+kc_change_pct = kc_change_pct_mercado if kc_edad_dias <= 3 else kc_change_pct_modelo
+trm_change_pct = trm_change_pct_mercado if trm_edad_dias <= 3 else trm_change_pct_modelo
 signal_strength = compute_market_signal_strength(kc_change_pct, trm_change_pct)
 dynamic_weights = adjust_weights_for_signal(base_weights, kc_change_pct, trm_change_pct)
 
@@ -159,17 +221,33 @@ selected_raw = (
 if best_strategy in {"prophet", "hybrid", "formula"} and signal_strength < 0.25:
     selected_raw = (0.7 * selected_raw) + (0.3 * forecast_candidates[best_strategy])
 
+prophet_variacion = ((prophet_yhat - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+hybrid_value = forecast_candidates["hybrid"]
+hybrid_variacion = ((hybrid_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+formula_value = forecast_candidates["formula"]
+formula_variacion = ((formula_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+selected_variacion_pre_presion = ((selected_raw - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+
+selected_raw, presion_mercado, precio_por_presion, factor_presion = aplicar_ajuste_presion_mercado(
+    selected_raw,
+    ultimo_precio_fnc,
+    kc_change_pct,
+    trm_change_pct,
+    [prophet_variacion, hybrid_variacion, formula_variacion, selected_variacion_pre_presion],
+)
+
 es_fin_de_semana = fecha_prediccion.weekday() >= 5
 if es_fin_de_semana:
     selected_raw = ultimo_precio_fnc
 
-minimo_seguro = ultimo_precio_fnc * (1 - recent_change_limit)
-maximo_seguro = ultimo_precio_fnc * (1 + recent_change_limit)
+limite_cambio = max(recent_change_limit, 0.025 if abs(presion_mercado) >= 3.0 and factor_presion >= 0.55 else recent_change_limit)
+minimo_seguro = ultimo_precio_fnc * (1 - limite_cambio)
+maximo_seguro = ultimo_precio_fnc * (1 + limite_cambio)
 precio_estimado = max(min(selected_raw, maximo_seguro), minimo_seguro)
 precio_estimado = int(round(precio_estimado / 100.0) * 100)
 
 variacion = ((precio_estimado - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-tendencia = clasificar_tendencia(variacion)
+tendencia = clasificar_tendencia(variacion, precio_estimado - ultimo_precio_fnc)
 holdout = metricas.get("metricas", {}).get("holdout", {})
 base_holdout_key = f"mape_{best_strategy}"
 base_mae_key = f"mae_{best_strategy}"
@@ -177,6 +255,7 @@ applied_strategy = "ensemble_ponderado"
 holdout_key = "mape_ensemble" if "mape_ensemble" in holdout else base_holdout_key
 mae_key = "mae_ensemble" if "mae_ensemble" in holdout else base_mae_key
 mae_holdout = float(holdout.get(mae_key, 0.0) or 0.0)
+mae_holdout = mae_holdout * (1 + (0.35 * (1 - factor_presion)))
 
 if best_strategy == "prophet":
     precio_minimo = max(float(prophet_forecast["yhat_lower"]), precio_estimado - mae_holdout)
@@ -191,12 +270,6 @@ if es_fin_de_semana:
     precio_minimo = precio_estimado
     precio_maximo = precio_estimado
 
-prophet_variacion = ((prophet_yhat - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-hybrid_value = forecast_candidates["hybrid"]
-hybrid_variacion = ((hybrid_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-formula_value = forecast_candidates["formula"]
-formula_variacion = ((formula_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
-
 if es_fin_de_semana:
     explicacion = (
         "Fin de semana: la FNC no publica nuevo precio porque no opera la Bolsa de Nueva York, "
@@ -206,6 +279,22 @@ elif se_salto_fin_semana:
     explicacion = (
         "Proxima jornada habil FNC: se omite sabado y domingo porque no hay nuevo cierre de la Bolsa de Nueva York. "
         "La prediccion apunta al lunes con las ultimas senales disponibles de KC/TRM."
+    )
+elif presion_mercado <= -2.0:
+    if factor_presion < 0.55:
+        explicacion = (
+            "KC muestra presion bajista, pero formula, Prophet e hibrido no confirman una baja fuerte; "
+            "por eso el ajuste se amortigua para evitar sobre-reaccionar."
+        )
+    else:
+        explicacion = (
+            "La salida fue ajustada por presion bajista de mercado: KC cae con mas fuerza que el soporte de TRM, "
+            "por eso el modelo reduce la proyeccion final."
+        )
+elif presion_mercado >= 2.0:
+    explicacion = (
+        "La salida fue ajustada por presion alcista de mercado: KC/TRM muestran impulso suficiente "
+        "para mover la proyeccion final."
     )
 elif signal_strength >= 0.55:
     explicacion = (
@@ -252,7 +341,15 @@ payload = {
     "senales_modelo": {
         "ultimo_fnc": int(round(ultimo_precio_fnc)),
         "kc_variacion_pct": round(float(kc_change_pct), 2),
+        "kc_variacion_pct_modelo": round(float(kc_change_pct_modelo), 2),
+        "kc_edad_dias": int(kc_edad_dias),
         "trm_variacion_pct": round(float(trm_change_pct), 2),
+        "trm_variacion_pct_modelo": round(float(trm_change_pct_modelo), 2),
+        "trm_edad_dias": int(trm_edad_dias),
+        "presion_mercado": round(float(presion_mercado), 2),
+        "precio_por_presion": redondear_cop(precio_por_presion),
+        "factor_presion": round(float(factor_presion), 3),
+        "limite_cambio_pct": round(float(limite_cambio * 100), 2),
         "fuerza_senal": round(float(signal_strength), 3),
         "pesos_ensamble": dynamic_weights,
         "prophet_bruto": redondear_cop(prophet_yhat),
@@ -282,6 +379,8 @@ history_row = {
     "estrategia": applied_strategy,
     "estrategia_base": best_strategy,
     "salto_fin_semana": int(se_salto_fin_semana),
+    "presion_mercado": round(float(presion_mercado), 2),
+    "factor_presion": round(float(factor_presion), 3),
     "holdout_mape": holdout.get(holdout_key),
     "holdout_mae": round(mae_holdout, 2),
 }
