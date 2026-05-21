@@ -11,6 +11,7 @@ import passport, { googleAuthConfigured } from "../config/passport.js";
 import { loginLimiter, registerLimiter, verifyLimiter, resendVerificationLimiter } from "../middlewares/rateLimit.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import Usuario from "../models/usuario.js";
+import { construirOpcionesCookie } from "../utils/cookieOptions.js";
 
 const router = express.Router();
 
@@ -18,13 +19,8 @@ const googleSessionMiddleware = session({
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || "coffeprice-google-session",
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 1000 * 60 * 15,
-  },
+  proxy: process.env.NODE_ENV === "production",
+  cookie: construirOpcionesCookie({ maxAge: 1000 * 60 * 15 }),
 });
 
 router.post("/login", loginLimiter, login);
@@ -58,12 +54,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-  res.clearCookie("auth_token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-  });
+  res.clearCookie("auth_token", construirOpcionesCookie());
   res.json({ message: "Sesión cerrada exitosamente" });
 });
 

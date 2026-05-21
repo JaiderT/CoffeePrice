@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { randomInt } from "crypto";
+import { construirOpcionesCookie } from "../utils/cookieOptions.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,13 +37,7 @@ function generarToken(usuario, expiresIn = process.env.JWT_EXPIRES_IN || "7d") {
 }
 
 function fijarCookieAuth(res, token, maxAge = 7 * 24 * 60 * 60 * 1000) {
-  res.cookie("auth_token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-    maxAge,
-  });
+  res.cookie("auth_token", token, construirOpcionesCookie({ maxAge }));
 }
 
 function generarCodigoSeisDigitos() {
