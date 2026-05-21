@@ -1,12 +1,43 @@
 import cron from 'node-cron';
 import puppeteer from 'puppeteer';
 import axios from 'axios';
+import PrecioFNC from '../models/PrecioFNC.js';
 
-// Cache compartida — leída por precioFNC.js
+// Cache RAM — se recarga desde MongoDB al arrancar
 export let cachePrecioFNC = { precio: null, timestamp: 0, fuente: null };
 let actualizacionPrecioFNCPromise = null;
 
-// ── Fuente 1: Scraping real de la FNC con Puppeteer ─────────────────
+// ── Persistir en MongoDB ─────────────────────────────────────────────
+async function guardarEnDB(precio, fuente) {
+  try {
+    await PrecioFNC.findOneAndUpdate(
+      {},
+      { precio, fuente, updatedAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  } catch (e) {
+    console.warn('[precioCron] No se pudo guardar en DB:', e.message);
+  }
+}
+
+// ── Cargar desde MongoDB al iniciar (sobrevive reinicios) ────────────
+async function cargarDesdeDB() {
+  try {
+    const doc = await PrecioFNC.findOne().sort({ updatedAt: -1 });
+    if (doc?.precio) {
+      cachePrecioFNC = {
+        precio: doc.precio,
+        fuente: doc.fuente || 'fnc-directo',
+        timestamp: new Date(doc.updatedAt).getTime(),
+      };
+      console.log(`[precioCron] Precio cargado desde DB: $${doc.precio.toLocaleString('es-CO')}`);
+    }
+  } catch (e) {
+    console.warn('[precioCron] No se pudo leer DB al iniciar:', e.message);
+  }
+}
+
+// ── Fuente 1: Scraping real de la FNC con Puppeteer ──────────────────
 async function scrapearFNC() {
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -16,6 +47,7 @@ async function scrapearFNC() {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--no-zygote',
+      '--single-process',        // ← importante en Railway
       '--disable-extensions',
     ],
   });
@@ -28,7 +60,6 @@ async function scrapearFNC() {
       waitUntil: 'networkidle2',
       timeout: 30000,
     });
-    // Esperar renderizado JS
     await new Promise(r => setTimeout(r, 3000));
 
     const precio = await page.evaluate(() => {
@@ -51,7 +82,6 @@ async function scrapearFNC() {
 }
 
 // ── Fuente 2: Precio NY convertido a COP/carga ───────────────────────
-// Factor calibrado: NY=300.9 ¢/lb → FNC=2,200,000 COP/carga (abril 2025)
 async function precioDesdeNY() {
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/KC=F?interval=1d&range=2d';
   const { data } = await axios.get(url, {
@@ -60,40 +90,51 @@ async function precioDesdeNY() {
   });
   const ny = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
   if (!ny || ny <= 0) throw new Error('Sin precio NY válido');
-  const precio = Math.round((ny / 100) * 275.58 * 2654);
+
+  // Fórmula: ¢/lb → USD/lb → USD/kg → USD/125kg(carga) → COP
+  // Factor TRM dinámico via API pública
+  let trm = 4200; // fallback
+  try {
+    const resTRM = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 5000 });
+    trm = resTRM.data?.rates?.COP || 4200;
+  } catch { /* usa fallback */ }
+
+  const precioUSDCarga = (ny / 100) * 0.453592 * 125; // ¢/lb → USD/carga (125kg)
+  const precio = Math.round(precioUSDCarga * trm * 0.95); // 5% descuento local típico
+
   if (precio < 800_000 || precio > 8_000_000) throw new Error('Precio fuera de rango');
   return { precio, fuente: 'ny-estimado' };
 }
 
 // ── Función principal de actualización ──────────────────────────────
 export async function actualizarPrecioFNC() {
-  if (actualizacionPrecioFNCPromise) {
-    return actualizacionPrecioFNCPromise;
-  }
+  if (actualizacionPrecioFNCPromise) return actualizacionPrecioFNCPromise;
 
   actualizacionPrecioFNCPromise = (async () => {
-  console.log('[precioCron] Actualizando precio FNC...');
+    console.log('[precioCron] Actualizando precio FNC...');
 
-  // Intentar scraping real
-  try {
-    const precio = await scrapearFNC();
-    if (precio) {
-      cachePrecioFNC = { precio, timestamp: Date.now(), fuente: 'fnc-directo' };
-      console.log(`[precioCron] ✓ FNC directo: $${precio.toLocaleString('es-CO')} COP/carga`);
-      return;
+    // Intentar scraping real
+    try {
+      const precio = await scrapearFNC();
+      if (precio) {
+        cachePrecioFNC = { precio, timestamp: Date.now(), fuente: 'fnc-directo' };
+        await guardarEnDB(precio, 'fnc-directo');
+        console.log(`[precioCron] ✓ FNC directo: $${precio.toLocaleString('es-CO')}`);
+        return;
+      }
+    } catch (e) {
+      console.warn('[precioCron] Puppeteer falló:', e.message);
     }
-  } catch (e) {
-    console.warn('[precioCron] Puppeteer falló:', e.message);
-  }
 
-  // Fallback: precio NY
-  try {
-    const { precio, fuente } = await precioDesdeNY();
-    cachePrecioFNC = { precio, timestamp: Date.now(), fuente };
-    console.log(`[precioCron] ✓ NY estimado: $${precio.toLocaleString('es-CO')} COP/carga`);
-  } catch (e) {
-    console.warn('[precioCron] Yahoo Finance también falló:', e.message);
-  }
+    // Fallback: precio NY
+    try {
+      const { precio, fuente } = await precioDesdeNY();
+      cachePrecioFNC = { precio, timestamp: Date.now(), fuente };
+      await guardarEnDB(precio, fuente);
+      console.log(`[precioCron] ✓ NY estimado: $${precio.toLocaleString('es-CO')}`);
+    } catch (e) {
+      console.warn('[precioCron] Yahoo Finance también falló:', e.message);
+    }
   })();
 
   try {
@@ -108,11 +149,21 @@ export function hayActualizacionPrecioFNCEnCurso() {
 }
 
 // ── Iniciar cron ─────────────────────────────────────────────────────
-export function iniciarCronPrecioFNC() {
-  // Obtener precio al arrancar el servidor
-  actualizarPrecioFNC();
+export async function iniciarCronPrecioFNC() {
+  // 1. Cargar último precio guardado (inmediato, sin esperar scraping)
+  await cargarDesdeDB();
 
-  // Actualizar lunes a viernes a las 8am y 1pm hora Colombia
+  // 2. Si el precio en DB tiene más de 4 horas, actualizar ya
+  const cuatroHoras = 4 * 60 * 60 * 1000;
+  const esViejo = !cachePrecioFNC.timestamp || 
+    (Date.now() - cachePrecioFNC.timestamp) > cuatroHoras;
+
+  if (esViejo) {
+    console.log('[precioCron] Precio desactualizado, actualizando en background...');
+    actualizarPrecioFNC().catch(e => console.error('[precioCron]', e.message));
+  }
+
+  // 3. Cron L-V 8am y 1pm hora Colombia
   cron.schedule('0 8,13 * * 1-5', () => {
     actualizarPrecioFNC();
   }, { timezone: 'America/Bogota' });
