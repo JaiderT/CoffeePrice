@@ -98,9 +98,18 @@ router.get(
       return responderGoogleNoDisponible(res);
     }
 
-    passport.authenticate("google", {
-      failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`,
-      session: false,
+    passport.authenticate("google", { session: false }, (err, user) => {
+      if (err) {
+        console.error("[GoogleAuth] Error en callback:", err);
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+      }
+
+      if (!user) {
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_failed`);
+      }
+
+      req.user = user;
+      return next();
     })(req, res, next);
   },
   googleCallback
