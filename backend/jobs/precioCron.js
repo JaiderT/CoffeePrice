@@ -1,43 +1,81 @@
 import cron from 'node-cron';
 import puppeteer from 'puppeteer';
 import axios from 'axios';
-import PrecioFNC from '../models/PrecioFNC.js';
 
-// Cache RAM — se recarga desde MongoDB al arrancar
+const TIME_ZONE = 'America/Bogota';
+const EDAD_MAXIMA_CACHE_MS = 18 * 60 * 60 * 1000;
+const INTERVALO_REINTENTO_TARDE_MS = 30 * 60 * 1000;
+const HORA_INICIO_VENTANA_TARDE = 13;
+const HORA_FIN_VENTANA_TARDE = 16;
+
+// Cache compartida leida por precioFNC.js
 export let cachePrecioFNC = { precio: null, timestamp: 0, fuente: null };
 let actualizacionPrecioFNCPromise = null;
+let ultimoIntentoActualizacionMs = 0;
 
-// ── Persistir en MongoDB ─────────────────────────────────────────────
-async function guardarEnDB(precio, fuente) {
-  try {
-    await PrecioFNC.findOneAndUpdate(
-      {},
-      { precio, fuente, updatedAt: new Date() },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-  } catch (e) {
-    console.warn('[precioCron] No se pudo guardar en DB:', e.message);
-  }
+function obtenerPartesBogota(fecha = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    weekday: 'short',
+    hour12: false,
+  });
+
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(fecha)
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  );
+
+  return {
+    dateKey: `${parts.year}-${parts.month}-${parts.day}`,
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    weekday: parts.weekday,
+  };
 }
 
-// ── Cargar desde MongoDB al iniciar (sobrevive reinicios) ────────────
-async function cargarDesdeDB() {
-  try {
-    const doc = await PrecioFNC.findOne().sort({ updatedAt: -1 });
-    if (doc?.precio) {
-      cachePrecioFNC = {
-        precio: doc.precio,
-        fuente: doc.fuente || 'fnc-directo',
-        timestamp: new Date(doc.updatedAt).getTime(),
-      };
-      console.log(`[precioCron] Precio cargado desde DB: $${doc.precio.toLocaleString('es-CO')}`);
-    }
-  } catch (e) {
-    console.warn('[precioCron] No se pudo leer DB al iniciar:', e.message);
-  }
+function esDiaHabilFNC(fecha = new Date()) {
+  const { weekday } = obtenerPartesBogota(fecha);
+  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(weekday);
 }
 
-// ── Fuente 1: Scraping real de la FNC con Puppeteer ──────────────────
+function esMismaFechaBogota(fechaA, fechaB) {
+  return obtenerPartesBogota(fechaA).dateKey === obtenerPartesBogota(fechaB).dateKey;
+}
+
+function deberiaReintentarEnVentanaTarde(fecha = new Date()) {
+  if (!ultimoIntentoActualizacionMs || !esDiaHabilFNC(fecha)) return false;
+
+  const { hour } = obtenerPartesBogota(fecha);
+  if (hour < HORA_INICIO_VENTANA_TARDE || hour >= HORA_FIN_VENTANA_TARDE) return false;
+
+  const ultimoIntento = new Date(ultimoIntentoActualizacionMs);
+  if (!esMismaFechaBogota(ultimoIntento, fecha)) return true;
+
+  return fecha.getTime() - ultimoIntentoActualizacionMs >= INTERVALO_REINTENTO_TARDE_MS;
+}
+
+export function necesitaActualizarPrecioFNC(fecha = new Date()) {
+  if (!cachePrecioFNC.precio || !cachePrecioFNC.timestamp) return true;
+
+  const edadMs = fecha.getTime() - cachePrecioFNC.timestamp;
+  if (edadMs >= EDAD_MAXIMA_CACHE_MS) return true;
+
+  if (!esMismaFechaBogota(new Date(cachePrecioFNC.timestamp), fecha) && esDiaHabilFNC(fecha)) {
+    const { hour } = obtenerPartesBogota(fecha);
+    if (hour >= 8) return true;
+  }
+
+  return deberiaReintentarEnVentanaTarde(fecha);
+}
+
+// Fuente 1: Scraping real de la FNC con Puppeteer
 async function scrapearFNC() {
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -47,10 +85,11 @@ async function scrapearFNC() {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--no-zygote',
-      '--single-process',        // ← importante en Railway
+      '--single-process',
       '--disable-extensions',
     ],
   });
+
   try {
     const page = await browser.newPage();
     await page.setUserAgent(
@@ -60,18 +99,19 @@ async function scrapearFNC() {
       waitUntil: 'networkidle2',
       timeout: 30000,
     });
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const precio = await page.evaluate(() => {
       for (const el of document.querySelectorAll('*')) {
         if (el.children.length > 0) continue;
         const texto = el.innerText?.trim() || '';
         const match = texto.match(/\b(\d{1,3}(?:[.,]\d{3})+)\b/);
-        if (match) {
-          const num = parseInt(match[1].replace(/[.,]/g, ''), 10);
-          if (num >= 800000 && num <= 8000000) return num;
-        }
+        if (!match) continue;
+
+        const num = parseInt(match[1].replace(/[.,]/g, ''), 10);
+        if (num >= 800000 && num <= 8000000) return num;
       }
+
       return null;
     });
 
@@ -81,64 +121,57 @@ async function scrapearFNC() {
   }
 }
 
-// ── Fuente 2: Precio NY convertido a COP/carga ───────────────────────
+// Fuente 2: Precio NY convertido a COP/carga
+// Factor calibrado: NY=300.9 c/lb -> FNC=2,200,000 COP/carga (abril 2025)
 async function precioDesdeNY() {
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/KC=F?interval=1d&range=2d';
   const { data } = await axios.get(url, {
     timeout: 8000,
     headers: { 'User-Agent': 'Mozilla/5.0' },
   });
+
   const ny = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-  if (!ny || ny <= 0) throw new Error('Sin precio NY válido');
+  if (!ny || ny <= 0) throw new Error('Sin precio NY valido');
 
-  // Fórmula: ¢/lb → USD/lb → USD/kg → USD/125kg(carga) → COP
-  // Factor TRM dinámico via API pública
-  let trm = 4200; // fallback
-  try {
-    const resTRM = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 5000 });
-    trm = resTRM.data?.rates?.COP || 4200;
-  } catch { /* usa fallback */ }
-
-  const precioUSDCarga = (ny / 100) * 0.453592 * 125; // ¢/lb → USD/carga (125kg)
-  const precio = Math.round(precioUSDCarga * trm * 0.95); // 5% descuento local típico
-
+  const precio = Math.round((ny / 100) * 275.58 * 2654);
   if (precio < 800_000 || precio > 8_000_000) throw new Error('Precio fuera de rango');
+
   return { precio, fuente: 'ny-estimado' };
 }
 
-// ── Función principal de actualización ──────────────────────────────
+// Funcion principal de actualizacion
 export async function actualizarPrecioFNC() {
   if (actualizacionPrecioFNCPromise) return actualizacionPrecioFNCPromise;
 
   actualizacionPrecioFNCPromise = (async () => {
+    ultimoIntentoActualizacionMs = Date.now();
     console.log('[precioCron] Actualizando precio FNC...');
 
-    // Intentar scraping real
     try {
       const precio = await scrapearFNC();
       if (precio) {
         cachePrecioFNC = { precio, timestamp: Date.now(), fuente: 'fnc-directo' };
-        await guardarEnDB(precio, 'fnc-directo');
-        console.log(`[precioCron] ✓ FNC directo: $${precio.toLocaleString('es-CO')}`);
-        return;
+        console.log(`[precioCron] OK FNC directo: $${precio.toLocaleString('es-CO')} COP/carga`);
+        return cachePrecioFNC;
       }
-    } catch (e) {
-      console.warn('[precioCron] Puppeteer falló:', e.message);
+    } catch (error) {
+      console.warn('[precioCron] Puppeteer fallo:', error.message);
     }
 
-    // Fallback: precio NY
     try {
       const { precio, fuente } = await precioDesdeNY();
       cachePrecioFNC = { precio, timestamp: Date.now(), fuente };
-      await guardarEnDB(precio, fuente);
-      console.log(`[precioCron] ✓ NY estimado: $${precio.toLocaleString('es-CO')}`);
-    } catch (e) {
-      console.warn('[precioCron] Yahoo Finance también falló:', e.message);
+      console.log(`[precioCron] OK NY estimado: $${precio.toLocaleString('es-CO')} COP/carga`);
+      return cachePrecioFNC;
+    } catch (error) {
+      console.warn('[precioCron] Yahoo Finance tambien fallo:', error.message);
     }
+
+    return cachePrecioFNC;
   })();
 
   try {
-    await actualizacionPrecioFNCPromise;
+    return await actualizacionPrecioFNCPromise;
   } finally {
     actualizacionPrecioFNCPromise = null;
   }
@@ -148,25 +181,21 @@ export function hayActualizacionPrecioFNCEnCurso() {
   return Boolean(actualizacionPrecioFNCPromise);
 }
 
-// ── Iniciar cron ─────────────────────────────────────────────────────
-export async function iniciarCronPrecioFNC() {
-  // 1. Cargar último precio guardado (inmediato, sin esperar scraping)
-  await cargarDesdeDB();
+// Iniciar cron
+export function iniciarCronPrecioFNC() {
+  actualizarPrecioFNC().catch((error) => {
+    console.error('[precioCron] Error en carga inicial:', error.message);
+  });
 
-  // 2. Si el precio en DB tiene más de 4 horas, actualizar ya
-  const cuatroHoras = 4 * 60 * 60 * 1000;
-  const esViejo = !cachePrecioFNC.timestamp || 
-    (Date.now() - cachePrecioFNC.timestamp) > cuatroHoras;
-
-  if (esViejo) {
-    console.log('[precioCron] Precio desactualizado, actualizando en background...');
-    actualizarPrecioFNC().catch(e => console.error('[precioCron]', e.message));
-  }
-
-  // 3. Cron L-V 8am y 1pm hora Colombia
-  cron.schedule('0 8,13 * * 1-5', () => {
-    actualizarPrecioFNC();
-  }, { timezone: 'America/Bogota' });
+  cron.schedule(
+    '0 8,13 * * 1-5',
+    () => {
+      actualizarPrecioFNC().catch((error) => {
+        console.error('[precioCron] Error en cron programado:', error.message);
+      });
+    },
+    { timezone: TIME_ZONE }
+  );
 
   console.log('[precioCron] Cron precio FNC activo (L-V 8am y 1pm Colombia)');
 }
