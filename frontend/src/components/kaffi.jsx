@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { KAFFI_GUIDES, getAssistForPath, getGuidesForPath } from '../data/kaffiGuides';
+import { useAuth } from '../context/useAuth.js';
 
 const MENSAJE_INICIAL =
   'Buenas. Soy Kaffi y estoy para ayudarle con la plataforma sin enredos.';
@@ -50,6 +51,7 @@ function leerDatosPaginaKaffi() {
 export default function Kaffi() {
   const API_URL = import.meta.env.VITE_API_URL;
   const location = useLocation();
+  const { usuario } = useAuth();
   const finRef = useRef(null);
   const targetRef = useRef(null);
 
@@ -278,11 +280,14 @@ export default function Kaffi() {
   };
 
   const mostrarPanel = chatAbierto || panelFijado;
+  const floatingPositionClass = usuario
+    ? 'bottom-[6.25rem] right-3 sm:bottom-5 sm:right-5'
+    : 'bottom-4 right-3 sm:bottom-5 sm:right-5';
 
   return (
-    <div className="fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-5 sm:right-5">
+    <div className={`fixed z-40 flex flex-col items-end gap-2 ${floatingPositionClass}`}>
       {mostrarPanel && (
-        <div className="flex h-95 w-[calc(100vw-1rem)] max-w-72 flex-col overflow-hidden rounded-3xl border border-[#E0D0B0] bg-white shadow-xl sm:h-115 sm:w-80 sm:max-w-80">
+        <div className="flex max-h-[min(68vh,34rem)] w-[min(calc(100vw-1.25rem),22rem)] flex-col overflow-hidden rounded-3xl border border-[#E0D0B0] bg-white shadow-xl sm:max-h-[34rem] sm:w-80">
           <div className="flex items-center gap-2 bg-linear-to-r from-[#3D1F0F] to-[#7A4020] px-3 py-3">
             <img
               src="/kaffi.png"

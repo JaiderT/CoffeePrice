@@ -14,11 +14,14 @@ const Inicio = lazy(() => import('./components/Home/Inicio.jsx'));
 const Noticias = lazy(() => import('./components/Home/Noticias.jsx'));
 const NoticiaDetalle = lazy(() => import('./components/Home/NoticiaDetalle.jsx'));
 const Contacto = lazy(() => import('./components/Home/Contacto.jsx'));
+const CentroAyuda = lazy(() => import('./components/Home/CentroAyuda.jsx'));
 const Precios = lazy(() => import('./components/Home/Precios.jsx'));
 const Predicciones = lazy(() => import('./components/Home/Predicciones.jsx'));
+const PoliticaPrivacidad = lazy(() => import('./components/Home/PoliticaPrivacidad.jsx'));
 const PerfilProductor = lazy(() => import('./components/Home/Perfilproductor.jsx'));
 const Alertas = lazy(() => import('./components/Home/Alertas.jsx'));
 const Historial = lazy(() => import('./components/Home/Historial.jsx'));
+const TerminosCondiciones = lazy(() => import('./components/Home/TerminosCondiciones.jsx'));
 const DashboardProductor = lazy(() => import('./components/Home/DashboardCaficultor.jsx'));
 const DashboardComprador = lazy(() => import('./components/Home/DashboardComprador.jsx'));
 const PerfilComprador = lazy(() => import('./components/Home/Perfilcomprador.jsx'));
@@ -33,6 +36,7 @@ import LayoutPrivado from './components/Layout/LayoutPrivado.jsx';
 import LayoutComprador from './components/Layout/LayoutComprador.jsx';
 import LayoutPublico from './components/Layout/LayoutPublico.jsx';
 import PrivateRoute from './components/Layout/PrivateRoute.jsx';
+import ScrollToTop from './components/Layout/ScrollToTop.jsx';
 import NotFound from './components/NotFound.jsx';
 import Kaffi from './components/kaffi.jsx';
 
@@ -64,6 +68,7 @@ function App() {
   return (
     <BrowserRouter>
       <>
+        <ScrollToTop />
         <Suspense fallback={<ScreenLoader />}>
           <Routes>
             <Route
@@ -121,6 +126,18 @@ function App() {
             <Route
               path="/contacto"
               element={suspendido ? <Navigate to="/cuenta-suspendida" /> : <Contacto />}
+            />
+            <Route
+              path="/centro-de-ayuda"
+              element={suspendido ? <Navigate to="/cuenta-suspendida" /> : <CentroAyuda />}
+            />
+            <Route
+              path="/terminos-y-condiciones"
+              element={suspendido ? <Navigate to="/cuenta-suspendida" /> : <TerminosCondiciones />}
+            />
+            <Route
+              path="/politica-de-privacidad"
+              element={suspendido ? <Navigate to="/cuenta-suspendida" /> : <PoliticaPrivacidad />}
             />
             <Route
               path="/noticias"

@@ -1,12 +1,8 @@
 import { useState } from "react";
-import Navbar from "../Layout/Navbar.jsx";
-import Footer from "../Layout/Footer.jsx";
-import Sidebar from "../Layout/Sidebar.jsx";
-import { useAuth } from "../../context/useAuth.js";
+import ResponsivePageLayout from "../Layout/ResponsivePageLayout.jsx";
 
 export default function Contacto() {
   const API_URL = import.meta.env.VITE_API_URL;
-  const { usuario } = useAuth();
   const [formData, setFormData] = useState({ nombre: "", correo: "", asunto: "", mensaje: "" });
   const [errors, setErrors] = useState({});
   const [enviado, setEnviado] = useState(false);
@@ -194,19 +190,8 @@ export default function Contacto() {
   );
 
   return (
-    <>
-      {usuario ? (
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 pb-20 md:ml-16 md:pb-0">{contenido}</div>
-        </div>
-      ) : (
-        <>
-          <Navbar />
-          {contenido}
-          <Footer />
-        </>
-      )}
-    </>
+    <ResponsivePageLayout>
+      {contenido}
+    </ResponsivePageLayout>
   );
 }
