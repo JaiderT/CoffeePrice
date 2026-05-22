@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import CompradorModel from "../models/comprador.js";
 import { ESTADOS_REVISION_COMPRADOR } from "../utils/compradorEstado.js";
 import { enviarDecisionComprador } from "../services/emailService.js";
+import { limpiarCookieAuth } from "../utils/cookieOptions.js";
 
 export const getusuario = async (req, res) => {
     try {
@@ -72,12 +73,8 @@ export const eliminarMiCuenta = async (req, res) => {
             { new: true }
         );
         if (!usuario) return res.status(404).json({ message: "Usuario no encontrado" });
-        res.clearCookie("auth_token", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            path: "/",
-        });
+        limpiarCookieAuth(res, "auth_token");
+        limpiarCookieAuth(res, "connect.sid");
         res.json({ message: "Tu cuenta fue eliminada correctamente" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar tu cuenta", error: error.message });
