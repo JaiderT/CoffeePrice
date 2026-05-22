@@ -68,6 +68,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    limpiarUsuarioLocal();
+    setUsuario(null);
+
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
@@ -75,9 +78,6 @@ export function AuthProvider({ children }) {
       });
     } catch (error) {
       console.error('Error al cerrar sesion:', error);
-    } finally {
-      limpiarUsuarioLocal();
-      setUsuario(null);
     }
   };
 

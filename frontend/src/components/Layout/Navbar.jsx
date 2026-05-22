@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../context/useAuth.js';
 
 function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
 
   const rutaPanel = usuario
     ? usuario.rol === 'admin'
@@ -13,6 +14,12 @@ function Navbar() {
         ? '/comprador/dashboard'
         : '/perfil'
     : '/login';
+
+  const handleLogout = async () => {
+    setMenuAbierto(false);
+    await logout();
+    navigate('/', { replace: true });
+  };
 
   return (
     <nav className="w-full border-b border-[#E0D0B0] bg-[#F5ECD7] px-4 py-4 md:px-8">
@@ -39,10 +46,10 @@ function Navbar() {
                 Mi panel
               </Link>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="rounded-full bg-[#C8A96E] px-4 py-2 text-sm text-white transition-colors hover:bg-[#B8994E]"
               >
-                Cerrar sesión
+                Cerrar sesion
               </button>
             </>
           ) : (
@@ -51,7 +58,7 @@ function Navbar() {
                 to="/login"
                 className="rounded-full border border-[#2C1A0E] px-4 py-2 text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
               >
-                Iniciar sesión
+                Iniciar sesion
               </Link>
               <Link
                 to="/register"
@@ -94,13 +101,10 @@ function Navbar() {
                   Mi panel
                 </Link>
                 <button
-                  onClick={() => {
-                    logout();
-                    setMenuAbierto(false);
-                  }}
+                  onClick={handleLogout}
                   className="rounded-full bg-[#C8A96E] px-4 py-2 text-center text-sm text-white transition-colors hover:bg-[#B8994E]"
                 >
-                  Cerrar sesión
+                  Cerrar sesion
                 </button>
               </>
             ) : (
@@ -110,7 +114,7 @@ function Navbar() {
                   className="rounded-full border border-[#2C1A0E] px-4 py-2 text-center text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
                   onClick={() => setMenuAbierto(false)}
                 >
-                  Iniciar sesión
+                  Iniciar sesion
                 </Link>
                 <Link
                   to="/register"
