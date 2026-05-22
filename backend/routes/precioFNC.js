@@ -1,42 +1,64 @@
 import express from 'express';
-import { cachePrecioFNC, actualizarPrecioFNC, hayActualizacionPrecioFNCEnCurso } from '../jobs/precioCron.js';
+import {
+  cachePrecioFNC,
+  actualizarPrecioFNC,
+  hayActualizacionPrecioFNCEnCurso,
+  necesitaActualizarPrecioFNC,
+} from '../jobs/precioCron.js';
 
 const router = express.Router();
 
+function construirRespuestaPrecio(precioCache) {
+  return {
+    precio: precioCache?.precio ?? null,
+    fuente: precioCache?.fuente ?? null,
+    actualizadoEn: precioCache?.timestamp
+      ? new Date(precioCache.timestamp).toLocaleString('es-CO', { timeZone: 'America/Bogota' })
+      : null,
+  };
+}
+
 router.get('/', async (req, res) => {
-  // Si el cron ya tiene precio, devolverlo directo
+  const hayCache = Boolean(cachePrecioFNC.precio);
+  const precioVencido = necesitaActualizarPrecioFNC();
+
+  if (hayCache) {
+    if (precioVencido && !hayActualizacionPrecioFNCEnCurso()) {
+      actualizarPrecioFNC().catch((error) => {
+        console.error('[precioFNC] Error al refrescar precio en segundo plano:', error.message);
+      });
+    }
+
+    return res.json(construirRespuestaPrecio(cachePrecioFNC));
+  }
+
+  if (hayActualizacionPrecioFNCEnCurso()) {
+    return res.status(hayCache ? 200 : 202).json({
+      ...construirRespuestaPrecio(cachePrecioFNC),
+      stale: hayCache,
+      message: hayCache
+        ? 'Se esta refrescando el precio FNC. Se entrega temporalmente el ultimo valor disponible.'
+        : 'Actualizando precio FNC. Intenta nuevamente en unos segundos.',
+    });
+  }
+
+  try {
+    await actualizarPrecioFNC();
+  } catch (error) {
+    console.error('[precioFNC] Error al actualizar precio:', error.message);
+  }
+
   if (cachePrecioFNC.precio) {
     return res.json({
-      precio: cachePrecioFNC.precio,
-      fuente: cachePrecioFNC.fuente,
-      actualizadoEn: new Date(cachePrecioFNC.timestamp).toLocaleString('es-CO'),
+      ...construirRespuestaPrecio(cachePrecioFNC),
+      stale: false,
     });
   }
 
-  // Si ya hay una actualización en curso, no duplicar trabajo pesado
-  if (hayActualizacionPrecioFNCEnCurso()) {
-    return res.status(202).json({
-      message: 'Actualizando precio FNC. Intenta nuevamente en unos segundos.',
-      precio: null,
-      fuente: null,
-      actualizadoEn: null,
-    });
-  }
-
-  // Primera vez que se llama: lanzar actualización en segundo plano
-  try {
-    actualizarPrecioFNC().catch((e) => {
-      console.error('[precioFNC] Error en actualización en segundo plano:', e.message);
-    });
-  } catch (e) {
-    console.error('[precioFNC] Error al obtener precio:', e.message);
-  }
-
-  return res.status(202).json({
-    message: 'Precio FNC en actualización. Intenta nuevamente en unos segundos.',
-    precio: null,
-    fuente: null,
-    actualizadoEn: null,
+  return res.status(503).json({
+    ...construirRespuestaPrecio(cachePrecioFNC),
+    stale: true,
+    message: 'No fue posible actualizar el precio FNC en este momento.',
   });
 });
 
