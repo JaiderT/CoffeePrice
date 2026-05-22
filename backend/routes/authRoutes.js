@@ -11,7 +11,7 @@ import passport, { googleAuthConfigured } from "../config/passport.js";
 import { loginLimiter, registerLimiter, verifyLimiter, resendVerificationLimiter } from "../middlewares/rateLimit.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import Usuario from "../models/usuario.js";
-import { construirOpcionesCookie } from "../utils/cookieOptions.js";
+import { construirOpcionesCookie, limpiarCookieAuth } from "../utils/cookieOptions.js";
 
 const router = express.Router();
 
@@ -54,7 +54,9 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-  res.clearCookie("auth_token", construirOpcionesCookie());
+  limpiarCookieAuth(res, "auth_token");
+  limpiarCookieAuth(res, "connect.sid");
+  res.set("Cache-Control", "no-store");
   res.json({ message: "Sesión cerrada exitosamente" });
 });
 
