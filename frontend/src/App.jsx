@@ -50,6 +50,15 @@ function ScreenLoader() {
   );
 }
 
+// Redirige al dashboard según el rol
+function RedirigirPorRol() {
+  const { usuario } = useAuth();
+  if (!usuario?.rol) return <Navigate to="/login" replace />;
+  if (usuario.rol === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  if (usuario.rol === 'comprador') return <Navigate to="/comprador/dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
 function App() {
   const { usuario } = useAuth();
 
@@ -67,6 +76,7 @@ function App() {
               element={usuario ? <CuentaSuspendida /> : <Navigate to="/login" />}
             />
 
+            {/* Ruta raíz: redirige al dashboard si está autenticado, landing si no */}
             <Route
               path="/"
               element={
@@ -75,6 +85,20 @@ function App() {
                 ) : compradorPendiente ? (
                   <Navigate to="/completar-perfil" replace />
                 ) : usuario?.rol ? (
+                  <RedirigirPorRol />
+                ) : (
+                  <LayoutPublico>
+                    <Inicio />
+                  </LayoutPublico>
+                )
+              }
+            />
+
+            {/* Landing accesible desde /inicio para usuarios autenticados que quieran verla */}
+            <Route
+              path="/inicio"
+              element={
+                usuario?.rol ? (
                   <LayoutPrivado>
                     <Inicio />
                   </LayoutPrivado>
@@ -144,7 +168,7 @@ function App() {
                 suspendido ? (
                   <Navigate to="/cuenta-suspendida" />
                 ) : (
-                  <PrivateRoute roles={['productor', 'admin']}>
+                  <PrivateRoute roles={['productor', 'admin', 'comprador']}>
                     <LayoutPrivado>
                       <Predicciones />
                     </LayoutPrivado>

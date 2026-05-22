@@ -85,6 +85,7 @@ async function scrapearFNC() {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--no-zygote',
+      '--single-process',
       '--disable-extensions',
     ],
   });
@@ -140,9 +141,7 @@ async function precioDesdeNY() {
 
 // Funcion principal de actualizacion
 export async function actualizarPrecioFNC() {
-  if (actualizacionPrecioFNCPromise) {
-    return actualizacionPrecioFNCPromise;
-  }
+  if (actualizacionPrecioFNCPromise) return actualizacionPrecioFNCPromise;
 
   actualizacionPrecioFNCPromise = (async () => {
     ultimoIntentoActualizacionMs = Date.now();
