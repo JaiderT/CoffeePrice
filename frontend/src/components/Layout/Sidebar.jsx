@@ -43,11 +43,11 @@ function Sidebar() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarMenuMovil, setMostrarMenuMovil] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async () => {
     setMostrarModal(false);
     setMostrarMenuMovil(false);
+    await logout();
+    navigate('/', { replace: true });
   };
 
   const iniciales = usuario
