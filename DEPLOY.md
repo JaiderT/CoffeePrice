@@ -118,3 +118,28 @@ Debe responder con `status: ok` cuando MongoDB este conectado.
 
 - El backend usa cookies `SameSite=None` en produccion, por eso el frontend debe estar en HTTPS.
 - Si copiaste secretos reales a archivos `.env`, conviene rotarlos antes del despliegue definitivo.
+
+## 6. Predicciones automáticas
+
+El despliegue actual de `backend` en Railway y `frontend` en Netlify no ejecuta por sí solo el pipeline de Python de `ml-service-experimental/`.
+
+Para dejarlo automático, el repo ahora incluye:
+
+- `.github/workflows/actualizar-predicciones.yml`
+
+### Qué hace
+
+- De lunes a viernes a las `20:15 UTC` ejecuta `ml-service-experimental/actualizar_todo.py`.
+- En hora de Colombia eso equivale a las `3:15 p. m.`.
+- Actualiza fuentes, reentrena el modelo, genera la predicción de la siguiente fecha hábil y guarda los artefactos públicos.
+- Hace commit de los archivos actualizados para que Railway y Netlify redeployen automáticamente si tienen auto-deploy activado.
+
+### Qué revisar en GitHub
+
+1. Que el repositorio esté conectado a Railway y Netlify con despliegue automático por push.
+2. Que GitHub Actions esté habilitado en el repositorio.
+3. Si quieres otra hora, ajusta el `cron` del workflow en UTC.
+
+### Lanzarlo manualmente
+
+Desde GitHub Actions también puedes ejecutar el workflow manualmente para forzar la actualización diaria sin entrar al computador local.
