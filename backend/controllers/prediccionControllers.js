@@ -8,6 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PREDICCION_FNC_PATH = path.resolve(__dirname, "../datos/predicciones_fnc.json");
 const HISTORIAL_PREDICCIONES_FNC_PATH = path.resolve(__dirname, "../datos/historial_predicciones_fnc.csv");
+const EVALUACION_PREDICCIONES_FNC_PATH = path.resolve(
+    __dirname,
+    "../../ml-service-experimental/datos/evaluacion_predicciones_fnc.csv"
+);
 const CAMPOS_PREDICCION_FNC = [
     "fecha_prediccion",
     "precio_estimado",
@@ -117,7 +121,7 @@ function normalizarPrediccionFnc(prediccion) {
     };
 }
 
-function normalizarPrediccionFncHistorica(prediccion) {
+function normalizarPrediccionFncHistorica(prediccion, evaluacion = null) {
     const adaptada = {
         fecha_prediccion: prediccion.fecha_prediccion,
         precio_estimado: Number(prediccion.precio_estimado),
@@ -135,12 +139,22 @@ function normalizarPrediccionFncHistorica(prediccion) {
         explicacion: "Prediccion historica generada por el modelo FNC hibrido.",
     };
 
+    const tienePrecioReal = esNumeroFinito(evaluacion?.precio_real);
+
     return {
         ...normalizarPrediccionFnc(adaptada),
         fuente: "fnc_hibrido_historial",
         fechaGeneracion: prediccion.fecha_generacion,
         fechaPrediccionOriginal: prediccion.fecha_prediccion_original,
         saltoFinSemana: Boolean(Number(prediccion.salto_fin_semana || 0)),
+        tieneResultadoReal: tienePrecioReal,
+        precioReal: tienePrecioReal ? Number(evaluacion.precio_real) : null,
+        errorCop: esNumeroFinito(evaluacion?.error_cop) ? Number(evaluacion.error_cop) : null,
+        errorAbsoluto: esNumeroFinito(evaluacion?.error_abs) ? Number(evaluacion.error_abs) : null,
+        errorPorcentaje: esNumeroFinito(evaluacion?.error_pct) ? Number(evaluacion.error_pct) : null,
+        acertoRango: evaluacion?.acerto_rango === "1",
+        tendenciaReal: evaluacion?.tendencia_real || null,
+        acertoTendencia: evaluacion?.acerto_tendencia === "1",
     };
 }
 
@@ -218,15 +232,42 @@ async function leerPrediccionFnc() {
 async function leerHistorialPrediccionesFnc() {
     try {
         const contenido = await readFile(HISTORIAL_PREDICCIONES_FNC_PATH, "utf8");
+        const evaluaciones = await leerEvaluacionPrediccionesFnc();
+
         return parseCsvSimple(contenido)
             .filter(esPrediccionHistoricaValida)
-            .map(normalizarPrediccionFncHistorica);
+            .map((prediccion) =>
+                normalizarPrediccionFncHistorica(
+                    prediccion,
+                    evaluaciones.get(prediccion.fecha_prediccion) || null
+                )
+            );
     } catch (error) {
         if (error.code !== "ENOENT") {
             console.warn("No se pudo leer historial_predicciones_fnc.csv:", error.message);
         }
 
         return [];
+    }
+}
+
+async function leerEvaluacionPrediccionesFnc() {
+    try {
+        const contenido = await readFile(EVALUACION_PREDICCIONES_FNC_PATH, "utf8");
+        const filas = parseCsvSimple(contenido).filter(esPrediccionHistoricaValida);
+        const porFecha = new Map();
+
+        for (const fila of filas) {
+            porFecha.set(fila.fecha_prediccion, fila);
+        }
+
+        return porFecha;
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            console.warn("No se pudo leer evaluacion_predicciones_fnc.csv:", error.message);
+        }
+
+        return new Map();
     }
 }
 

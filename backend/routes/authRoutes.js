@@ -1,5 +1,6 @@
-﻿import express from "express";
+import express from "express";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import {
   login,
   register,
@@ -14,12 +15,19 @@ import Usuario from "../models/usuario.js";
 import { construirOpcionesCookie, limpiarCookieAuth } from "../utils/cookieOptions.js";
 
 const router = express.Router();
+const isProduction = process.env.NODE_ENV === "production";
 
 const googleSessionMiddleware = session({
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || "coffeprice-google-session",
   resave: false,
   saveUninitialized: false,
-  proxy: process.env.NODE_ENV === "production",
+  proxy: isProduction,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    ttl: 60 * 15,
+    autoRemove: "native",
+    stringify: false,
+  }),
   cookie: construirOpcionesCookie({ maxAge: 1000 * 60 * 15 }),
 });
 
@@ -43,7 +51,7 @@ router.get("/me", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
     }
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificacion" });
     }
 
     res.json(user);
@@ -54,15 +62,16 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
+  req.session?.destroy(() => {});
   limpiarCookieAuth(res, "auth_token");
   limpiarCookieAuth(res, "connect.sid");
   res.set("Cache-Control", "no-store");
-  res.json({ message: "Sesión cerrada exitosamente" });
+  res.json({ message: "Sesion cerrada exitosamente" });
 });
 
 function responderGoogleNoDisponible(res) {
   return res.status(503).json({
-    message: "El inicio de sesión con Google no está configurado en este entorno.",
+    message: "El inicio de sesion con Google no esta configurado en este entorno.",
   });
 }
 
@@ -109,5 +118,3 @@ router.get(
 );
 
 export default router;
-
-

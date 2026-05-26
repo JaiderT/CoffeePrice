@@ -1,0 +1,48 @@
+name: Actualizar predicciones FNC
+
+on:
+  schedule:
+    - cron: '15 20 * * 1-5'
+  workflow_dispatch:
+    inputs: {}
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias ML
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ml-service-experimental/requirements_hibrido.txt
+
+      - name: Generar predicción diaria
+        working-directory: ml-service-experimental
+        run: python actualizar_todo.py
+
+      - name: Commit y push de artefactos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/datos \
+            ml-service-experimental/datos \
+            ml-service-experimental/modelos/metricas_fnc_hibrido.json
+          if git diff --cached --quiet; then
+            echo "No hubo cambios para publicar."
+            exit 0
+          fi
+          git commit -m "chore: actualizar predicciones automáticas"
+          git push
