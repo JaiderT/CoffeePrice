@@ -55,7 +55,7 @@ def clasificar_tendencia_real(row: pd.Series) -> str:
     variacion_pct = row["variacion_real_pct"]
     if pd.isna(variacion_cop) or pd.isna(variacion_pct):
         return ""
-    if abs(variacion_cop) < 25000 or abs(variacion_pct) < 0.6:
+    if abs(variacion_cop) < 22000 or abs(variacion_pct) < 0.55:
         return "estable"
     return "sube" if variacion_pct > 0 else "baja"
 
