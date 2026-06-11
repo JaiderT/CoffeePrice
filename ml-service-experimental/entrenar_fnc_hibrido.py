@@ -7,6 +7,8 @@ import xgboost as xgb
 from prophet import Prophet
 
 from pipeline_fnc_hibrido import (
+    DIRECTION_LABELS,
+    DIRECTION_MODEL_PATH,
     FEATURE_CONFIG_PATH,
     METRICS_PATH,
     MODEL_DIR,
@@ -103,6 +105,30 @@ formula_model = xgb.XGBRegressor(
 )
 formula_model.fit(train_frame[feature_cols], formula_target_train)
 
+direction_counts = train_frame["direccion_target"].astype(int).value_counts().to_dict()
+direction_classes = len(direction_counts)
+direction_sample_weight = train_frame["direccion_target"].astype(int).map(
+    lambda label: len(train_frame) / (direction_classes * direction_counts.get(int(label), 1))
+)
+
+direction_model = xgb.XGBClassifier(
+    n_estimators=180,
+    max_depth=3,
+    learning_rate=0.045,
+    subsample=0.9,
+    colsample_bytree=0.9,
+    reg_alpha=0.15,
+    reg_lambda=1.4,
+    objective="multi:softprob",
+    eval_metric="mlogloss",
+    random_state=126,
+)
+direction_model.fit(
+    train_frame[feature_cols],
+    train_frame["direccion_target"].astype(int),
+    sample_weight=direction_sample_weight,
+)
+
 print("\n4. Evaluando estrategias...")
 train_frame["pred_naive"] = train_frame["fnc_lag_1"]
 train_frame["pred_prophet"] = train_frame["prophet_yhat"]
@@ -113,6 +139,10 @@ test_frame["pred_naive"] = test_frame["fnc_lag_1"]
 test_frame["pred_prophet"] = test_frame["prophet_yhat"]
 test_frame["pred_hybrid"] = test_frame["prophet_yhat"] + xgb_model.predict(test_frame[feature_cols])
 test_frame["pred_formula"] = test_frame["precio_formula_ajustada"] + formula_model.predict(test_frame[feature_cols])
+test_frame["pred_direccion"] = direction_model.predict(test_frame[feature_cols])
+test_frame["acerto_direccion"] = (
+    test_frame["pred_direccion"].astype(int) == test_frame["direccion_target"].astype(int)
+).astype(int)
 
 holdout_errors = {
     "naive": mape(test_frame["y_target"], test_frame["pred_naive"]),
@@ -166,6 +196,7 @@ metricas = {
         "mae_hybrid": round(mae(test_frame["y_target"], test_frame["pred_hybrid"]), 2),
         "mae_formula": round(mae(test_frame["y_target"], test_frame["pred_formula"]), 2),
         "mae_ensemble": round(mae(test_frame["y_target"], test_frame["pred_ensemble"]), 2),
+        "accuracy_direccion": round(float(test_frame["acerto_direccion"].mean() * 100), 2),
     },
 }
 
@@ -199,6 +230,7 @@ print(f"   Holdout MAPE prophet: {metricas['holdout']['mape_prophet']:.3f}%")
 print(f"   Holdout MAPE hybrid : {metricas['holdout']['mape_hybrid']:.3f}%")
 print(f"   Holdout MAPE formula: {metricas['holdout']['mape_formula']:.3f}%")
 print(f"   Holdout MAPE ensemble: {metricas['holdout']['mape_ensemble']:.3f}%")
+print(f"   Holdout direccion    : {metricas['holdout']['accuracy_direccion']:.1f}%")
 print(f"   Estrategia ganadora : {best_strategy}")
 
 print("\n5. Reentrenando modelos finales con todos los datos...")
@@ -247,6 +279,30 @@ final_formula_model = xgb.XGBRegressor(
 )
 final_formula_model.fit(final_frame[feature_cols], final_formula_residual)
 
+final_direction_counts = final_frame["direccion_target"].astype(int).value_counts().to_dict()
+final_direction_classes = len(final_direction_counts)
+final_direction_sample_weight = final_frame["direccion_target"].astype(int).map(
+    lambda label: len(final_frame) / (final_direction_classes * final_direction_counts.get(int(label), 1))
+)
+
+final_direction_model = xgb.XGBClassifier(
+    n_estimators=180,
+    max_depth=3,
+    learning_rate=0.045,
+    subsample=0.9,
+    colsample_bytree=0.9,
+    reg_alpha=0.15,
+    reg_lambda=1.4,
+    objective="multi:softprob",
+    eval_metric="mlogloss",
+    random_state=126,
+)
+final_direction_model.fit(
+    final_frame[feature_cols],
+    final_frame["direccion_target"].astype(int),
+    sample_weight=final_direction_sample_weight,
+)
+
 recent_change_limit = compute_recent_change_limit(base_df)
 estado_modelo = "usable" if estrategias[best_strategy] <= 1.0 else "seguir_en_pruebas"
 
@@ -276,6 +332,9 @@ with XGBOOST_MODEL_PATH.open("wb") as handle:
 with (MODEL_DIR / "modelo_formula_xgboost.pkl").open("wb") as handle:
     pickle.dump(final_formula_model, handle)
 
+with DIRECTION_MODEL_PATH.open("wb") as handle:
+    pickle.dump(final_direction_model, handle)
+
 with FEATURE_CONFIG_PATH.open("wb") as handle:
     pickle.dump(
         {
@@ -284,6 +343,7 @@ with FEATURE_CONFIG_PATH.open("wb") as handle:
             "best_strategy": best_strategy,
             "recent_change_limit": recent_change_limit,
             "ensemble_weights": ensemble_weights,
+            "direction_labels": DIRECTION_LABELS,
             "naive_margin_pct": 0.2,
         },
         handle,

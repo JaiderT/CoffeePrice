@@ -7,6 +7,8 @@ import pandas as pd
 
 from pipeline_fnc_hibrido import (
     BACKEND_PREDICTION_HISTORY_PATH,
+    DIRECTION_LABELS,
+    DIRECTION_MODEL_PATH,
     PREDICTION_HISTORY_PATH,
     adjust_weights_for_signal,
     FEATURE_CONFIG_PATH,
@@ -42,13 +44,56 @@ def redondear_cop(valor: float) -> int:
 
 
 def clasificar_tendencia(variacion_pct: float, variacion_cop: float) -> str:
-    if abs(variacion_cop) < 25000 or abs(variacion_pct) < 0.6:
+    if abs(variacion_cop) < 22000 or abs(variacion_pct) < 0.55:
         return "estable"
-    if variacion_pct >= 0.6:
+    if variacion_pct >= 0.55:
         return "sube"
-    if variacion_pct <= -0.6:
+    if variacion_pct <= -0.55:
         return "baja"
     return "estable"
+
+
+def clasificar_confianza(
+    holdout_mape: float,
+    candidate_spread_pct: float,
+    signal_strength: float,
+    direction_prediction: str,
+    direction_confidence: float,
+    direction_margin: float,
+) -> tuple[str, str, list[str]]:
+    alertas = []
+    riesgo_puntos = 0
+
+    if holdout_mape >= 1.6:
+        riesgo_puntos += 2
+        alertas.append("Error reciente del modelo por encima del objetivo")
+    elif holdout_mape >= 1.0:
+        riesgo_puntos += 1
+        alertas.append("Modelo en seguimiento: MAPE reciente supera 1%")
+
+    if candidate_spread_pct >= 3.0:
+        riesgo_puntos += 2
+        alertas.append("Alta dispersion entre formula, Prophet e hibrido")
+    elif candidate_spread_pct >= 1.6:
+        riesgo_puntos += 1
+        alertas.append("Senales mixtas entre motores de prediccion")
+
+    if signal_strength >= 0.65:
+        riesgo_puntos += 1
+        alertas.append("Mercado con senal fuerte de KC/TRM")
+
+    if direction_prediction == "estable" and candidate_spread_pct >= 2.4:
+        riesgo_puntos += 1
+        alertas.append("Tendencia estable con alta incertidumbre interna")
+    elif direction_prediction in {"sube", "baja"} and (direction_confidence < 0.55 or direction_margin < 0.12):
+        riesgo_puntos += 1
+        alertas.append("Clasificador de direccion con confianza limitada")
+
+    if riesgo_puntos >= 4:
+        return "baja", "alto", alertas
+    if riesgo_puntos >= 2:
+        return "media", "medio", alertas
+    return "alta", "bajo", alertas
 
 
 def siguiente_fecha_habil_fnc(fecha: pd.Timestamp) -> pd.Timestamp:
@@ -150,6 +195,11 @@ if formula_model_path.exists():
     with formula_model_path.open("rb") as handle:
         formula_model = pickle.load(handle)
 
+direction_model = None
+if DIRECTION_MODEL_PATH.exists():
+    with DIRECTION_MODEL_PATH.open("rb") as handle:
+        direction_model = pickle.load(handle)
+
 with FEATURE_CONFIG_PATH.open("rb") as handle:
     config = pickle.load(handle)
 
@@ -194,6 +244,25 @@ formula_residual_prediction = 0.0
 if formula_model is not None:
     formula_residual_prediction = float(formula_model.predict(future_features)[0])
 
+direction_prediction = "sin_modelo"
+direction_confidence = 0.0
+direction_margin = 0.0
+direction_probabilities: dict[str, float] = {}
+if direction_model is not None:
+    proba = direction_model.predict_proba(future_features)[0]
+    classes = [int(value) for value in direction_model.classes_]
+    class_probs = {classes[index]: float(value) for index, value in enumerate(proba)}
+    direction_probabilities = {
+        DIRECTION_LABELS.get(label, str(label)): round(prob, 4)
+        for label, prob in class_probs.items()
+    }
+    ordered_probs = sorted(class_probs.items(), key=lambda item: item[1], reverse=True)
+    top_label, top_prob = ordered_probs[0]
+    second_prob = ordered_probs[1][1] if len(ordered_probs) > 1 else 0.0
+    direction_prediction = DIRECTION_LABELS.get(top_label, str(top_label))
+    direction_confidence = float(top_prob)
+    direction_margin = float(top_prob - second_prob)
+
 forecast_candidates = {
     "naive": float(future_row["fnc_lag_1"]),
     "prophet": prophet_yhat,
@@ -227,6 +296,11 @@ hybrid_variacion = ((hybrid_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 10
 formula_value = forecast_candidates["formula"]
 formula_variacion = ((formula_value - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
 selected_variacion_pre_presion = ((selected_raw - ultimo_precio_fnc) / ultimo_precio_fnc) * 100
+candidate_spread_pct = max(prophet_variacion, hybrid_variacion, formula_variacion) - min(
+    prophet_variacion,
+    hybrid_variacion,
+    formula_variacion,
+)
 
 selected_raw, presion_mercado, precio_por_presion, factor_presion = aplicar_ajuste_presion_mercado(
     selected_raw,
@@ -236,9 +310,23 @@ selected_raw, presion_mercado, precio_por_presion, factor_presion = aplicar_ajus
     [prophet_variacion, hybrid_variacion, formula_variacion, selected_variacion_pre_presion],
 )
 
+ajuste_direccion_cop = 0.0
+if direction_prediction in {"sube", "baja"} and direction_confidence >= 0.48 and direction_margin >= 0.10:
+    direction_sign = 1 if direction_prediction == "sube" else -1
+    selected_delta = selected_raw - ultimo_precio_fnc
+    min_direction_delta = max(22000.0, ultimo_precio_fnc * 0.0075)
+    ajuste_direccion_cop = min_direction_delta * (0.55 + direction_margin)
+    objetivo_direccion = ultimo_precio_fnc + (direction_sign * ajuste_direccion_cop)
+
+    if direction_sign > 0 and selected_delta < ajuste_direccion_cop:
+        selected_raw = (0.65 * selected_raw) + (0.35 * objetivo_direccion)
+    elif direction_sign < 0 and selected_delta > -ajuste_direccion_cop:
+        selected_raw = (0.65 * selected_raw) + (0.35 * objetivo_direccion)
+
 es_fin_de_semana = fecha_prediccion.weekday() >= 5
 if es_fin_de_semana:
     selected_raw = ultimo_precio_fnc
+    ajuste_direccion_cop = 0.0
 
 limite_cambio = max(recent_change_limit, 0.025 if abs(presion_mercado) >= 3.0 and factor_presion >= 0.55 else recent_change_limit)
 minimo_seguro = ultimo_precio_fnc * (1 - limite_cambio)
@@ -255,7 +343,10 @@ applied_strategy = "ensemble_ponderado"
 holdout_key = "mape_ensemble" if "mape_ensemble" in holdout else base_holdout_key
 mae_key = "mae_ensemble" if "mae_ensemble" in holdout else base_mae_key
 mae_holdout = float(holdout.get(mae_key, 0.0) or 0.0)
+holdout_mape_actual = float(holdout.get(holdout_key, 0.0) or 0.0)
 mae_holdout = mae_holdout * (1 + (0.35 * (1 - factor_presion)))
+if direction_prediction == "estable" and candidate_spread_pct >= 1.2:
+    mae_holdout = mae_holdout * (1 + min(0.30, candidate_spread_pct * 0.08))
 
 if best_strategy == "prophet":
     precio_minimo = max(float(prophet_forecast["yhat_lower"]), precio_estimado - mae_holdout)
@@ -270,6 +361,15 @@ if es_fin_de_semana:
     precio_minimo = precio_estimado
     precio_maximo = precio_estimado
 
+confianza, nivel_riesgo, alertas = clasificar_confianza(
+    holdout_mape_actual,
+    candidate_spread_pct,
+    signal_strength,
+    direction_prediction,
+    direction_confidence,
+    direction_margin,
+)
+
 if es_fin_de_semana:
     explicacion = (
         "Fin de semana: la FNC no publica nuevo precio porque no opera la Bolsa de Nueva York, "
@@ -279,6 +379,16 @@ elif se_salto_fin_semana:
     explicacion = (
         "Proxima jornada habil FNC: se omite sabado y domingo porque no hay nuevo cierre de la Bolsa de Nueva York. "
         "La prediccion apunta al lunes con las ultimas senales disponibles de KC/TRM."
+    )
+elif abs(ajuste_direccion_cop) > 0:
+    explicacion = (
+        f"El clasificador de direccion detecta mayor probabilidad de {direction_prediction}; "
+        "por eso se aplica un ajuste suave sobre el ensamble para mejorar subidas/bajas sin romper el rango."
+    )
+elif nivel_riesgo == "alto":
+    explicacion = (
+        "Prediccion con incertidumbre alta: los motores internos no coinciden lo suficiente, "
+        "por eso se recomienda interpretar principalmente el rango y no una direccion puntual."
     )
 elif presion_mercado <= -2.0:
     if factor_presion < 0.55:
@@ -332,6 +442,9 @@ payload = {
     "precio_maximo": int(precio_maximo),
     "variacion_porcentual": round(float(variacion), 2),
     "tendencia": tendencia,
+    "confianza": confianza,
+    "nivel_riesgo": nivel_riesgo,
+    "alertas": alertas,
     "modelo": "fnc_hibrido",
     "estrategia_base": best_strategy,
     "estrategia_aplicada": applied_strategy,
@@ -349,6 +462,12 @@ payload = {
         "presion_mercado": round(float(presion_mercado), 2),
         "precio_por_presion": redondear_cop(precio_por_presion),
         "factor_presion": round(float(factor_presion), 3),
+        "direccion_modelo": direction_prediction,
+        "direccion_confianza": round(float(direction_confidence), 3),
+        "direccion_margen": round(float(direction_margin), 3),
+        "direccion_probabilidades": direction_probabilities,
+        "ajuste_direccion_cop": redondear_cop(ajuste_direccion_cop),
+        "dispersion_motores_pct": round(float(candidate_spread_pct), 2),
         "limite_cambio_pct": round(float(limite_cambio * 100), 2),
         "fuerza_senal": round(float(signal_strength), 3),
         "pesos_ensamble": dynamic_weights,
@@ -378,9 +497,14 @@ history_row = {
     "modelo": "fnc_hibrido",
     "estrategia": applied_strategy,
     "estrategia_base": best_strategy,
+    "confianza": confianza,
+    "nivel_riesgo": nivel_riesgo,
     "salto_fin_semana": int(se_salto_fin_semana),
     "presion_mercado": round(float(presion_mercado), 2),
     "factor_presion": round(float(factor_presion), 3),
+    "direccion_modelo": direction_prediction,
+    "direccion_confianza": round(float(direction_confidence), 3),
+    "ajuste_direccion_cop": redondear_cop(ajuste_direccion_cop),
     "holdout_mape": holdout.get(holdout_key),
     "holdout_mae": round(mae_holdout, 2),
 }
@@ -418,10 +542,15 @@ print(f"   Estrategia aplicada: {applied_strategy}")
 print(f"   KC variacion 1d: {kc_change_pct:+.2f}%")
 print(f"   TRM variacion 1d: {trm_change_pct:+.2f}%")
 print(f"   Fuerza de senal: {signal_strength:.3f}")
+print(f"   Direccion modelo: {direction_prediction} ({direction_confidence:.2f}, margen {direction_margin:.2f})")
+print(f"   Ajuste direccion: ${ajuste_direccion_cop:,.0f}")
 print(f"   Prediccion final: ${precio_estimado:,.0f}")
 print(f"   Rango estimado: ${precio_minimo:,.0f} - ${precio_maximo:,.0f}")
 print(f"   Variacion: {variacion:+.2f}%")
 print(f"   Tendencia: {tendencia}")
+print(f"   Confianza: {confianza} | Riesgo: {nivel_riesgo}")
+if alertas:
+    print(f"   Alertas: {'; '.join(alertas)}")
 print(f"   Explicacion: {explicacion}")
 print(f"\nOK: JSON guardado en {PREDICTION_JSON_PATH}")
 print(f"OK: historial actualizado en {PREDICTION_HISTORY_PATH}")
