@@ -223,16 +223,16 @@ function StatCard({ icon: Icon, label, value, helper, tone = 'bg-white/70', valu
       className={`group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#E8D9C5] p-4 sm:p-5 ${tone} shadow-[0_14px_30px_rgba(108,75,52,0.06)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(108,75,52,0.10)]`}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.55),transparent)]" />
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] bg-[linear-gradient(180deg,#F5E4CC_0%,#EED7B8_100%)] text-[#6C4B34] shadow-inner">
           <Icon size={20} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8A735B]">{label}</p>
-          <div className={`mt-3 min-w-0 text-xl font-black leading-tight text-[#2F241C] sm:text-2xl ${valueClassName}`}>
-            {value}
-          </div>
         </div>
+      </div>
+      <div className={`mt-4 min-w-0 text-xl font-black leading-tight text-[#2F241C] sm:text-2xl ${valueClassName}`}>
+        {value}
       </div>
       {helper ? <p className="mt-5 text-sm leading-relaxed text-[#6D5E53]">{helper}</p> : null}
     </article>
@@ -244,13 +244,13 @@ function RangeValue({ minimo, maximo }) {
     <div className="grid grid-cols-1 gap-3">
       <div className="rounded-[22px] bg-white/88 px-3 py-3 ring-1 ring-[#EADDCB] shadow-[0_8px_18px_rgba(108,75,52,0.04)]">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8A735B]">Mínimo</p>
-        <p className="mt-1 break-words text-lg font-black leading-none tracking-tight text-[#2F241C] sm:text-xl">
+        <p className="mt-1 whitespace-nowrap text-[clamp(1.15rem,3vw,1.35rem)] font-black leading-none tracking-tight text-[#2F241C]">
           {formatCurrency(minimo)}
         </p>
       </div>
       <div className="rounded-[22px] bg-white/88 px-3 py-3 ring-1 ring-[#EADDCB] shadow-[0_8px_18px_rgba(108,75,52,0.04)]">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8A735B]">Máximo</p>
-        <p className="mt-1 break-words text-lg font-black leading-none tracking-tight text-[#2F241C] sm:text-xl">
+        <p className="mt-1 whitespace-nowrap text-[clamp(1.15rem,3vw,1.35rem)] font-black leading-none tracking-tight text-[#2F241C]">
           {formatCurrency(maximo)}
         </p>
       </div>
@@ -260,7 +260,7 @@ function RangeValue({ minimo, maximo }) {
 
 function CompactCurrency({ value, signed = false }) {
   return (
-    <span className="block break-words text-[2rem] font-black leading-[0.92] tracking-[-0.03em] text-[#2F241C] sm:text-[2.35rem]">
+    <span className="block whitespace-nowrap text-[clamp(1.75rem,4vw,2.35rem)] font-black leading-[0.95] tracking-[-0.04em] text-[#2F241C]">
       {signed ? formatSignedCurrency(value) : formatCurrency(value)}
     </span>
   );
@@ -510,7 +510,7 @@ export default function Predicciones() {
             </div>
 
             {resumen ? (
-              <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 sm:p-6">
+              <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:p-6">
                 <StatCard
                   icon={BadgeDollarSign}
                   label="Rango esperado"

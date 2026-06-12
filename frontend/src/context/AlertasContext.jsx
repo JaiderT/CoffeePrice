@@ -33,7 +33,7 @@ export function AlertasProvider({ children }) {
           nuevasAlertas.forEach((alerta) => {
             alertasNotificadasRef.current.add(alerta._id);
             new Notification('Alerta de precio CoffePrice', {
-              body: `${alerta.comprador?.nombreempresa || 'Un comprador'} supero $${Number(alerta.precioMinimo).toLocaleString()}`,
+              body: `${alerta.comprador?.nombreempresa || 'Un comprador'} superó $${Number(alerta.precioMinimo).toLocaleString()}`,
               icon: '/favicon.ico',
             });
           });
@@ -110,7 +110,7 @@ export function AlertasProvider({ children }) {
                       <span className="font-semibold text-[#C8A96E]">
                         {alerta.comprador?.nombreempresa || 'Un comprador'}
                       </span>{' '}
-                      supero el precio minimo de{' '}
+                      superó el precio mínimo de{' '}
                       <span className="font-bold text-[#2C1A0E]">
                         ${Number(alerta.precioMinimo).toLocaleString()}
                       </span>

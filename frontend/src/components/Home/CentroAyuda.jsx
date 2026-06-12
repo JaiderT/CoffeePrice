@@ -4,7 +4,7 @@ import ResponsivePageLayout from '../Layout/ResponsivePageLayout.jsx';
 const helpTopics = [
   {
     title: 'Consultar precios',
-    description: 'Revise precios por carga y por kilo, compare compradores activos y valide la referencia FNC del dia.',
+    description: 'Revise precios por carga y por kilo, compare compradores activos y valide la referencia FNC del día.',
     cta: { label: 'Ir a precios', to: '/precios' },
   },
   {
@@ -14,7 +14,7 @@ const helpTopics = [
   },
   {
     title: 'Entender predicciones',
-    description: 'Mire la tendencia esperada del mercado para decidir con mas contexto si vender hoy o esperar.',
+    description: 'Mire la tendencia esperada del mercado para decidir con más contexto si vender hoy o esperar.',
     cta: { label: 'Activar acceso a predicciones', to: '/register' },
   },
   {
@@ -31,17 +31,17 @@ const commonQuestions = [
       'No. Puede entrar a la vista de precios sin registrarse. La cuenta gratuita se necesita para alertas, historial y otras funciones personalizadas.',
   },
   {
-    question: '¿Con que frecuencia cambia el precio?',
+    question: '¿Con qué frecuencia cambia el precio?',
     answer:
-      'Los compradores actualizan sus valores durante el dia. CoffePrice muestra la informacion mas reciente disponible en la plataforma.',
+      'Los compradores actualizan sus valores durante el día. CoffePrice muestra la información más reciente disponible en la plataforma.',
   },
   {
-    question: '¿Que hago si no veo mi boton o una opcion del menu?',
+    question: '¿Qué hago si no veo mi botón o una opción del menú?',
     answer:
-      'En celular ahora encontrara los accesos principales en la barra inferior y el resto dentro del boton "Mas". Si aun no aparece, recargue la pagina o cierre y abra sesion de nuevo.',
+      'En celular ahora encontrará los accesos principales en la barra inferior y el resto dentro del botón "Más". Si aún no aparece, recargue la página o cierre y abra sesión de nuevo.',
   },
   {
-    question: '¿Como contacto al equipo?',
+    question: '¿Cómo contacto al equipo?',
     answer:
       'Puede usar el formulario de contacto, escribir por WhatsApp al +57 315 279 8859 o enviar un correo a support.coffeprice@gmail.com.',
   },
@@ -59,7 +59,7 @@ function CentroAyuda() {
               </span>
               <h1 className="mt-4 text-3xl font-black md:text-4xl">Le ayudamos a usar CoffePrice sin enredos</h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#E9DDD0] md:text-base">
-                Aqui reunimos las rutas mas utiles para consultar precios, entender el mercado y resolver dudas de la cuenta.
+                Aquí reunimos las rutas más útiles para consultar precios, entender el mercado y resolver dudas de la cuenta.
               </p>
             </div>
 

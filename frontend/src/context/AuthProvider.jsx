@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
         });
 
         if (!response.ok) {
-          throw new Error('No hay sesion activa');
+          throw new Error('No hay sesión activa');
         }
 
         const userData = await response.json();
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
         credentials: 'include',
       });
     } catch (error) {
-      console.error('Error al cerrar sesion:', error);
+      console.error('Error al cerrar sesión:', error);
     }
   };
 

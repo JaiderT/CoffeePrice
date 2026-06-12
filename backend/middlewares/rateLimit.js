@@ -4,7 +4,7 @@ export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: {
-    message: 'Demasiados intentos de inicio de sesion. Intenta nuevamente mas tarde.',
+    message: 'Demasiados intentos de inicio de sesión. Intenta nuevamente más tarde.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -14,7 +14,7 @@ export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: {
-    message: 'Demasiados registros. Intenta nuevamente mas tarde.',
+    message: 'Demasiados registros. Intenta nuevamente más tarde.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -24,7 +24,7 @@ export const verifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 6,
   message: {
-    message: 'Demasiados intentos de verificacion. Intenta mas tarde.',
+    message: 'Demasiados intentos de verificación. Intenta más tarde.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -34,7 +34,7 @@ export const resendVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 4,
   message: {
-    message: 'Espera un momento antes de solicitar otro codigo.',
+    message: 'Espera un momento antes de solicitar otro código.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -44,7 +44,7 @@ export const recoveryLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
-    message: 'Demasiadas solicitudes de recuperacion. Intenta mas tarde.',
+    message: 'Demasiadas solicitudes de recuperación. Intenta más tarde.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -62,7 +62,7 @@ export const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
-    message: 'Demasiados mensajes enviados. Intenta nuevamente mas tarde.',
+    message: 'Demasiados mensajes enviados. Intenta nuevamente más tarde.',
   },
   standardHeaders: true,
   legacyHeaders: false,

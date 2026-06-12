@@ -5,17 +5,17 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const SISTEMA_KAFFI = `Sos Kaffi, el asistente de CoffePrice.
 Hablas en espanol claro, calido y cercano.
 Ayudas a caficultores y compradores a usar la plataforma, entender precios, alertas, predicciones y tomar mejores decisiones.
-Solo respondes preguntas relacionadas con CoffePrice, la compra y venta de cafe, precios, compradores, alertas, predicciones y uso de la plataforma.
-Si te preguntan por historia, politica, tecnologia general, salud, tareas del colegio u otros temas ajenos a CoffePrice o al cafe, no los respondas.
-En esos casos, di con amabilidad que solo puedes ayudar con la plataforma y con decisiones relacionadas con el cafe, y ofrece ejemplos de preguntas que si puedes responder.
-Respondes siempre en espanol y en maximo 3 parrafos cortos.
+Solo respondes preguntas relacionadas con CoffePrice, la compra y venta de café, precios, compradores, alertas, predicciones y uso de la plataforma.
+Si te preguntan por historia, política, tecnología general, salud, tareas del colegio u otros temas ajenos a CoffePrice o al café, no los respondas.
+En esos casos, di con amabilidad que solo puedes ayudar con la plataforma y con decisiones relacionadas con el café, y ofrece ejemplos de preguntas que sí puedes responder.
+Respondes siempre en español y en máximo 3 párrafos cortos.
 Da ayuda concreta antes de decir "revise la plataforma".
 Si no tienes un dato exacto, no inventes numeros: explica que mirar y como decidir con lo que la persona ya tiene en pantalla.
 Cuando respondas, prioriza:
 1. Explicar en lenguaje simple.
 2. Recomendar la siguiente accion util.
 3. Dar criterios practicos para decidir.
-Si la persona esta en login, registro o verificacion, responde con pasos cortos.
+Si la persona está en login, registro o verificación, responde con pasos cortos.
 Si la persona esta en precios o predicciones, responde con recomendaciones accionables, no con frases genericas.
 Si la persona usa lenguaje ofensivo, no devuelvas ofensas: marca un limite con respeto y vuelve a ofrecer ayuda util.`;
 
@@ -192,7 +192,7 @@ function construirContextoDeNegocio(contexto = {}) {
   if (contexto?.datosPagina?.historialPredicciones) {
     const historial = contexto.datosPagina.historialPredicciones;
     bloques.push(
-      `Historial consultado: ${historial.diasConsultados ?? 0} dias, promedio ${historial.promedio ?? 'sin dato'}, minimo ${historial.minimo ?? 'sin dato'}, maximo ${historial.maximo ?? 'sin dato'}, confianza media ${historial.confianzaPromedio ?? 'sin dato'}%.`
+      `Historial consultado: ${historial.diasConsultados ?? 0} días, promedio ${historial.promedio ?? 'sin dato'}, mínimo ${historial.minimo ?? 'sin dato'}, máximo ${historial.maximo ?? 'sin dato'}, confianza media ${historial.confianzaPromedio ?? 'sin dato'}%.`
     );
   }
 
@@ -239,7 +239,7 @@ function obtenerRespuestaFueraDeTema({ contexto }) {
 
   return {
     respuesta:
-      'Solo puedo ayudarle con CoffePrice y con temas del cafe, como precios, compradores, alertas, predicciones y uso de la plataforma. Si quiere, pregúnteme por quien paga mejor, si conviene vender hoy, como leer la prediccion o como hacer algo en esta pantalla.',
+      'Solo puedo ayudarle con CoffePrice y con temas del café, como precios, compradores, alertas, predicciones y uso de la plataforma. Si quiere, pregúnteme por quién paga mejor, si conviene vender hoy, cómo leer la predicción o cómo hacer algo en esta pantalla.',
     sugerencias: sugerenciasBase,
   };
 }
@@ -271,7 +271,7 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
 
       return {
         respuesta:
-          `Para elegir mejor comprador, mire tres cosas: quien aparece con el mejor pago hoy, si ese precio es por carga o por kilo segun su cafe, y hace cuanto lo actualizo.${detallePrecio} Si dos compradores estan parecidos, confirme directo con el que tenga el dato mas reciente.`,
+          `Para elegir mejor comprador, mire tres cosas: quién aparece con el mejor pago hoy, si ese precio es por carga o por kilo según su café, y hace cuánto lo actualizó.${detallePrecio} Si dos compradores están parecidos, confirme directo con el que tenga el dato más reciente.`,
         sugerencias: ['Comparar con FNC', 'Conviene vender hoy', 'Que debo revisar primero'],
       };
     }
@@ -289,7 +289,7 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
 
     return {
       respuesta:
-        `Para decidir si vender hoy, compare primero el mejor pago de la lista con el precio FNC.${comparacionFnc} Luego mire la prediccion de manana: si el cambio esperado es pequeno, normalmente conviene confirmar hoy con el comprador en vez de esperar por una diferencia minima.${lecturaPrediccion} Tambien revise que el tipo de cafe coincida con el precio publicado.`,
+        `Para decidir si vender hoy, compare primero el mejor pago de la lista con el precio FNC.${comparacionFnc} Luego mire la predicción de mañana: si el cambio esperado es pequeño, normalmente conviene confirmar hoy con el comprador en vez de esperar por una diferencia mínima.${lecturaPrediccion} También revise que el tipo de café coincida con el precio publicado.`,
       sugerencias: ['Quien paga mejor', 'Comparar con FNC', 'Como leer la prediccion'],
     };
   }
@@ -297,12 +297,12 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
   if (pagina === '/predicciones' || contieneAlguno(texto, ['prediccion', 'confianza', 'esperar', 'historial'])) {
     const lecturaHistorial =
       historialPredicciones?.diasConsultados
-        ? ` En la consulta actual esta revisando ${historialPredicciones.diasConsultados} dias, con un promedio de ${Number(historialPredicciones.promedio || 0).toLocaleString('es-CO')} pesos y una confianza media de ${historialPredicciones.confianzaPromedio || 0}%.`
+        ? ` En la consulta actual está revisando ${historialPredicciones.diasConsultados} días, con un promedio de ${Number(historialPredicciones.promedio || 0).toLocaleString('es-CO')} pesos y una confianza media de ${historialPredicciones.confianzaPromedio || 0}%.`
         : '';
 
     return {
       respuesta:
-        `La prediccion sirve como guia, no como promesa. Si la confianza esta alta, te ayuda a tomar la senal mas en serio; si esta media o baja, usala solo para acompanar el precio de hoy.${lecturaHistorial} Lo mas util es mirar si el rango esperado cambia mucho frente a hoy y si esa diferencia de verdad compensa esperar.`,
+        `La predicción sirve como guía, no como promesa. Si la confianza está alta, te ayuda a tomar la señal más en serio; si está media o baja, úsala solo para acompañar el precio de hoy.${lecturaHistorial} Lo más útil es mirar si el rango esperado cambia mucho frente a hoy y si esa diferencia de verdad compensa esperar.`,
       sugerencias: ['Que significa la confianza', 'Comparar con precio de hoy', 'Me conviene esperar'],
     };
   }
@@ -318,15 +318,15 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
   if (pagina === '/login' || contieneAlguno(texto, ['iniciar sesion', 'entrar', 'contrasena', 'clave'])) {
     return {
       respuesta:
-        'Para entrar necesitas el correo con el que te registraste y tu contrasena. Si no recuerdas la clave, usa la opcion de recuperarla antes de intentar muchas veces. Si el correo y la clave estan bien y aun no entra, revisa que no haya espacios de mas al copiar.',
-      sugerencias: ['No recuerdo mi contrasena', 'Que correo debo usar', 'Quiero crear una cuenta'],
+        'Para entrar necesitas el correo con el que te registraste y tu contraseña. Si no recuerdas la clave, usa la opción de recuperarla antes de intentar muchas veces. Si el correo y la clave están bien y aún no entra, revisa que no haya espacios de más al copiar.',
+      sugerencias: ['No recuerdo mi contraseña', 'Qué correo debo usar', 'Quiero crear una cuenta'],
     };
   }
 
   if (pagina === '/register' || contieneAlguno(texto, ['registro', 'registrar', 'crear cuenta', 'cuenta'])) {
     return {
       respuesta:
-        'Para registrarte, primero elige bien el tipo de cuenta: productor si vendes tu cafe, comprador si publicas precios de compra. Despues llena nombre, correo y contrasena con calma, y usa un correo que si revises porque alli llega la verificacion.',
+        'Para registrarte, primero elige bien el tipo de cuenta: productor si vendes tu café, comprador si publicas precios de compra. Después llena nombre, correo y contraseña con calma, y usa un correo que sí revises porque allí llega la verificación.',
       sugerencias: ['Cuenta de productor', 'Cuenta de comprador', 'Que datos necesito'],
     };
   }
@@ -334,8 +334,8 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
   if (pagina === '/verify-email' || contieneAlguno(texto, ['codigo', 'correo', 'verificar', 'verificacion'])) {
     return {
       respuesta:
-        'Si no llega el codigo, revisa primero spam o promociones y luego usa reenviar. Cuando lo tengas, escribelo completo tal como llego. Despues de verificar, la cuenta queda lista o sigue al paso siguiente segun el tipo de usuario.',
-      sugerencias: ['No me llego el codigo', 'Reenviar codigo', 'Que sigue despues'],
+        'Si no llega el código, revisa primero spam o promociones y luego usa reenviar. Cuando lo tengas, escríbelo completo tal como llegó. Después de verificar, la cuenta queda lista o sigue al paso siguiente según el tipo de usuario.',
+      sugerencias: ['No me llegó el código', 'Reenviar código', 'Qué sigue después'],
     };
   }
 
@@ -363,7 +363,7 @@ function obtenerSugerencias({ ultimoMensaje, contexto }) {
   }
 
   if (texto.includes('codigo') || texto.includes('correo') || texto.includes('verificar')) {
-    return ['No me llego el codigo', 'Reenviar codigo', 'Que hago ahora'];
+    return ['No me llegó el código', 'Reenviar código', 'Qué hago ahora'];
   }
 
   if (texto.includes('alerta')) {
@@ -387,11 +387,11 @@ function obtenerSugerencias({ ultimoMensaje, contexto }) {
   }
 
   if (pagina === '/login') {
-    return ['No recuerdo mi contrasena', 'Como iniciar sesion', 'Quiero crear una cuenta'];
+    return ['No recuerdo mi contraseña', 'Cómo iniciar sesión', 'Quiero crear una cuenta'];
   }
 
   if (pagina === '/verify-email') {
-    return ['No me llego el codigo', 'Reenviar codigo', 'Que pasa despues'];
+    return ['No me llegó el código', 'Reenviar código', 'Qué pasa después'];
   }
 
   return ['Ayudeme con esta pantalla', 'Que me recomienda hacer', 'Expliquemelo facil'];
@@ -402,7 +402,7 @@ export const chatWithKaffi = async (req, res) => {
     const { mensajes, contexto } = req.body;
 
     if (!mensajes || !Array.isArray(mensajes)) {
-      return res.status(400).json({ message: 'mensajes invalidos' });
+      return res.status(400).json({ message: 'mensajes inválidos' });
     }
 
     const ultimoMensaje = mensajes[mensajes.length - 1]?.content || '';

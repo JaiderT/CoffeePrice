@@ -39,7 +39,7 @@ const authMiddleware = async (req, res, next) => {
     const usuario = await Usuario.findById(decoded.id).select("_id rol estado");
 
     if (!usuario) {
-      return res.status(401).json({ message: "Usuario no encontrado o sesion invalida" });
+      return res.status(401).json({ message: "Usuario no encontrado o sesión inválida" });
     }
 
     if (
@@ -69,7 +69,7 @@ const authMiddleware = async (req, res, next) => {
     };
     next();
   } catch (error) {
-    res.status(401).json({ message: "Token invalido o expirado" });
+    res.status(401).json({ message: "Token inválido o expirado" });
   }
 };
 

@@ -20,7 +20,7 @@ const compradorSchema = new mongoose.Schema(
         },
         direccion: {
             type: String,
-            required: [true, "direccion necesaria"],
+            required: [true, "dirección necesaria"],
             trim: true,
         },
         municipio: {

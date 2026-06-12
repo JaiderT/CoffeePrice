@@ -64,7 +64,7 @@ function construirUbicacionGeneral(comprador = {}) {
     if (comprador.municipio) {
         return `Zona de ${comprador.municipio}`;
     }
-    return "Ubicacion general disponible";
+    return "Ubicación general disponible";
 }
 
 export function sanitizarCompradorPublico(comprador = {}, extras = {}) {

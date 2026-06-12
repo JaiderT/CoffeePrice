@@ -49,7 +49,7 @@ function Navbar() {
                 onClick={handleLogout}
                 className="rounded-full bg-[#C8A96E] px-4 py-2 text-sm text-white transition-colors hover:bg-[#B8994E]"
               >
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </>
           ) : (
@@ -58,7 +58,7 @@ function Navbar() {
                 to="/login"
                 className="rounded-full border border-[#2C1A0E] px-4 py-2 text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
               >
-                Iniciar sesion
+                Iniciar sesión
               </Link>
               <Link
                 to="/register"
@@ -73,7 +73,7 @@ function Navbar() {
         <button
           className="flex flex-col gap-1.5 p-2 lg:hidden"
           onClick={() => setMenuAbierto(!menuAbierto)}
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
         >
           <span className={`block h-0.5 w-6 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'translate-y-2 rotate-45' : ''}`} />
           <span className={`block h-0.5 w-6 bg-[#2C1A0E] transition-all duration-300 ${menuAbierto ? 'opacity-0' : ''}`} />
@@ -104,7 +104,7 @@ function Navbar() {
                   onClick={handleLogout}
                   className="rounded-full bg-[#C8A96E] px-4 py-2 text-center text-sm text-white transition-colors hover:bg-[#B8994E]"
                 >
-                  Cerrar sesion
+                  Cerrar sesión
                 </button>
               </>
             ) : (
@@ -114,7 +114,7 @@ function Navbar() {
                   className="rounded-full border border-[#2C1A0E] px-4 py-2 text-center text-sm text-[#2C1A0E] transition-colors hover:bg-[#2C1A0E] hover:text-white"
                   onClick={() => setMenuAbierto(false)}
                 >
-                  Iniciar sesion
+                  Iniciar sesión
                 </Link>
                 <Link
                   to="/register"
