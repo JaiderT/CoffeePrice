@@ -25,6 +25,8 @@ Minimas obligatorias:
 - `JWT_SECRET`
 - `SESSION_SECRET`
 - `FRONTEND_URL`
+- `EMAIL_USER`
+- `EMAIL_PASS`
 
 Segun funcionalidades activas, tambien necesitaras:
 
@@ -32,8 +34,6 @@ Segun funcionalidades activas, tambien necesitaras:
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL`
 - `JWT_EXPIRES_IN`
-- `EMAIL_USER`
-- `EMAIL_PASS`
 - `OPENAI_API_KEY`
 - `NEWSAPI_KEY`
 - `GNEWS_API_KEY`
@@ -46,6 +46,10 @@ Segun funcionalidades activas, tambien necesitaras:
 - `NODE_ENV=production`
 - `FRONTEND_URL=https://TU-SITIO.netlify.app`
 - `GOOGLE_CALLBACK_URL=https://TU-BACKEND.up.railway.app/api/auth/google/callback`
+- `EMAIL_USER=support.coffeprice@gmail.com`
+- `EMAIL_PASS=clave_de_aplicacion_de_gmail`
+
+Para Gmail, `EMAIL_PASS` debe ser una clave de aplicacion, no la contrasena normal de la cuenta.
 
 ### Dominio del backend
 

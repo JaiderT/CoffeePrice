@@ -14,6 +14,7 @@ import axios from "axios";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STEPS = ["Correo", "Código", "Nueva clave"];
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
 export default function VerifyCode() {
   const navigate = useNavigate();
@@ -64,8 +65,8 @@ export default function VerifyCode() {
 
     if (codigoCompleto.length !== 6)
       return setMessage({ type: "error", text: "Debes ingresar el código completo de 6 dígitos." });
-    if (newPassword.length < 6)
-      return setMessage({ type: "error", text: "La contraseña debe tener al menos 6 caracteres." });
+    if (!PASSWORD_REGEX.test(newPassword))
+      return setMessage({ type: "error", text: "La contraseña debe tener mínimo 10 caracteres, una mayúscula, una minúscula y un número." });
     if (newPassword !== confirmPassword)
       return setMessage({ type: "error", text: "Las contraseñas no coinciden." });
 
@@ -201,7 +202,7 @@ export default function VerifyCode() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "#C8A96E" }}>🔒</span>
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 10 caracteres, mayúscula y número"
                   required
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
@@ -236,7 +237,7 @@ export default function VerifyCode() {
                     ))}
                   </div>
                   <p className="text-xs mt-1" style={{ color: "#8B6A4A" }}>
-                    {newPassword.length < 2 ? "Muy corta" : newPassword.length < 4 ? "Débil" : newPassword.length < 6 ? "Regular" : newPassword.length < 8 ? "Buena" : "Fuerte"}
+                    {!PASSWORD_REGEX.test(newPassword) ? "Debe incluir mayúscula, minúscula, número y 10 caracteres" : "Fuerte"}
                   </p>
                 </div>
               )}
