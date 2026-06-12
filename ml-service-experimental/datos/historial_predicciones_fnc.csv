@@ -28,3 +28,4 @@ fecha_generacion,fecha_prediccion,precio_actual_fnc,precio_estimado,precio_minim
 2026-06-09,2026-06-10,2005000,2010400,1962500,2058300,0.27,fnc_hibrido,ensemble_ponderado,1.8004,47903.99,estable,naive,2026-06-10,0.0,-0.2,0.2,estable,0.712,0.0,media,medio
 2026-06-10,2026-06-11,2020000,2027600,1978000,2077200,0.38,fnc_hibrido,ensemble_ponderado,1.7006,49612.82,estable,naive,2026-06-11,0.0,0.01,0.25,estable,0.646,0.0,media,medio
 2026-06-11,2026-06-12,2030000,2033200,1986600,2079800,0.16,fnc_hibrido,ensemble_ponderado,1.7831,46580.83,estable,naive,2026-06-12,0.0,0.68,0.25,estable,0.973,0.0,media,medio
+2026-06-14,2026-06-15,2030000,2030200,1987500,2072900,0.01,fnc_hibrido,ensemble_ponderado,1.7408,42731.99,estable,naive,2026-06-15,0.0,-0.21,0.45,estable,0.674,0.0,media,medio
