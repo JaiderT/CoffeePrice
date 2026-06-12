@@ -371,7 +371,7 @@ function Inicio() {
                           </div>
 
                           {/* Filas tapadas con overlay (a partir de la 4ta) */}
-                          <div className="relative mt-3">
+                          <div className="relative mt-3 min-h-[180px]">
                             {/* Filas borrosas decorativas */}
                             <div className="space-y-3 blur-sm pointer-events-none select-none">
                               {precios.slice(3, 5).map((item, i) => (
@@ -397,14 +397,14 @@ function Inicio() {
                             </div>
 
                             {/* Overlay con CTA encima de las filas tapadas */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#2F241C]/65 px-4 text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#2F241C]/70 px-4 py-4 text-center">
                               <p className="text-sm font-bold text-white">
                                 Ver todos los compradores
                               </p>
                               <p className="text-xs text-[#E8D8C5]">
                                 Inicia sesión para ver la lista completa
                               </p>
-                              <div className="mt-1 flex gap-2">
+                              <div className="mt-1 flex flex-wrap justify-center gap-2">
                                 <Link
                                   to="/login"
                                   className="rounded-xl bg-[#E1BE86] px-4 py-2 text-xs font-semibold text-[#2E2118] transition hover:bg-[#E9C996]"
