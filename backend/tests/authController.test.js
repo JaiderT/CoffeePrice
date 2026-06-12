@@ -147,7 +147,7 @@ test("verifyEmailCodigo rechaza codigo incorrecto aunque exista hash", async () 
   await verifyEmailCodigo(req, res);
 
   assert.equal(res.statusCode, 400);
-  assert.equal(res.payload.message, "Codigo incorrecto");
+  assert.equal(res.payload.message, "Código incorrecto");
   assert.equal(res.cookies.length, 0);
 
   Usuario.findOne = originalFindOne;
@@ -259,7 +259,7 @@ test("resendVerification rehace hash y fecha cuando ya se puede reenviar", async
   await resendVerification(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.equal(res.payload.message, "Codigo reenviado exitosamente");
+  assert.equal(res.payload.message, "Código reenviado exitosamente");
   assert.equal(usuario.saveCalled, true);
   assert.ok(usuario.codigoVerificacion);
   assert.notEqual(usuario.codigoVerificacionExpira, null);

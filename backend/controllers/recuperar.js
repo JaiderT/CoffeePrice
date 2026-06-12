@@ -12,13 +12,13 @@ const transporte = nodemailer.createTransport({
     }
 });
 
-// funcion de generar codigo de 6 digitos
+// función de generar código de 6 dígitos
 
 const generarCodigo =() => {
     return Math.floor(100000 + Math.random()* 900000).toString();
 };
 
-// SOLICITAR CODIGO DE RECUPERACION
+// SOLICITAR CÓDIGO DE RECUPERACIÓN
 
 export const solicitarCodigo = async (req, res) => {
     try {
@@ -26,7 +26,7 @@ export const solicitarCodigo = async (req, res) => {
 
         if (!email) {
             return res.status(400).json({
-                message: "El correo electronico es obligatorio"
+                message: "El correo electrónico es obligatorio"
             });
         }
 
@@ -56,20 +56,20 @@ export const solicitarCodigo = async (req, res) => {
         const mailOptions = {
             from: 'support.coffeprice@gmail.com',
             to: usuarioEncontrado.email,
-            subject: 'Codigo de Recuperacion - CoffePrice',
+            subject: 'Código de Recuperación - CoffePrice',
             html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
             <h2 style="color: #3D1F0F; margin: 0;">CoffePrice</h2>
             </div>
             
-            <h3 style="color: #333;">Recuperacion de Contraseña</h3>
+            <h3 style="color: #333;">Recuperación de Contraseña</h3>
             
             <p>Hola <strong>${usuarioEncontrado.nombre}</strong>,</p>
             
             <p>Recibimos una solicitud para restablecer tu contraseña.</p>
             
-            <p>Tu codigo de verificacion es:</p>
+            <p>Tu código de verificación es:</p>
             
             <div style="background: linear-gradient(135deg, #3D1F0F 0%, #7A4020) 100%);
             padding: 20px;
@@ -86,7 +86,7 @@ export const solicitarCodigo = async (req, res) => {
             </div>
             
             <p style="color: #666; font-size: 14px;">
-            Este codigo expira en <strong>15 minutos</strong>.
+            Este código expira en <strong>15 minutos</strong>.
             </p>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
@@ -100,15 +100,15 @@ export const solicitarCodigo = async (req, res) => {
         await transporte.sendMail(mailOptions);
 
         if (process.env.NODE_ENV === 'development') {
-            console.log(`[DEV] Codigo enviado a: ${usuarioEncontrado.email}`);
+            console.log(`[DEV] Código enviado a: ${usuarioEncontrado.email}`);
         }
 
 
         res.status(200).json({
-            message: "Si el correo esta registrado, recibiras un codigo de verificacion",
+            message: "Si el correo está registrado, recibirás un código de verificación",
         });
     } catch (error) {
-        console.error("Error al enviar el codigo", error);
+        console.error("Error al enviar el código", error);
         res.status(500).json({
             message: "Error al procesar la solicitud"
         });
@@ -159,7 +159,7 @@ export const cambiarPassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
 
-        // Actualizar contraseña y limpiar codigo
+        // Actualizar contraseña y limpiar código
 
         usuarioEncontrado.password = hashedPassword;
         usuarioEncontrado.codigoRecuperacion = null;
@@ -192,7 +192,7 @@ export const cambiarPassword = async (req, res) => {
             
             <p>Tu contraseña ha sido actualizada exitosamente.</p>
             
-            <p>Ya puedes iniciar sesion con tu nueva contraseña.</p>
+            <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
             
             <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.FRONTEND_URL}/login" 
@@ -202,7 +202,7 @@ export const cambiarPassword = async (req, res) => {
             text-decoration: none;
             border-radius: 8px;
             display: inline-block;">
-            Iniciar Sesion
+            Iniciar Sesión
             </a>
             </div>
             

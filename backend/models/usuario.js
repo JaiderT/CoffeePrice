@@ -26,7 +26,7 @@ const usuarioSchema = new mongoose.Schema({
     type: String,
     required: false,
     default: null,
-    minlength: [8, "minimo 8 caracteres"],
+    minlength: [8, "mínimo 8 caracteres"],
   },
   celular: {
     type: String,

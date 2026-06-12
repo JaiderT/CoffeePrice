@@ -1,20 +1,20 @@
 import express from "express";
 import {
-  getResenasAprobadas,
-  getTodasResenas,
-  createResena,
-  aprobarResena,
-  deleteResena,
+  getReseñasAprobadas,
+  getTodasReseñas,
+  createReseña,
+  aprobarReseña,
+  deleteReseña,
 } from "../controllers/resenaPlataforma.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import rolMiddleware from "../middlewares/rolMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getResenasAprobadas);
-router.get("/todas", authMiddleware, rolMiddleware("admin"), getTodasResenas);
-router.post("/", authMiddleware, createResena);
-router.put("/:id/aprobar", authMiddleware, rolMiddleware("admin"), aprobarResena);
-router.delete("/:id", authMiddleware, rolMiddleware("admin"), deleteResena);
+router.get("/", getReseñasAprobadas);
+router.get("/todas", authMiddleware, rolMiddleware("admin"), getTodasReseñas);
+router.post("/", authMiddleware, createReseña);
+router.put("/:id/aprobar", authMiddleware, rolMiddleware("admin"), aprobarReseña);
+router.delete("/:id", authMiddleware, rolMiddleware("admin"), deleteReseña);
 
 export default router;

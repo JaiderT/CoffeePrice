@@ -15,12 +15,12 @@ const prediccionSchema = new mongoose.Schema(
 
     preciominimo: {
         type: Number,
-        required: [true, "El precio minimo es obligatorio"],
+        required: [true, "El precio mínimo es obligatorio"],
     },
 
     preciomaximo: {
         type: Number,
-        required: [true, "El precio maximo es obligatorio"],
+        required: [true, "El precio máximo es obligatorio"],
     },
 
     tendencia: {
