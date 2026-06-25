@@ -122,11 +122,13 @@ export const cambiarestado = async (req, res) => {
                 await comprador.save();
             }
 
-            await enviarDecisionComprador({
+            enviarDecisionComprador({
                 destinatario: usuario.email,
                 nombreUsuario: `${usuario.nombre} ${usuario.apellido}`.trim(),
                 estado,
                 motivoRevision,
+            }).catch((emailError) => {
+                console.error("Error al enviar decision de comprador:", emailError.message);
             });
         }
 

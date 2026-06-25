@@ -26,13 +26,15 @@ const verificarAlertas = async (compradorId, preciocarga) => {
       await Alerta.findByIdAndUpdate(alerta._id, {
         ultimaNotificacion: new Date()
       });
-      if (alerta.canales?.email && alerta.usuario?.email) {
-        await enviarAlertaPrecio({
+      if (alerta.canales?.email !== false && alerta.usuario?.email) {
+        enviarAlertaPrecio({
           destinatario: alerta.usuario.email,
           nombreUsuario: `${alerta.usuario.nombre} ${alerta.usuario.apellido}`,
           nombreComprador: alerta.comprador?.nombreempresa || 'Un comprador',
           precioMinimo: alerta.precioMinimo,
           precioActual: preciocarga,
+        }).catch((emailError) => {
+          console.error('Error enviando correo de alerta:', emailError.message);
         });
       }
     }
@@ -190,7 +192,9 @@ const esPropietario = compradorExistente.usuario._id.toString() === req.user.id;
       preciokg: nuevoPrecio.preciokg,
       tipocafe,
     });
-    await verificarAlertas(comprador, precioNumerico);
+    verificarAlertas(comprador, precioNumerico).catch((error) => {
+      console.error('Error verificando alertas:', error.message);
+    });
     notificarProductores(compradorExistente.nombreempresa, nuevoPrecio, 'nuevo').catch(console.error);
 
     res.status(201).json(nuevoPrecio);
@@ -253,7 +257,9 @@ export const updateprecio = async (req, res) => {
       preciokg: precio.preciokg,
       tipocafe: precio.tipocafe,
     });
-    await verificarAlertas(precio.comprador, precio.preciocarga);
+    verificarAlertas(precio.comprador, precio.preciocarga).catch((error) => {
+      console.error('Error verificando alertas:', error.message);
+    });
     notificarProductores(compradorExistente.nombreempresa, precio, 'actualizado').catch(console.error);
 
     res.json(precio);
