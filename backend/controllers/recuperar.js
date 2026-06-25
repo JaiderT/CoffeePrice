@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import Usuario from "../models/usuario.js";
-import { enviarCorreo } from "../services/emailService.js";
+import { CorreoNoDisponibleError, enviarCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,6 +21,16 @@ function normalizarEmail(email = "") {
 
 function generarCodigo() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function responderErrorCorreo(res, error, fallbackMessage = "Error al procesar la solicitud") {
+  if (error instanceof CorreoNoDisponibleError || error?.statusCode === 503) {
+    return res.status(503).json({
+      message: "No pudimos enviar el correo en este momento. Revisa la configuracion del proveedor de correo en produccion.",
+    });
+  }
+
+  return res.status(500).json({ message: fallbackMessage });
 }
 
 function construirCorreoRecuperacion(usuario, codigo) {
@@ -107,7 +117,14 @@ export const solicitarCodigo = async (req, res) => {
     usuarioEncontrado.codigoExpiracion = new Date(Date.now() + 15 * 60 * 1000);
     await usuarioEncontrado.save();
 
-    await enviarCorreoActual(construirCorreoRecuperacion(usuarioEncontrado, codigo));
+    try {
+      await enviarCorreoActual(construirCorreoRecuperacion(usuarioEncontrado, codigo));
+    } catch (emailError) {
+      usuarioEncontrado.codigoRecuperacion = null;
+      usuarioEncontrado.codigoExpiracion = null;
+      await usuarioEncontrado.save();
+      throw emailError;
+    }
 
     if (process.env.NODE_ENV === "development") {
       console.log(`[DEV] Código de recuperación enviado a: ${usuarioEncontrado.email}`);
@@ -116,7 +133,7 @@ export const solicitarCodigo = async (req, res) => {
     return res.status(200).json({ message: MENSAJE_GENERICO });
   } catch (error) {
     console.error("Error al enviar el código de recuperación:", error);
-    return res.status(500).json({ message: "Error al procesar la solicitud" });
+    return responderErrorCorreo(res, error);
   }
 };
 
@@ -166,7 +183,9 @@ export const cambiarPassword = async (req, res) => {
     usuarioEncontrado.codigoExpiracion = null;
     await usuarioEncontrado.save();
 
-    await enviarCorreoActual(construirCorreoConfirmacion(usuarioEncontrado));
+    enviarCorreoActual(construirCorreoConfirmacion(usuarioEncontrado)).catch((emailError) => {
+      console.error("Error enviando confirmacion de cambio de contrasena:", emailError.message);
+    });
 
     return res.status(200).json({ message: "Contraseña actualizada exitosamente" });
   } catch (error) {

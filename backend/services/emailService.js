@@ -16,13 +16,28 @@ function obtenerProveedorCorreo() {
   return String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
 }
 
+export class CorreoNoDisponibleError extends Error {
+  constructor(message, cause = null) {
+    super(message);
+    this.name = 'CorreoNoDisponibleError';
+    this.statusCode = 503;
+    this.cause = cause;
+  }
+}
+
+function esErrorConexionCorreo(error) {
+  return ['ETIMEDOUT', 'ESOCKET', 'ECONNECTION', 'ECONNREFUSED', 'ENETUNREACH', 'EAUTH'].includes(error?.code) ||
+    ['CONN', 'AUTH'].includes(error?.command);
+}
+
 export function crearTransporteCorreo() {
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const port = Number(process.env.EMAIL_PORT || 587);
   const secure = parseBoolean(process.env.EMAIL_SECURE, port === 465);
+  const usarService = parseBoolean(process.env.EMAIL_USE_SERVICE, false);
 
   return nodemailer.createTransport({
-    ...(process.env.EMAIL_SERVICE
+    ...(usarService && process.env.EMAIL_SERVICE
       ? { service: process.env.EMAIL_SERVICE }
       : { host, port, secure, requireTLS: !secure }),
     auth: {
@@ -45,6 +60,9 @@ const transporter = crearTransporteCorreo();
 async function enviarCorreoResend(mailOptions) {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('Falta RESEND_API_KEY para enviar correos por Resend');
+  }
+  if (!process.env.EMAIL_FROM) {
+    throw new Error('Falta EMAIL_FROM para enviar correos por Resend');
   }
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -72,11 +90,19 @@ async function enviarCorreoResend(mailOptions) {
 }
 
 export const enviarCorreo = async (mailOptions) => {
-  if (obtenerProveedorCorreo() === 'resend' || process.env.RESEND_API_KEY) {
-    return enviarCorreoResend(mailOptions);
-  }
+  try {
+    if (obtenerProveedorCorreo() === 'resend' || process.env.RESEND_API_KEY) {
+      return await enviarCorreoResend(mailOptions);
+    }
 
-  return transporter.sendMail(mailOptions);
+    return await transporter.sendMail(mailOptions);
+  } catch (error) {
+    const proveedor = obtenerProveedorCorreo() || (process.env.RESEND_API_KEY ? 'resend' : 'smtp');
+    const mensaje = esErrorConexionCorreo(error)
+      ? `No fue posible conectar con el proveedor de correo (${proveedor}). En produccion usa un proveedor HTTP como Resend o revisa EMAIL_HOST/EMAIL_PORT/EMAIL_FAMILY.`
+      : `No fue posible enviar el correo con el proveedor configurado (${proveedor}).`;
+    throw new CorreoNoDisponibleError(mensaje, error);
+  }
 };
 
 function escaparHtml(texto = '') {
