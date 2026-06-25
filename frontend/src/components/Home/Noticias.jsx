@@ -42,7 +42,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState(alertasActivas.categorias || []);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState({
     push: alertasActivas.canales?.push ?? true,
-    email: alertasActivas.canales?.email ?? false,
+    email: alertasActivas.canales?.email ?? true,
   });
 
   const categorias = CATEGORIAS.filter((categoria) => categoria.value !== 'todas');
@@ -130,7 +130,7 @@ function ModalAlertas({ onClose, alertasActivas, setAlertasActivas }) {
       console.error('Error al desactivar alertas:', error);
     } finally {
       localStorage.removeItem('coffeprice_alertas');
-      setAlertasActivas({ activas: false, categorias: [], canales: { push: true, email: false } });
+      setAlertasActivas({ activas: false, categorias: [], canales: { push: true, email: true } });
       onClose();
     }
   };
@@ -235,9 +235,9 @@ export default function Noticias() {
   const [alertasActivas, setAlertasActivas] = useState(() => {
     try {
       const guardado = localStorage.getItem('coffeprice_alertas');
-      return guardado ? JSON.parse(guardado) : { activas: false, categorias: [], canales: { push: true, email: false } };
+      return guardado ? JSON.parse(guardado) : { activas: false, categorias: [], canales: { push: true, email: true } };
     } catch {
-      return { activas: false, categorias: [], canales: { push: true, email: false } };
+      return { activas: false, categorias: [], canales: { push: true, email: true } };
     }
   });
 
@@ -269,7 +269,7 @@ export default function Noticias() {
           setAlertasActivas({
             activas: true,
             categorias: data.categorias || [],
-            canales: data.canales || { push: true, email: false },
+            canales: data.canales || { push: true, email: true },
           });
         }
       } catch {
@@ -298,9 +298,9 @@ export default function Noticias() {
       <div className="max-w-7xl mx-auto px-4 md:px-7">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al dia con el mundo</p>
+            <p className="text-[#C8A96E] text-xs font-semibold uppercase tracking-widest">Al día con el mundo</p>
             <h2 className="text-[#2C1A0E] text-3xl md:text-4xl font-bold mt-2">Noticias Internacionales</h2>
-            <p className="text-gray-500 text-sm mt-2">Lo mas relevante del sector colombiano e internacional.</p>
+            <p className="text-gray-500 text-sm mt-2">Lo más relevante del sector colombiano e internacional.</p>
           </div>
         </div>
 

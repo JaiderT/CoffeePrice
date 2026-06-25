@@ -64,11 +64,20 @@ function construirUbicacionGeneral(comprador = {}) {
     if (comprador.municipio) {
         return `Zona de ${comprador.municipio}`;
     }
-    return "Ubicacion general disponible";
+    return "Ubicación general disponible";
 }
 
 export function sanitizarCompradorPublico(comprador = {}, extras = {}) {
-    const coords = generarCoordenadasAproximadas(comprador);
+    const tieneCoordenadasExactas =
+        Number.isFinite(Number(comprador.latitud)) &&
+        Number.isFinite(Number(comprador.longitud));
+    const coords = tieneCoordenadasExactas
+        ? {
+            latitud: Number(comprador.latitud),
+            longitud: Number(comprador.longitud),
+            coordenadasEstimadas: false,
+        }
+        : generarCoordenadasAproximadas(comprador);
     return {
         _id: comprador._id,
         nombreempresa: comprador.nombreempresa,
@@ -108,6 +117,10 @@ router.post("/", authMiddleware, roleMiddleware("comprador"), createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
 router.get("/mapa", async (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+
         const compradoresConUsuario = await CompradorModel.find({
             $or: [
                 { estadoRevision: ESTADOS_REVISION_COMPRADOR.APROBADO },

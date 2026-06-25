@@ -45,9 +45,9 @@ export const cambiarpassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         usuario.password = await bcrypt.hash(passwordnueva, salt);
         await usuario.save();
-        res.json({ message: "Contrasena actualizada" });
+        res.json({ message: "Contraseña actualizada" });
     } catch (error) {
-        res.status(500).json({ message: "Error al cambiar la contrasena", error: error.message });
+        res.status(500).json({ message: "Error al cambiar la contraseña", error: error.message });
     }
 };
 
@@ -122,11 +122,13 @@ export const cambiarestado = async (req, res) => {
                 await comprador.save();
             }
 
-            await enviarDecisionComprador({
+            enviarDecisionComprador({
                 destinatario: usuario.email,
                 nombreUsuario: `${usuario.nombre} ${usuario.apellido}`.trim(),
                 estado,
                 motivoRevision,
+            }).catch((emailError) => {
+                console.error("Error al enviar decision de comprador:", emailError.message);
             });
         }
 

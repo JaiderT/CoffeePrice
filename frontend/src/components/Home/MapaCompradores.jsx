@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -194,10 +194,10 @@ function PanelDetalles({
         <div className="flex items-start gap-3 text-sm">
           <span className="text-xl">📍</span>
           <div>
-            <span className="text-gray-700">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicacion general disponible'}</span>
+            <span className="text-gray-700">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicación general disponible'}</span>
             {comprador.municipio && <p className="mt-1 text-xs font-semibold text-[#8B7355]">{comprador.municipio}</p>}
             {comprador.coordenadasEstimadas && (
-              <p className="mt-1 text-[11px] text-amber-600">Ubicacion aproximada segun direccion y municipio</p>
+              <p className="mt-1 text-[11px] text-amber-600">Ubicación aproximada según dirección y municipio</p>
             )}
           </div>
         </div>
@@ -273,13 +273,13 @@ function PanelDetalles({
             onClick={() => onComoLlegar(comprador)}
             className="flex-1 rounded-xl bg-[#C8814A] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#B0703A]"
           >
-            {cargandoRuta ? 'Trazando ruta...' : rutaActiva ? 'Actualizar ruta' : 'Como llegar'}
+            {cargandoRuta ? 'Trazando ruta...' : rutaActiva ? 'Actualizar ruta' : 'Cómo llegar'}
           </button>
         </div>
 
         {!miUbicacion && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-            Activa tu ubicacion para ver el camino dentro del mapa.
+            Activa tu ubicación para ver el camino dentro del mapa.
           </p>
         )}
 
@@ -317,18 +317,41 @@ export default function MapaCompradores() {
   const [cargandoRuta, setCargandoRuta] = useState(false);
   const [errorRuta, setErrorRuta] = useState('');
 
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/comprador/mapa`, { withCredentials: true })
-      .then(({ data }) => {
-        const normalizados = (data || []).filter(
-          (comprador) => Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud)
-        );
-        setCompradores(normalizados);
-      })
-      .catch(() => console.error('Error cargando compradores'))
-      .finally(() => setCargando(false));
+  const cargarCompradores = useCallback(async () => {
+    setCargando(true);
+    try {
+      const { data } = await axios.get(`${API_URL}/api/comprador/mapa`, {
+        withCredentials: true,
+        params: { t: Date.now() },
+      });
+      const normalizados = (data || []).filter(
+        (comprador) => Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud)
+      );
+      setCompradores(normalizados);
+    } catch {
+      console.error('Error cargando compradores');
+    } finally {
+      setCargando(false);
+    }
   }, [API_URL]);
+
+  useEffect(() => {
+    cargarCompradores();
+
+    const refrescarSiVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarCompradores();
+      }
+    };
+
+    window.addEventListener('focus', cargarCompradores);
+    document.addEventListener('visibilitychange', refrescarSiVisible);
+
+    return () => {
+      window.removeEventListener('focus', cargarCompradores);
+      document.removeEventListener('visibilitychange', refrescarSiVisible);
+    };
+  }, [cargarCompradores]);
 
   const obtenerMiUbicacion = () => {
     if (!navigator.geolocation) return;
@@ -343,7 +366,7 @@ export default function MapaCompradores() {
       },
       () => {
         setBuscandoUbicacion(false);
-        setErrorRuta('No fue posible obtener tu ubicacion actual.');
+        setErrorRuta('No fue posible obtener tu ubicación actual.');
       }
     );
   };
@@ -364,7 +387,7 @@ export default function MapaCompradores() {
 
   const trazarRuta = async (comprador) => {
     if (!miUbicacion) {
-      setErrorRuta('Activa primero tu ubicacion para calcular el camino.');
+      setErrorRuta('Activa primero tu ubicación para calcular el camino.');
       return;
     }
 
@@ -478,7 +501,7 @@ export default function MapaCompradores() {
               disabled={buscandoUbicacion}
               className="flex items-center gap-2 rounded-xl bg-[#2C1A0E] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#3D1F0F] disabled:opacity-50"
             >
-              {buscandoUbicacion ? 'Buscando...' : 'Mi ubicacion'}
+              {buscandoUbicacion ? 'Buscando...' : 'Mi ubicación'}
             </button>
           </div>
         </div>
@@ -585,7 +608,7 @@ export default function MapaCompradores() {
                 <Marker position={miUbicacion} icon={iconoUsuario}>
                   <Popup>
                     <div className="text-center">
-                      <p className="font-bold text-[#3B1F0A]">Tu ubicacion</p>
+                      <p className="font-bold text-[#3B1F0A]">Tu ubicación</p>
                       <p className="text-xs text-gray-500">Buscando compradores en {radioKm} km</p>
                     </div>
                   </Popup>
@@ -622,7 +645,7 @@ export default function MapaCompradores() {
                 <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#B7791F]"></span><span>Cooperativa</span></div>
                 <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#7A4020]"></span><span>Trilladora</span></div>
                 <div className="flex items-center gap-2"><span className="text-[#E67E22]">★</span><span>Favorito</span></div>
-                <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#1a4a6b]"></span><span>Tu ubicacion</span></div>
+                <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#1a4a6b]"></span><span>Tu ubicación</span></div>
                 {rutaActiva && <div className="flex items-center gap-2"><span className="h-1.5 w-5 rounded-full bg-[#C8814A]"></span><span>Ruta activa</span></div>}
               </div>
             </div>
@@ -711,7 +734,7 @@ export default function MapaCompradores() {
                           {comprador.esFavorito ? '★' : '☆'}
                         </button>
                       </div>
-                      <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicacion general disponible'}</p>
+                      <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">{comprador.ubicacionGeneral || comprador.direccion || 'Ubicación general disponible'}</p>
                       {comprador.coordenadasEstimadas && <p className="mt-1 text-[10px] font-medium text-amber-600">Ubicacion aproximada</p>}
                       <div className="mt-3 flex items-end justify-between gap-3">
                         <div>

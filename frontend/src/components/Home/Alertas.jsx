@@ -16,7 +16,7 @@ function Alertas() {
   const [form, setForm] = useState({
     comprador: '',
     precioMinimo: '',
-    canales: { push: true, email: false, whatsapp: false },
+    canales: { push: true, email: true, whatsapp: false },
   });
 
   const obtenerAlertas = useCallback(async () => {
@@ -73,7 +73,7 @@ function Alertas() {
       setForm({
         comprador: '',
         precioMinimo: '',
-        canales: { push: true, email: false, whatsapp: false },
+        canales: { push: true, email: true, whatsapp: false },
       });
       obtenerAlertas();
     } catch {
@@ -238,7 +238,7 @@ function Alertas() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Precio minimo (COP)</label>
+                <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Precio mínimo (COP)</label>
                 <input
                   type="number"
                   required
@@ -250,7 +250,7 @@ function Alertas() {
               </div>
               <div className="space-y-2">
                 {[
-                  { key: 'push', label: 'Notificaci?n push', desc: 'En el navegador' },
+                  { key: 'push', label: 'Notificación push', desc: 'En el navegador' },
                   { key: 'email', label: 'Correo electrónico', desc: usuario?.email },
                   { key: 'whatsapp', label: 'WhatsApp', desc: usuario?.celular || 'Agrega tu celular en el perfil' },
                 ].map((canal) => (

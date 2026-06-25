@@ -25,6 +25,7 @@ MAX_RAW_FILE_BYTES = 50 * 1024 * 1024
 CLEAN_KC_PATH = DATA_DIR / "precios_limpios.csv"
 CLEAN_TRM_PATH = DATA_DIR / "trm_limpias.csv"
 FNC_HISTORY_PATH = DATA_DIR / "precios_fnc_historicos.csv"
+FNC_INDICATORS_PATH = DATA_DIR / "fnc_indicadores_diarios.csv"
 EXTERNAL_VARS_PATH = DATA_DIR / "variables_externas.csv"
 PREDICTION_JSON_PATH = BACKEND_DATA_DIR / "predicciones_fnc.json"
 PREDICTION_HISTORY_PATH = DATA_DIR / "historial_predicciones_fnc.csv"
@@ -33,6 +34,7 @@ EVALUATION_HISTORY_PATH = DATA_DIR / "evaluacion_predicciones_fnc.csv"
 
 PROPHET_MODEL_PATH = MODEL_DIR / "modelo_prophet_hibrido.pkl"
 XGBOOST_MODEL_PATH = MODEL_DIR / "modelo_xgboost.pkl"
+DIRECTION_MODEL_PATH = MODEL_DIR / "modelo_direccion_xgboost.pkl"
 FEATURE_CONFIG_PATH = MODEL_DIR / "features_hibrido.pkl"
 METRICS_PATH = MODEL_DIR / "metricas_fnc_hibrido.json"
 
@@ -51,6 +53,7 @@ EXTERNAL_COLUMNS = [
 ]
 
 PROPHET_REGRESSORS = ["kc_centavos", "trm"]
+DIRECTION_LABELS = {0: "baja", 1: "estable", 2: "sube"}
 
 
 def ensure_directories() -> None:
@@ -200,6 +203,26 @@ def load_fnc_history() -> pd.DataFrame:
     return df.rename(columns={"y": "precio_fnc"})
 
 
+def load_fnc_indicators() -> pd.DataFrame:
+    columns = ["ds", "fnc_web_precio", "fnc_web_bolsa_ny", "fnc_web_trm", "fnc_web_mecic"]
+    if not FNC_INDICATORS_PATH.exists():
+        return pd.DataFrame(columns=columns)
+
+    df = pd.read_csv(FNC_INDICATORS_PATH, parse_dates=["ds"])
+    rename_map = {
+        "precio_interno": "fnc_web_precio",
+        "bolsa_ny": "fnc_web_bolsa_ny",
+        "trm_fnc": "fnc_web_trm",
+        "mecic": "fnc_web_mecic",
+    }
+    df = df.rename(columns=rename_map)
+    for column in columns:
+        if column not in df.columns:
+            df[column] = np.nan
+    df = _deduplicate_daily(df[columns], columns[1:])
+    return df
+
+
 def load_external_variables() -> pd.DataFrame:
     if not EXTERNAL_VARS_PATH.exists():
         raise FileNotFoundError("No existe variables_externas.csv")
@@ -220,14 +243,21 @@ def build_daily_base() -> pd.DataFrame:
     df_kc = load_clean_kc()
     df_trm = load_clean_trm()
     df_vars = load_external_variables()
+    df_fnc_indicators = load_fnc_indicators()
 
     df = df_fnc.merge(df_kc, on="ds", how="left")
     df = df.merge(df_trm, on="ds", how="left")
     df = df.merge(df_vars, on="ds", how="left")
+    df = df.merge(df_fnc_indicators, on="ds", how="left")
     df = df.sort_values("ds").reset_index(drop=True)
 
-    numeric_columns = ["precio_fnc", "kc_centavos", "trm", *EXTERNAL_COLUMNS]
+    indicator_columns = ["fnc_web_precio", "fnc_web_bolsa_ny", "fnc_web_trm", "fnc_web_mecic"]
+    numeric_columns = ["precio_fnc", "kc_centavos", "trm", *EXTERNAL_COLUMNS, *indicator_columns]
     df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors="coerce")
+    df["fnc_web_precio"] = df["fnc_web_precio"].fillna(df["precio_fnc"])
+    df["fnc_web_bolsa_ny"] = df["fnc_web_bolsa_ny"].fillna(df["kc_centavos"])
+    df["fnc_web_trm"] = df["fnc_web_trm"].fillna(df["trm"])
+    df["fnc_web_mecic"] = df["fnc_web_mecic"].fillna(0.0)
     df[numeric_columns] = df[numeric_columns].ffill().bfill()
     df = add_formula_columns(df)
     return add_calendar_columns(df)
@@ -244,6 +274,10 @@ def add_formula_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["residuo_formula"] = df["precio_fnc"] - df["precio_formula_ajustada"]
     df["formula_retorno_1d"] = df["precio_formula_ajustada"].pct_change().replace([np.inf, -np.inf], np.nan)
     df["gap_formula_pct"] = (df["residuo_formula"] / df["precio_fnc"].replace(0, np.nan)).replace([np.inf, -np.inf], np.nan)
+    df["factor_formula_retorno_1d"] = df["factor_formula_implicito"].pct_change().replace([np.inf, -np.inf], np.nan)
+    df["gap_formula_delta_1d"] = df["gap_formula_pct"].diff()
+    df["residuo_formula_delta_1d"] = df["residuo_formula"].diff()
+    df["residuo_formula_delta_3d"] = df["residuo_formula"] - df["residuo_formula"].shift(3)
     return df
 
 
@@ -269,6 +303,9 @@ def build_supervised_frame(base_df: pd.DataFrame) -> pd.DataFrame:
     df["fnc_ma_7"] = df["precio_fnc"].rolling(7).mean()
     df["fnc_volatilidad_7"] = df["precio_fnc"].rolling(7).std()
     df["fnc_retorno_1d"] = df["precio_fnc"].pct_change().replace([np.inf, -np.inf], np.nan)
+    df["fnc_retorno_2d"] = df["precio_fnc"].pct_change(2).replace([np.inf, -np.inf], np.nan)
+    df["fnc_delta_1d"] = df["precio_fnc"].diff()
+    df["fnc_delta_2d"] = df["precio_fnc"] - df["precio_fnc"].shift(2)
 
     df["kc_lag_1"] = df["kc_centavos"]
     df["kc_lag_2"] = df["kc_centavos"].shift(1)
@@ -282,15 +319,27 @@ def build_supervised_frame(base_df: pd.DataFrame) -> pd.DataFrame:
     df["trm_ma_3"] = df["trm"].rolling(3).mean()
     df["trm_ma_7"] = df["trm"].rolling(7).mean()
     df["trm_retorno_1d"] = df["trm"].pct_change().replace([np.inf, -np.inf], np.nan)
+    df["fnc_web_bolsa_retorno_1d"] = df["fnc_web_bolsa_ny"].pct_change().replace([np.inf, -np.inf], np.nan)
+    df["fnc_web_trm_retorno_1d"] = df["fnc_web_trm"].pct_change().replace([np.inf, -np.inf], np.nan)
+    df["fnc_web_mecic_delta_1d"] = df["fnc_web_mecic"].diff()
+    df["fnc_vs_formula_base_pct"] = (
+        (df["precio_fnc"] - df["precio_formula_base"]) / df["precio_fnc"].replace(0, np.nan)
+    ).replace([np.inf, -np.inf], np.nan)
     df["formula_lag_1"] = df["precio_formula_ajustada"]
     df["formula_lag_2"] = df["precio_formula_ajustada"].shift(1)
     df["formula_ma_3"] = df["precio_formula_ajustada"].rolling(3).mean()
     df["factor_formula_ma_7"] = df["factor_formula_implicito"].rolling(7).mean()
     df["residuo_formula_lag_1"] = df["residuo_formula"]
     df["residuo_formula_ma_7"] = df["residuo_formula"].rolling(7).mean()
+    df["residuo_formula_delta_1d_lag"] = df["residuo_formula_delta_1d"]
+    df["residuo_formula_delta_3d_lag"] = df["residuo_formula_delta_3d"]
 
     df["y_target"] = df["precio_fnc"].shift(-1)
     df["ds_target"] = df["ds"].shift(-1)
+    df["direccion_target"] = [
+        classify_direction_from_prices(actual, target)
+        for actual, target in zip(df["precio_fnc"], df["y_target"])
+    ]
     if not df.empty:
         df.loc[df.index[-1], "ds_target"] = df.loc[df.index[-1], "ds"] + pd.Timedelta(days=1)
     return df
@@ -314,6 +363,9 @@ def feature_columns() -> list[str]:
         "fnc_ma_7",
         "fnc_volatilidad_7",
         "fnc_retorno_1d",
+        "fnc_retorno_2d",
+        "fnc_delta_1d",
+        "fnc_delta_2d",
         "kc_lag_1",
         "kc_lag_2",
         "kc_lag_3",
@@ -325,19 +377,41 @@ def feature_columns() -> list[str]:
         "trm_ma_3",
         "trm_ma_7",
         "trm_retorno_1d",
+        "fnc_web_precio",
+        "fnc_web_bolsa_ny",
+        "fnc_web_trm",
+        "fnc_web_mecic",
+        "fnc_web_bolsa_retorno_1d",
+        "fnc_web_trm_retorno_1d",
+        "fnc_web_mecic_delta_1d",
+        "fnc_vs_formula_base_pct",
         "precio_formula_base",
         "precio_formula_ajustada",
         "factor_formula_implicito",
+        "factor_formula_retorno_1d",
         "formula_retorno_1d",
         "gap_formula_pct",
+        "gap_formula_delta_1d",
         "formula_lag_1",
         "formula_lag_2",
         "formula_ma_3",
         "factor_formula_ma_7",
         "residuo_formula_lag_1",
         "residuo_formula_ma_7",
+        "residuo_formula_delta_1d_lag",
+        "residuo_formula_delta_3d_lag",
         "prophet_yhat",
     ]
+
+
+def classify_direction_from_prices(precio_actual: float, precio_siguiente: float) -> int:
+    if pd.isna(precio_actual) or pd.isna(precio_siguiente) or precio_actual == 0:
+        return 1
+    variacion_cop = float(precio_siguiente) - float(precio_actual)
+    variacion_pct = (variacion_cop / float(precio_actual)) * 100
+    if abs(variacion_cop) < 22000 or abs(variacion_pct) < 0.55:
+        return 1
+    return 2 if variacion_cop > 0 else 0
 
 
 def prepare_training_frame(df_supervised: pd.DataFrame, prophet_predictions: pd.DataFrame) -> pd.DataFrame:
@@ -350,7 +424,7 @@ def prepare_training_frame(df_supervised: pd.DataFrame, prophet_predictions: pd.
             "yhat_upper": "prophet_yhat_upper",
         }
     )
-    columns = ["ds_target", "y_target", *feature_columns()]
+    columns = ["ds_target", "y_target", "direccion_target", *feature_columns()]
     df = df[columns].copy()
     df = df.replace([np.inf, -np.inf], np.nan).dropna().sort_values("ds_target").reset_index(drop=True)
     return df

@@ -51,7 +51,7 @@ router.get("/me", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Esta cuenta ha sido eliminada." });
     }
     if (user.estado === "pendiente" && user.rol !== "comprador") {
-      return res.status(403).json({ message: "Cuenta pendiente de verificacion" });
+      return res.status(403).json({ message: "Cuenta pendiente de verificación" });
     }
 
     res.json(user);
@@ -66,12 +66,12 @@ router.post("/logout", (req, res) => {
   limpiarCookieAuth(res, "auth_token");
   limpiarCookieAuth(res, "connect.sid");
   res.set("Cache-Control", "no-store");
-  res.json({ message: "Sesion cerrada exitosamente" });
+  res.json({ message: "Sesión cerrada exitosamente" });
 });
 
 function responderGoogleNoDisponible(res) {
   return res.status(503).json({
-    message: "El inicio de sesion con Google no esta configurado en este entorno.",
+    message: "El inicio de sesión con Google no está configurado en este entorno.",
   });
 }
 

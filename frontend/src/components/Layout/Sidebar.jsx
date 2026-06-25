@@ -118,16 +118,16 @@ function Sidebar() {
                 ? 'bg-[#C8A96E] text-white'
                 : 'text-[#D1C6BB] hover:bg-[#3D1F0F] hover:text-white'
             }`}
-            aria-label="Abrir mas opciones"
+            aria-label="Abrir más opciones"
           >
             <i className="fa-solid fa-ellipsis text-sm" />
-            <span className="text-[10px] font-medium">Mas</span>
+            <span className="text-[10px] font-medium">Más</span>
           </button>
 
           <button
             onClick={() => setMostrarModal(true)}
             className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[#D1C6BB] transition-all duration-200 hover:bg-red-900 hover:text-red-300"
-            aria-label="Cerrar sesion"
+            aria-label="Cerrar sesión"
           >
             <i className="fa-solid fa-right-from-bracket text-sm" />
             <span className="text-[10px] font-medium">Salir</span>
@@ -183,7 +183,7 @@ function Sidebar() {
             >
               <i className="fa-solid fa-right-from-bracket text-sm" />
               <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-gray-700 bg-[#2C1A0E] px-3 py-1.5 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                Cerrar sesion
+                Cerrar sesión
               </span>
             </button>
           </div>
@@ -196,7 +196,7 @@ function Sidebar() {
             type="button"
             className="fixed inset-0 z-40 bg-black/20 md:hidden"
             onClick={() => setMostrarMenuMovil(false)}
-            aria-label="Cerrar menu movil"
+            aria-label="Cerrar menú móvil"
           />
           <div className="fixed inset-x-3 bottom-24 z-50 rounded-[28px] border border-[#E0D0B0] bg-[#FFF8EC] p-4 shadow-[0_24px_50px_rgba(44,26,14,0.22)] md:hidden">
             <div className="flex items-center gap-3 border-b border-[#E7D9BF] pb-3">
@@ -252,9 +252,9 @@ function Sidebar() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF8E7]">
               <i className="fa-solid fa-right-from-bracket text-2xl text-[#C8A96E]" />
             </div>
-            <h3 className="mb-2 text-lg font-bold text-[#2C1A0E]">Cerrar sesion</h3>
+            <h3 className="mb-2 text-lg font-bold text-[#2C1A0E]">Cerrar sesión</h3>
             <p className="mb-6 text-sm text-gray-400">
-              ¿Estas seguro de que deseas cerrar tu sesion en CoffePrice?
+              ¿Estás seguro de que deseas cerrar tu sesión en CoffePrice?
             </p>
             <div className="flex gap-3">
               <button
@@ -267,7 +267,7 @@ function Sidebar() {
                 onClick={handleLogout}
                 className="flex-1 rounded-xl bg-[#2C1A0E] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3D1F0F]"
               >
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </div>
           </div>

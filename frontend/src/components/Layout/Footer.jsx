@@ -5,7 +5,7 @@ const footerSections = [
     title: 'CONSULTA PUBLICA',
     links: [
       { label: 'Ver precios', to: '/precios' },
-      { label: 'Noticias del cafe', to: '/noticias' },
+      { label: 'Noticias del café', to: '/noticias' },
       { label: 'Contacto', to: '/contacto' },
     ],
   },
@@ -13,9 +13,9 @@ const footerSections = [
     title: 'AYUDA',
     links: [
       { label: 'Centro de ayuda', to: '/centro-de-ayuda' },
-      { label: 'Como funciona CoffePrice', to: '/centro-de-ayuda' },
+      { label: 'Cómo funciona CoffePrice', to: '/centro-de-ayuda' },
       { label: 'Terminos y condiciones', to: '/terminos-y-condiciones' },
-      { label: 'Politica de privacidad', to: '/politica-de-privacidad' },
+      { label: 'Política de privacidad', to: '/politica-de-privacidad' },
     ],
   },
 ];
@@ -37,7 +37,7 @@ function Footer() {
               <span className="text-xl font-bold text-white">CoffePrice</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-[#D2C0AE]">
-              El precio justo del cafe, en tus manos. Informacion publica y herramientas claras para entender mejor el mercado cafetero colombiano.
+              El precio justo del café, en tus manos. Información pública y herramientas claras para entender mejor el mercado cafetero colombiano.
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">

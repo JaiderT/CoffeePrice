@@ -29,6 +29,7 @@ import alertaNoticia from './routes/alertaNoticia.js';
 import configuracionRoutes from "./routes/configuracion.js";
 import precioFNCRoutes from "./routes/precioFNC.js";
 import actividadRoutes from "./routes/actividad.js"; // Nuevo
+import { asegurarIndicesReseñas } from "./utils/resenaIndexes.js";
 
 const app = express();
 
@@ -152,6 +153,7 @@ const PORT = process.env.PORT || 8081;
 
 async function iniciarServidor() {
   await esperarMongoDisponible();
+  await asegurarIndicesReseñas();
 
   app.listen(PORT, async () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

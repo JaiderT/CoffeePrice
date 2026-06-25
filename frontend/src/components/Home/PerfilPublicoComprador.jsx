@@ -236,15 +236,13 @@ export default function PerfilPublicoComprador() {
     }
     setEnviando(true);
     try {
-      const usuarioId = localStorage.getItem('usuarioId');
       await axios.post(`${API_URL}/api/resenas`, {
-        productor: usuarioId,
         comprador: id,
         calificacion,
         comentario,
         tags: tagsSeleccionados,
       }, { withCredentials: true });
-      setMensaje({ tipo: 'exito', texto: 'reseña publicada correctamente' });
+      setMensaje({ tipo: 'exito', texto: 'Reseña publicada correctamente' });
       setCalificacion(0);
       setComentario('');
       setTagsSeleccionados([]);
@@ -265,7 +263,7 @@ export default function PerfilPublicoComprador() {
       await axios.post(`${API_URL}/api/alertas`, {
         comprador: id,
         precioMinimo: Number(precioAlerta),
-        canales: { push: true, email: false, whatsapp: false },
+        canales: { push: true, email: true, whatsapp: false },
       }, { withCredentials: true });
       setAlertaGuardada(true);
       setMensajeAlerta({ tipo: 'exito', texto: 'Alerta activada. La verás en tu sección de alertas.' });
@@ -534,7 +532,7 @@ export default function PerfilPublicoComprador() {
                   </div>
                 )}
                 <form onSubmit={handleEnviarreseña}>
-                  <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Calificacion</p>
+                  <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Calificación</p>
                   <div className="mb-4"><Estrellas valor={calificacion} onChange={setCalificacion} /></div>
                   <p className="text-xs font-semibold text-[#8B7355] uppercase mb-2">Tags (opcional)</p>
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -807,7 +805,7 @@ export default function PerfilPublicoComprador() {
                 <h3 className="text-[#2C1A0E] font-bold text-lg">Contactar comprador</h3>
                 <p className="text-[#8B7355] text-sm mt-1">{comprador.nombreempresa}</p>
                 {comprador.contactoRestringido && (
-                  <p className="text-amber-700 text-xs mt-2">El perfil publico protege telefono y direccion exacta.</p>
+                  <p className="text-amber-700 text-xs mt-2">El perfil público protege teléfono y dirección exacta.</p>
                 )}
               </div>
               <button onClick={() => setModalContacto(false)} className="text-gray-400 hover:text-gray-700 transition-colors">

@@ -12,6 +12,10 @@ const EVALUACION_PREDICCIONES_FNC_PATH = path.resolve(
     __dirname,
     "../../ml-service-experimental/datos/evaluacion_predicciones_fnc.csv"
 );
+const FNC_HISTORY_PATHS = [
+    path.resolve(__dirname, "../../ml-service-experimental/datos/precios_fnc_historicos.csv"),
+    path.resolve(__dirname, "../datos/precios_fnc_historicos.csv"),
+];
 const CAMPOS_PREDICCION_FNC = [
     "fecha_prediccion",
     "precio_estimado",
@@ -58,23 +62,23 @@ function construirMensaje(prediccion) {
 
     if (prediccion.tendencia === "sube") {
         return prediccion.confianza >= 70
-            ? "Se proyecta una subida del precio del cafe en la proxima jornada."
-            : "Hay senales de una posible subida en el precio del cafe.";
+            ? "Se proyecta una subida del precio del café en la próxima jornada."
+            : "Hay señales de una posible subida en el precio del café.";
     }
 
     if (prediccion.tendencia === "baja") {
         return prediccion.confianza >= 70
-            ? "Se proyecta una baja del precio del cafe en la proxima jornada."
-            : "Hay senales de una posible baja en el precio del cafe.";
+            ? "Se proyecta una baja del precio del café en la próxima jornada."
+            : "Hay señales de una posible baja en el precio del café.";
     }
 
     if (prediccion.tendencia === "estable") {
         return prediccion.confianza >= 70
-            ? "Se espera estabilidad en el precio del cafe para la proxima jornada."
-            : "El precio del cafe podria mantenerse estable en la proxima jornada.";
+            ? "Se espera estabilidad en el precio del café para la próxima jornada."
+            : "El precio del café podría mantenerse estable en la próxima jornada.";
     }
 
-    return "Se espera un comportamiento estable en el precio del cafe.";
+    return "Se espera un comportamiento estable en el precio del café.";
 }
 
 function calcularConfianzaDesdeFnc(prediccion) {
@@ -136,7 +140,7 @@ function normalizarPrediccionFncHistorica(prediccion, evaluacion = null) {
         estrategia_aplicada: prediccion.estrategia,
         holdout_mape: Number(prediccion.holdout_mape),
         holdout_mae: Number(prediccion.holdout_mae),
-        explicacion: "Prediccion historica generada por el modelo FNC hibrido.",
+        explicacion: "Predicción histórica generada por el modelo FNC híbrido.",
     };
 
     const tienePrecioReal = esNumeroFinito(evaluacion?.precio_real);
@@ -158,12 +162,12 @@ function normalizarPrediccionFncHistorica(prediccion, evaluacion = null) {
     };
 }
 
-export function parseCsvSimple(contenido) {
+function parseCsvConEncabezados(contenido, camposRequeridos = []) {
     const lineas = contenido.trim().split(/\r?\n/).filter(Boolean);
     if (lineas.length < 2) return [];
 
     const encabezados = lineas[0].split(",").map((item) => item.trim());
-    if (!CAMPOS_HISTORIAL_FNC.every((campo) => encabezados.includes(campo))) {
+    if (!camposRequeridos.every((campo) => encabezados.includes(campo))) {
         return [];
     }
 
@@ -179,12 +183,77 @@ export function parseCsvSimple(contenido) {
     }).filter(Boolean);
 }
 
+export function parseCsvSimple(contenido) {
+    return parseCsvConEncabezados(contenido, CAMPOS_HISTORIAL_FNC);
+}
+
 function esFechaIsoSimple(value) {
     return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function esNumeroFinito(value) {
-    return Number.isFinite(Number(value));
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
+function desplazarFechaIso(fecha, offsetDias) {
+    const base = new Date(`${fecha}T00:00:00.000Z`);
+    if (Number.isNaN(base.getTime())) return null;
+    base.setUTCDate(base.getUTCDate() + offsetDias);
+    return serializarFecha(base);
+}
+
+function buscarPrecioRealComparable(fecha, preciosRealesFnc) {
+    if (!fecha || !(preciosRealesFnc instanceof Map)) return null;
+    if (preciosRealesFnc.has(fecha)) return preciosRealesFnc.get(fecha);
+
+    for (let offset = 1; offset <= 3; offset += 1) {
+        const fechaSiguiente = desplazarFechaIso(fecha, offset);
+        if (fechaSiguiente && preciosRealesFnc.has(fechaSiguiente)) {
+            return preciosRealesFnc.get(fechaSiguiente);
+        }
+    }
+
+    return null;
+}
+
+function calcularTendenciaReal(precioReal, precioBase) {
+    const real = Number(precioReal);
+    const base = Number(precioBase);
+
+    if (!Number.isFinite(real) || !Number.isFinite(base) || base === 0) return null;
+
+    const variacionCop = real - base;
+    const variacionPct = (variacionCop / base) * 100;
+
+    if (Math.abs(variacionCop) < 22000 || Math.abs(variacionPct) < 0.55) {
+        return "estable";
+    }
+
+    return variacionPct > 0 ? "sube" : "baja";
+}
+
+function construirEvaluacionDesdePrecioReal(prediccion, precioReal) {
+    if (!esNumeroFinito(precioReal) || !esNumeroFinito(prediccion?.precio_estimado)) {
+        return null;
+    }
+
+    const real = Number(precioReal);
+    const estimado = Number(prediccion.precio_estimado);
+    const minimo = Number(prediccion.precio_minimo);
+    const maximo = Number(prediccion.precio_maximo);
+    const precioBase = Number(prediccion.precio_actual_fnc);
+    const errorCop = estimado - real;
+    const tendenciaReal = calcularTendenciaReal(real, precioBase);
+
+    return {
+        precio_real: real,
+        error_cop: errorCop,
+        error_abs: Math.abs(errorCop),
+        error_pct: real !== 0 ? (Math.abs(errorCop) / real) * 100 : null,
+        acerto_rango: Number.isFinite(minimo) && Number.isFinite(maximo) && real >= minimo && real <= maximo ? "1" : "0",
+        tendencia_real: tendenciaReal,
+        acerto_tendencia: tendenciaReal && prediccion.tendencia === tendenciaReal ? "1" : "0",
+    };
 }
 
 export function esPrediccionFncValida(prediccion) {
@@ -215,7 +284,7 @@ async function leerPrediccionFnc() {
         const prediccion = JSON.parse(contenido);
 
         if (!esPrediccionFncValida(prediccion)) {
-            console.warn("predicciones_fnc.json invalido o incompleto. Se omite su lectura.");
+            console.warn("predicciones_fnc.json inválido o incompleto. Se omite su lectura.");
             return null;
         }
 
@@ -233,13 +302,18 @@ async function leerHistorialPrediccionesFnc() {
     try {
         const contenido = await readFile(HISTORIAL_PREDICCIONES_FNC_PATH, "utf8");
         const evaluaciones = await leerEvaluacionPrediccionesFnc();
+        const preciosRealesFnc = await leerPreciosRealesFnc();
 
         return parseCsvSimple(contenido)
             .filter(esPrediccionHistoricaValida)
             .map((prediccion) =>
                 normalizarPrediccionFncHistorica(
                     prediccion,
-                    evaluaciones.get(prediccion.fecha_prediccion) || null
+                    evaluaciones.get(prediccion.fecha_prediccion) ||
+                        construirEvaluacionDesdePrecioReal(
+                            prediccion,
+                            buscarPrecioRealComparable(prediccion.fecha_prediccion, preciosRealesFnc)
+                        )
                 )
             );
     } catch (error) {
@@ -251,10 +325,37 @@ async function leerHistorialPrediccionesFnc() {
     }
 }
 
+async function leerPreciosRealesFnc() {
+    for (const ruta of FNC_HISTORY_PATHS) {
+        try {
+            const contenido = await readFile(ruta, "utf8");
+            const filas = parseCsvConEncabezados(contenido, ["ds", "y"]);
+            const porFecha = new Map();
+
+            for (const fila of filas) {
+                if (esFechaIsoSimple(fila.ds) && esNumeroFinito(fila.y)) {
+                    porFecha.set(fila.ds, Number(fila.y));
+                }
+            }
+
+            if (porFecha.size > 0) return porFecha;
+        } catch (error) {
+            if (error.code !== "ENOENT") {
+                console.warn(`No se pudo leer historial FNC ${ruta}:`, error.message);
+            }
+        }
+    }
+
+    return new Map();
+}
+
 async function leerEvaluacionPrediccionesFnc() {
     try {
         const contenido = await readFile(EVALUACION_PREDICCIONES_FNC_PATH, "utf8");
-        const filas = parseCsvSimple(contenido).filter(esPrediccionHistoricaValida);
+        const filas = parseCsvConEncabezados(contenido, [
+            ...CAMPOS_HISTORIAL_FNC,
+            "precio_real",
+        ]).filter(esPrediccionHistoricaValida);
         const porFecha = new Map();
 
         for (const fila of filas) {
@@ -285,7 +386,22 @@ async function leerPrediccionesFncDisponibles() {
     }
 
     if (actual) {
-        porFecha.set(actual.fecha, actual);
+        const historica = porFecha.get(actual.fecha);
+        if (historica?.tieneResultadoReal) {
+            porFecha.set(actual.fecha, {
+                ...actual,
+                tieneResultadoReal: historica.tieneResultadoReal,
+                precioReal: historica.precioReal,
+                errorCop: historica.errorCop,
+                errorAbsoluto: historica.errorAbsoluto,
+                errorPorcentaje: historica.errorPorcentaje,
+                acertoRango: historica.acertoRango,
+                tendenciaReal: historica.tendenciaReal,
+                acertoTendencia: historica.acertoTendencia,
+            });
+        } else {
+            porFecha.set(actual.fecha, actual);
+        }
     }
 
     return ordenarPrediccionesPorFecha([...porFecha.values()]);
@@ -350,20 +466,20 @@ export const getResumenPredicciones = async (req, res) => {
             });
         }
 
-        let mensaje = "Se espera un comportamiento estable en el precio del cafe.";
+        let mensaje = "Se espera un comportamiento estable en el precio del café.";
 
         if (prediccion.tendencia === "sube") {
             mensaje = prediccion.confianza >= 70
-                ? "Se proyecta una subida del precio del cafe en la proxima jornada."
-                : "Hay señales de una posible subida en el precio del cafe.";
+                ? "Se proyecta una subida del precio del café en la próxima jornada."
+                : "Hay señales de una posible subida en el precio del café.";
         } else if (prediccion.tendencia === "baja") {
             mensaje = prediccion.confianza >= 70
-                ? "Se proyecta una baja del precio del cafe en la proxima jornada."
-                : "Hay señales de una posible baja en el precio del cafe.";
+                ? "Se proyecta una baja del precio del café en la próxima jornada."
+                : "Hay señales de una posible baja en el precio del café.";
         } else if (prediccion.tendencia === "estable") {
             mensaje = prediccion.confianza >= 70
-                ? "Se espera estabilidad en el precio del cafe para la proxima jornada."
-                : "El precio del cafe podra mantenerse estable en la proxima jornada.";
+                ? "Se espera estabilidad en el precio del café para la próxima jornada."
+                : "El precio del café podrá mantenerse estable en la próxima jornada.";
         }
 
         res.json({
@@ -394,12 +510,14 @@ export const getPrediccionesPorRango = async (req, res) => {
 
         if (!diasPermitidos.includes(dias)) {
             return res.status(400).json({
-                message: "Debes consultar un rango valido de 7, 15 o 30 dias"
+                message: "Debes consultar un rango válido de 7, 15 o 30 días"
             });
         }
 
         if (prediccionesFnc.length) {
-            const prediccionesRango = prediccionesFnc.slice(-dias);
+            const prediccionesEvaluadas = prediccionesFnc.filter((item) => item.tieneResultadoReal);
+            const baseRango = prediccionesEvaluadas.length ? prediccionesEvaluadas : prediccionesFnc;
+            const prediccionesRango = baseRango.slice(-dias);
             return res.json({
                 dias,
                 total: prediccionesRango.length,
@@ -407,7 +525,7 @@ export const getPrediccionesPorRango = async (req, res) => {
                 modelVersion: prediccionesRango[prediccionesRango.length - 1].modelVersion,
                 fuente: "fnc_hibrido_historial",
                 modo: prediccionesRango.length === 1 ? "prediccion_unica" : "historial_fnc",
-                mensaje: "Historial real generado por el modelo FNC hibrido. Crece con cada ejecucion diaria del pipeline.",
+                mensaje: "Historial real generado por el modelo FNC híbrido. Crece con cada ejecución diaria del pipeline.",
                 predicciones: prediccionesRango,
             });
         }
@@ -452,7 +570,7 @@ export const getPrediccionPorDia = async (req, res) => {
 
         if (!offsetsPermitidos.includes(offset)) {
             return res.status(400).json({
-                message: "Debes consultar un dia valido: 1, 7, 15 o 30"
+                message: "Debes consultar un día válido: 1, 7, 15 o 30"
             });
         }
 
@@ -481,7 +599,7 @@ export const getPrediccionPorDia = async (req, res) => {
 
         if (!prediccion) {
             return res.status(404).json({
-                message: "No hay prediccion disponible para ese dia"
+                message: "No hay predicción disponible para ese día"
             });
         }
 
@@ -498,7 +616,7 @@ export const getPrediccionPorDia = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({
-            message: "Error al obtener prediccion por dia",
+            message: "Error al obtener predicción por día",
             error: error.message
         });
     }
@@ -539,7 +657,7 @@ export const getPrediccionPorFecha = async (req, res) => {
 
         if (!prediccion) {
             return res.status(404).json({
-                message: "No hay prediccion disponible para esa fecha"
+                message: "No hay predicción disponible para esa fecha"
             });
         }
 
@@ -555,7 +673,7 @@ export const getPrediccionPorFecha = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({
-            message: "Error al obtener prediccion por fecha",
+            message: "Error al obtener predicción por fecha",
             error: error.message
         });
     }
@@ -565,10 +683,10 @@ export const getPrediccionPorFecha = async (req, res) => {
 export const getPrediccionById = async (req, res) => {
     try {
         const prediccion = await Prediccion.findById(req.params.id).lean();
-        if (!prediccion) return res.status(404).json({ message: "Prediccion no encontrada" });
+        if (!prediccion) return res.status(404).json({ message: "Predicción no encontrada" });
         res.json(serializarPrediccion(prediccion));
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener prediccion", error: error.message });
+        res.status(500).json({ message: "Error al obtener predicción", error: error.message });
     }
 };
 
@@ -588,7 +706,7 @@ export const createPrediccion = async (req, res) => {
         await prediccion.save();
         res.status(201).json(prediccion);
     } catch (error) {
-        res.status(400).json({ message: "Error al crear prediccion", error: error.message });
+        res.status(400).json({ message: "Error al crear predicción", error: error.message });
     }
 };
 
@@ -602,19 +720,19 @@ export const updatePrediccion = async (req, res) => {
             { new: true, runValidators: true }
         );
 
-        if (!prediccion) return res.status(404).json({ message: "Prediccion no encontrada" });
-        res.json(prediccion); // Correccion: antes usaba res.jason
+        if (!prediccion) return res.status(404).json({ message: "Predicción no encontrada" });
+        res.json(prediccion); // Corrección: antes usaba res.jason
     } catch (error) {
-        res.status(400).json({ message: "Error al actualizar prediccion", error: error.message });
+        res.status(400).json({ message: "Error al actualizar predicción", error: error.message });
     }
 };
 
 export const deletePrediccion = async (req, res) => {
     try {
         const prediccion = await Prediccion.findByIdAndDelete(req.params.id);
-        if (!prediccion) return res.status(404).json({ message: "Prediccion no encontrada" });
-        res.json({ message: "Prediccion eliminada correctamente" });
+        if (!prediccion) return res.status(404).json({ message: "Predicción no encontrada" });
+        res.json({ message: "Predicción eliminada correctamente" });
     } catch (error) {
-        res.status(500).json({ message: "Error al eliminar prediccion", error: error.message });
+        res.status(500).json({ message: "Error al eliminar predicción", error: error.message });
     }
 };

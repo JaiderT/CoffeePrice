@@ -160,7 +160,7 @@ export default function NoticiaDetalle() {
               <div className="mt-10 pt-6 border-t border-[#E7D9BF] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-[#2C1A0E] text-sm font-semibold">Resumen breve en CoffePrice</p>
-                  <p className="text-gray-400 text-xs mt-1">Aqui tienes el contexto esencial de la noticia en tres parrafos para lectura rapida.</p>
+                  <p className="text-gray-400 text-xs mt-1">Aquí tienes el contexto esencial de la noticia en tres párrafos para lectura rápida.</p>
                 </div>
                 {noticia.sourceUrl && (
                   <a

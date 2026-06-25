@@ -1,20 +1,14 @@
 import Usuario from "../models/usuario.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import { randomInt } from "crypto";
 import { construirOpcionesCookie } from "../utils/cookieOptions.js";
+import { crearTransporteCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const transporter = crearTransporteCorreo();
 
 function construirSesionUsuario(usuario) {
   return {
@@ -62,7 +56,7 @@ export async function enviarCodigoVerificacion(email, nombre, codigo) {
         <div style="padding: 36px 32px;">
           <h2 style="color: #3B1F0A; margin: 0 0 8px;">Hola, ${nombre}</h2>
           <p style="color: #666; font-size: 0.95rem; line-height: 1.6; margin: 0 0 28px;">
-            Usa este codigo para verificar tu cuenta. Expira en <strong>10 minutos</strong>.
+            Usa este código para verificar tu cuenta. Expira en <strong>10 minutos</strong>.
           </p>
           <div style="background: white; border: 2px solid #C8814A; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 28px;">
             <span style="font-size: 2.8rem; font-weight: 900; letter-spacing: 12px; color: #3B1F0A;">
@@ -103,7 +97,7 @@ export const register = async (req, res) => {
 
     if (!nombre || !apellido || !email || !password || !rol) {
       return res.status(400).json({
-        message: "Nombre, apellido, correo, contrasena y rol son obligatorios",
+        message: "Nombre, apellido, correo, contraseña y rol son obligatorios",
       });
     }
 
@@ -111,16 +105,16 @@ export const register = async (req, res) => {
     const rolesPermitidos = ["productor", "comprador"];
 
     if (!rolesPermitidos.includes(rol)) {
-      return res.status(400).json({ message: "Rol no valido" });
+      return res.status(400).json({ message: "Rol no válido" });
     }
 
     if (!EMAIL_REGEX.test(emailNormalizado)) {
-      return res.status(400).json({ message: "Correo electronico no valido" });
+      return res.status(400).json({ message: "Correo electrónico no válido" });
     }
 
     if (!PASSWORD_REGEX.test(password)) {
       return res.status(400).json({
-        message: "La contrasena debe tener minimo 10 caracteres, una mayuscula, una minuscula y un numero",
+        message: "La contraseña debe tener mínimo 10 caracteres, una mayúscula, una minúscula y un número",
       });
     }
 
@@ -133,7 +127,7 @@ export const register = async (req, res) => {
         await existeUsuario.save();
         await enviarCodigoVerificacion(emailNormalizado, existeUsuario.nombre, codigoPendiente);
         return res.status(200).json({
-          message: "Ya existe una cuenta pendiente. Te reenviamos el codigo de verificacion.",
+          message: "Ya existe una cuenta pendiente. Te reenviamos el código de verificación.",
         });
       }
       return res.status(400).json({ message: "El correo ya esta registrado" });
@@ -158,7 +152,7 @@ export const register = async (req, res) => {
     await newUsuario.save();
     await enviarCodigoVerificacion(emailNormalizado, nombre.trim(), codigo);
 
-    res.status(201).json({ message: "Codigo de verificacion enviado al correo." });
+    res.status(201).json({ message: "Código de verificación enviado al correo." });
   } catch (error) {
     console.error("Error en register:", error);
     res.status(500).json({ message: "Error en el servidor" });
@@ -170,7 +164,7 @@ export const verifyEmailCodigo = async (req, res) => {
     const { email, code } = req.body;
 
     if (!email || !code) {
-      return res.status(400).json({ message: "Correo y codigo son obligatorios" });
+      return res.status(400).json({ message: "Correo y código son obligatorios" });
     }
 
     const emailNormalizado = email.trim().toLowerCase();
@@ -185,16 +179,16 @@ export const verifyEmailCodigo = async (req, res) => {
     }
 
     if (!usuario.codigoVerificacion || !usuario.codigoVerificacionExpira) {
-      return res.status(400).json({ message: "No hay codigo pendiente. Solicita uno nuevo." });
+      return res.status(400).json({ message: "No hay código pendiente. Solicita uno nuevo." });
     }
 
     if (new Date() > usuario.codigoVerificacionExpira) {
-      return res.status(400).json({ message: "El codigo expiro. Solicita uno nuevo." });
+      return res.status(400).json({ message: "El código expiró. Solicita uno nuevo." });
     }
 
     const codigoValido = await bcrypt.compare(code.trim(), usuario.codigoVerificacion);
     if (!codigoValido) {
-      return res.status(400).json({ message: "Codigo incorrecto" });
+      return res.status(400).json({ message: "Código incorrecto" });
     }
 
     usuario.codigoVerificacion = null;
@@ -269,14 +263,14 @@ export const resendVerification = async (req, res) => {
 
     if (tiempoRestante > 9 * 60 * 1000) {
       return res.status(429).json({
-        message: "Espera un momento antes de solicitar otro codigo",
+        message: "Espera un momento antes de solicitar otro código",
       });
     }
 
     usuario.email = emailNormalizado;
     await reenviarCodigoVerificacionUsuario(usuario);
 
-    res.status(200).json({ message: "Codigo reenviado exitosamente" });
+    res.status(200).json({ message: "Código reenviado exitosamente" });
   } catch (error) {
     console.error("Error en resendVerification:", error);
     res.status(500).json({ message: "Error en el servidor" });
@@ -288,13 +282,13 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Correo y contrasena son obligatorios" });
+      return res.status(400).json({ message: "Correo y contraseña son obligatorios" });
     }
 
     const emailNormalizado = email.trim().toLowerCase();
 
     if (!EMAIL_REGEX.test(emailNormalizado)) {
-      return res.status(400).json({ message: "Correo electronico no valido" });
+      return res.status(400).json({ message: "Correo electrónico no válido" });
     }
 
     const user = await Usuario.findOne({ email: emailNormalizado });
@@ -304,7 +298,7 @@ export const login = async (req, res) => {
 
     if (!user.password) {
       return res.status(400).json({
-        message: "Esta cuenta usa Google. Inicia sesion con Google.",
+        message: "Esta cuenta usa Google. Inicia sesión con Google.",
       });
     }
 
@@ -316,13 +310,19 @@ export const login = async (req, res) => {
 
     if (user.estado === "pendiente") {
       return res.status(403).json({
-        message: "Debes verificar tu correo electronico antes de iniciar sesion.",
+        message: "Debes verificar tu correo electrónico antes de iniciar sesión.",
       });
     }
 
     if (user.estado === "rechazado") {
       return res.status(403).json({
         message: "Tu cuenta ha sido rechazada. Contacta al administrador.",
+      });
+    }
+
+    if (user.estado === "suspendido") {
+      return res.status(403).json({
+        message: "Tu cuenta está suspendida. Contacta al administrador.",
       });
     }
 

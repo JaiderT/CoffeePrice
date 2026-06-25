@@ -1,6 +1,6 @@
 import express from "express";
-import nodemailer from "nodemailer";
 import { contactLimiter } from "../middlewares/rateLimit.js";
+import { enviarCorreo } from "../services/emailService.js";
 
 const router = express.Router();
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +43,7 @@ export function validarContactoPayload(payload = {}) {
   }
 
   if (!EMAIL_REGEX.test(correoSeguro)) {
-    return { ok: false, error: "Correo invalido." };
+    return { ok: false, error: "Correo inválido." };
   }
 
   if (nombreSeguro.length > 120 || asuntoSeguro.length > 180 || mensajeSeguro.length > 4000) {
@@ -108,14 +108,6 @@ router.post("/contacto", contactLimiter, async (req, res) => {
 
   const { nombreSeguro, correoSeguro, asuntoSeguro, mensajeSeguro } = validacion.data;
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
   const mailOptions = construirMailOptions({
     nombreSeguro,
     correoSeguro,
@@ -124,11 +116,11 @@ router.post("/contacto", contactLimiter, async (req, res) => {
   });
 
   try {
-    await transporter.sendMail(mailOptions);
+    await enviarCorreo(mailOptions);
     res.status(200).json({ message: "Correo enviado correctamente." });
   } catch (error) {
     console.error("Error al enviar correo:", error);
-    res.status(500).json({ error: "No se pudo enviar el correo. Intenta mas tarde." });
+    res.status(500).json({ error: "No se pudo enviar el correo. Intenta más tarde." });
   }
 });
 

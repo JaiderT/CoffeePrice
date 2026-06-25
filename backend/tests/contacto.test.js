@@ -15,7 +15,7 @@ test("validarContactoPayload rechaza correo invalido", () => {
   });
 
   assert.equal(resultado.ok, false);
-  assert.equal(resultado.error, "Correo invalido.");
+  assert.equal(resultado.error, "Correo inválido.");
 });
 
 test("validarContactoPayload rechaza mensaje demasiado largo", () => {

@@ -30,7 +30,13 @@ export const getReseñasByProductor = async (req, res) => {
 
 export const createReseña = async (req, res) => {
   try {
-    const { productor, comprador, calificacion, comentario, tags } = req.body;
+    const { comprador, calificacion, comentario, tags } = req.body;
+    const productor = req.user?.id;
+
+    const reseñaExistente = await Reseña.exists({ productor, comprador });
+    if (reseñaExistente) {
+      return res.status(400).json({ message: "Ya has reseñado a este comprador anteriormente" });
+    }
 
     const reseña = new Reseña({ productor, comprador, calificacion, comentario, tags });
     await reseña.save();
