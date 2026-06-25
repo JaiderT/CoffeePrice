@@ -12,6 +12,10 @@ function parseBoolean(value, defaultValue) {
   return String(value).toLowerCase() === 'true';
 }
 
+function obtenerProveedorCorreo() {
+  return String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+}
+
 export function crearTransporteCorreo() {
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const port = Number(process.env.EMAIL_PORT || 587);
@@ -25,6 +29,8 @@ export function crearTransporteCorreo() {
       user: process.env.EMAIL_USER,
       pass: normalizarPasswordCorreo(process.env.EMAIL_PASS),
     },
+    family: Number(process.env.EMAIL_FAMILY || 4),
+    dnsTimeout: Number(process.env.EMAIL_DNS_TIMEOUT_MS || 8000),
     connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 8000),
     greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 8000),
     socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 12000),
@@ -36,7 +42,42 @@ export function crearTransporteCorreo() {
 
 const transporter = crearTransporteCorreo();
 
-export const enviarCorreo = async (mailOptions) => transporter.sendMail(mailOptions);
+async function enviarCorreoResend(mailOptions) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('Falta RESEND_API_KEY para enviar correos por Resend');
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || mailOptions.from || `"CoffePrice" <${process.env.EMAIL_USER}>`,
+      to: Array.isArray(mailOptions.to) ? mailOptions.to : String(mailOptions.to || '').split(',').map((email) => email.trim()).filter(Boolean),
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+      text: mailOptions.text,
+      reply_to: mailOptions.replyTo,
+    }),
+  });
+
+  if (!response.ok) {
+    const detalle = await response.text().catch(() => '');
+    throw new Error(`Resend rechazo el correo (${response.status}): ${detalle}`);
+  }
+
+  return response.json();
+}
+
+export const enviarCorreo = async (mailOptions) => {
+  if (obtenerProveedorCorreo() === 'resend' || process.env.RESEND_API_KEY) {
+    return enviarCorreoResend(mailOptions);
+  }
+
+  return transporter.sendMail(mailOptions);
+};
 
 function escaparHtml(texto = '') {
   return String(texto)
@@ -49,7 +90,7 @@ function escaparHtml(texto = '') {
 
 export const enviarAlertaPrecio = async ({ destinatario, nombreUsuario, nombreComprador, precioMinimo, precioActual }) => {
   try {
-    await transporter.sendMail({
+    await enviarCorreo({
       from: `"CoffePrice ☕" <${process.env.EMAIL_USER}>`,
       to: destinatario,
       subject: `🔔 ¡Alerta de precio! ${nombreComprador} superó $${Number(precioActual).toLocaleString('es-CO')}`,
@@ -119,7 +160,7 @@ export const enviarAlertaNoticia = async ({ destinatario, nombreUsuario, tituloN
     fnc: '🏛️', produccion: '🌱', consejos: '💡', el_pital: '⛰️'
   };
   try {
-    await transporter.sendMail({
+    await enviarCorreo({
       from: `"CoffePrice ☕" <${process.env.EMAIL_USER}>`,
       to: destinatario,
       subject: `📰 Nueva noticia: ${tituloNoticia}`,
@@ -173,7 +214,7 @@ export const enviarNotificacionPrecio = async ({ destinatario, nombreUsuario, no
     verde: 'Café verde',
   };
   try {
-    await transporter.sendMail({
+    await enviarCorreo({
       from: `"CoffePrice ☕" <${process.env.EMAIL_USER}>`,
       to: destinatario,
       subject: `☕ ${nombreComprador} ${accion === 'nuevo' ? 'publicó' : 'actualizó'} su precio de café`,
@@ -250,7 +291,7 @@ export const enviarSolicitudCompradorAdmin = async ({
     if (!destinatarios?.length) return false;
     const enlaceRevision = `${process.env.FRONTEND_URL}/admin/perfil`;
 
-    await transporter.sendMail({
+    await enviarCorreo({
       from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
       to: destinatarios.join(','),
       subject: `Nuevo registro de comprador: ${empresa.nombreempresa}`,
@@ -298,7 +339,7 @@ export const enviarDecisionComprador = async ({
     if (!destinatario) return false;
 
     const aprobado = estado === 'activo';
-    await transporter.sendMail({
+    await enviarCorreo({
       from: `"CoffePrice" <${process.env.EMAIL_USER}>`,
       to: destinatario,
       subject: aprobado ? 'Tu cuenta de comprador fue aprobada' : 'Actualización sobre tu registro de comprador',
