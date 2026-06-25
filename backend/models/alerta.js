@@ -19,7 +19,7 @@ const alertaSchema = new mongoose.Schema(
     canales: {
       whatsapp: { type: Boolean, default: true },
       sms: { type: Boolean, default: false },
-      email: { type: Boolean, default: false },
+      email: { type: Boolean, default: true },
       push: { type: Boolean, default: true },
     },
     activa: {

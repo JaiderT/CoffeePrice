@@ -66,28 +66,28 @@ def clasificar_confianza(
 
     if holdout_mape >= 1.6:
         riesgo_puntos += 2
-        alertas.append("Error reciente del modelo por encima del objetivo")
+        alertas.append("El modelo ha tenido mas margen de error en los ultimos dias")
     elif holdout_mape >= 1.0:
         riesgo_puntos += 1
-        alertas.append("Modelo en seguimiento: MAPE reciente supera 1%")
+        alertas.append("La prediccion viene en seguimiento porque el error reciente subio")
 
     if candidate_spread_pct >= 3.0:
         riesgo_puntos += 2
-        alertas.append("Alta dispersion entre formula, Prophet e hibrido")
+        alertas.append("Las señales no se ponen de acuerdo sobre el precio")
     elif candidate_spread_pct >= 1.6:
         riesgo_puntos += 1
-        alertas.append("Senales mixtas entre motores de prediccion")
+        alertas.append("Hay señales mezcladas: unas apuntan arriba y otras abajo")
 
     if signal_strength >= 0.65:
         riesgo_puntos += 1
-        alertas.append("Mercado con senal fuerte de KC/TRM")
+        alertas.append("El mercado externo se esta moviendo con fuerza")
 
     if direction_prediction == "estable" and candidate_spread_pct >= 2.4:
         riesgo_puntos += 1
-        alertas.append("Tendencia estable con alta incertidumbre interna")
+        alertas.append("Aunque parece estable, hay bastante dudas en los datos")
     elif direction_prediction in {"sube", "baja"} and (direction_confidence < 0.55 or direction_margin < 0.12):
         riesgo_puntos += 1
-        alertas.append("Clasificador de direccion con confianza limitada")
+        alertas.append("La posible subida o baja no esta lo bastante clara")
 
     if riesgo_puntos >= 4:
         return "baja", "alto", alertas
@@ -349,17 +349,11 @@ if direction_prediction == "estable" and candidate_spread_pct >= 1.2:
     mae_holdout = mae_holdout * (1 + min(0.30, candidate_spread_pct * 0.08))
 
 if best_strategy == "prophet":
-    precio_minimo = max(float(prophet_forecast["yhat_lower"]), precio_estimado - mae_holdout)
-    precio_maximo = min(float(prophet_forecast["yhat_upper"]), precio_estimado + mae_holdout)
+    precio_minimo_raw = max(float(prophet_forecast["yhat_lower"]), precio_estimado - mae_holdout)
+    precio_maximo_raw = min(float(prophet_forecast["yhat_upper"]), precio_estimado + mae_holdout)
 else:
-    precio_minimo = precio_estimado - mae_holdout
-    precio_maximo = precio_estimado + mae_holdout
-
-precio_minimo = redondear_cop(max(0.0, precio_minimo))
-precio_maximo = redondear_cop(max(precio_minimo, precio_maximo))
-if es_fin_de_semana:
-    precio_minimo = precio_estimado
-    precio_maximo = precio_estimado
+    precio_minimo_raw = precio_estimado - mae_holdout
+    precio_maximo_raw = precio_estimado + mae_holdout
 
 confianza, nivel_riesgo, alertas = clasificar_confianza(
     holdout_mape_actual,
@@ -370,65 +364,96 @@ confianza, nivel_riesgo, alertas = clasificar_confianza(
     direction_margin,
 )
 
+colchon_riesgo = 0.0
+if not es_fin_de_semana:
+    volatilidad_reciente = float(future_row.get("fnc_volatilidad_7", 0.0) or 0.0)
+    if nivel_riesgo == "alto":
+        colchon_riesgo = max(
+            ultimo_precio_fnc * 0.018,
+            volatilidad_reciente * 0.75,
+            ultimo_precio_fnc * min(0.025, candidate_spread_pct / 100 * 0.8),
+        )
+    elif nivel_riesgo == "medio" and (signal_strength >= 0.5 or candidate_spread_pct >= 1.5):
+        colchon_riesgo = max(
+            ultimo_precio_fnc * 0.008,
+            volatilidad_reciente * 0.35,
+            ultimo_precio_fnc * min(0.012, candidate_spread_pct / 100 * 0.35),
+        )
+
+    direccion_probable = direction_prediction if direction_prediction in {"sube", "baja"} else ""
+    if direccion_probable == "sube":
+        precio_maximo_raw += colchon_riesgo * 1.35
+        precio_minimo_raw -= colchon_riesgo * 0.65
+    elif direccion_probable == "baja":
+        precio_minimo_raw -= colchon_riesgo * 1.35
+        precio_maximo_raw += colchon_riesgo * 0.65
+    else:
+        precio_minimo_raw -= colchon_riesgo
+        precio_maximo_raw += colchon_riesgo
+
+precio_minimo = redondear_cop(max(0.0, precio_minimo_raw))
+precio_maximo = redondear_cop(max(precio_minimo, precio_maximo_raw))
+if es_fin_de_semana:
+    precio_minimo = precio_estimado
+    precio_maximo = precio_estimado
+    colchon_riesgo = 0.0
+
 if es_fin_de_semana:
     explicacion = (
-        "Fin de semana: la FNC no publica nuevo precio porque no opera la Bolsa de Nueva York, "
-        "por eso se conserva el ultimo precio oficial disponible."
+        "Fin de semana: normalmente no hay nuevo precio FNC porque la Bolsa de Nueva York no opera. "
+        "Por eso se mantiene el ultimo precio oficial disponible."
     )
 elif se_salto_fin_semana:
     explicacion = (
-        "Proxima jornada habil FNC: se omite sabado y domingo porque no hay nuevo cierre de la Bolsa de Nueva York. "
-        "La prediccion apunta al lunes con las ultimas senales disponibles de KC/TRM."
+        "La prediccion salta al proximo dia habil. Sabado y domingo se conserva el precio anterior, "
+        "asi que el calculo apunta al lunes con la informacion disponible."
     )
 elif abs(ajuste_direccion_cop) > 0:
     explicacion = (
-        f"El clasificador de direccion detecta mayor probabilidad de {direction_prediction}; "
-        "por eso se aplica un ajuste suave sobre el ensamble para mejorar subidas/bajas sin romper el rango."
+        f"Hay una señal moderada de que el precio puede {direction_prediction}. "
+        "Por eso se hizo un ajuste pequeño, sin alejar demasiado la estimacion."
     )
 elif nivel_riesgo == "alto":
     explicacion = (
-        "Prediccion con incertidumbre alta: los motores internos no coinciden lo suficiente, "
-        "por eso se recomienda interpretar principalmente el rango y no una direccion puntual."
+        "Hay mucha incertidumbre para este dia: las señales no apuntan todas al mismo lado. "
+        "Es mejor mirar el rango estimado que confiarse solo del precio exacto."
     )
 elif presion_mercado <= -2.0:
     if factor_presion < 0.55:
         explicacion = (
-            "KC muestra presion bajista, pero formula, Prophet e hibrido no confirman una baja fuerte; "
-            "por eso el ajuste se amortigua para evitar sobre-reaccionar."
+            "La Bolsa de Nueva York presiona a la baja, pero otras señales no confirman una caida fuerte. "
+            "Por eso la estimacion baja con cuidado y no de forma agresiva."
         )
     else:
         explicacion = (
-            "La salida fue ajustada por presion bajista de mercado: KC cae con mas fuerza que el soporte de TRM, "
-            "por eso el modelo reduce la proyeccion final."
+            "El mercado muestra presion bajista clara, principalmente por la Bolsa de Nueva York. "
+            "Por eso la estimacion se ajusta hacia abajo."
         )
 elif presion_mercado >= 2.0:
     explicacion = (
-        "La salida fue ajustada por presion alcista de mercado: KC/TRM muestran impulso suficiente "
-        "para mover la proyeccion final."
+        "El mercado muestra una señal alcista suficiente para mover la estimacion hacia arriba."
     )
 elif signal_strength >= 0.55:
     explicacion = (
-        "La prediccion final usa un ensamble ponderado con ajuste por senales fuertes de KC/TRM, "
-        "reduciendo el peso de replicar el ultimo FNC."
+        "Hay movimiento en las señales de mercado, asi que la estimacion no se queda solo copiando "
+        "el ultimo precio FNC."
     )
 elif best_strategy == "formula":
     explicacion = (
-        "La estrategia base usa formula de mercado KC/TRM y el modelo solo corrige el residuo historico."
+        "La estimacion se apoya principalmente en la relacion entre Bolsa de Nueva York, TRM y precio FNC."
     )
 elif best_strategy == "naive":
     explicacion = (
-        "La base historica sigue favoreciendo continuidad, pero la salida final ahora usa "
-        "un ensamble ponderado para no depender solo de replicar el ultimo FNC."
+        "Como el precio suele moverse poco de un dia a otro, la estimacion parte del ultimo precio FNC "
+        "y lo ajusta con las señales disponibles."
     )
 elif best_strategy == "prophet":
     explicacion = (
-        "La estrategia seleccionada fue prophet porque su tendencia temporal con KC y TRM "
-        "mostro el menor error holdout reciente."
+        "La estimacion se apoya mas en el comportamiento historico reciente y en las señales de mercado."
     )
 else:
     explicacion = (
-        "La estrategia seleccionada fue hybrid porque la combinacion de Prophet y XGBoost "
-        "mostro el menor error holdout reciente."
+        "La estimacion combina el historial del precio con señales de mercado para buscar una zona probable."
     )
 
 payload = {
@@ -451,6 +476,17 @@ payload = {
     "holdout_mape": holdout.get(holdout_key),
     "holdout_mae": round(mae_holdout, 2),
     "explicacion": explicacion,
+    "lectura_simple": {
+        "resumen": explicacion,
+        "confianza": f"Confianza {confianza}",
+        "riesgo": f"Riesgo {nivel_riesgo}",
+        "recomendacion": (
+            "Usa principalmente el rango estimado; el precio exacto puede moverse mas de lo normal."
+            if nivel_riesgo == "alto"
+            else "Usa el precio estimado como referencia y revisa el rango para tomar una decision mas prudente."
+        ),
+        "senales": alertas if alertas else ["Las señales se ven relativamente tranquilas para esta prediccion"],
+    },
     "senales_modelo": {
         "ultimo_fnc": int(round(ultimo_precio_fnc)),
         "kc_variacion_pct": round(float(kc_change_pct), 2),
@@ -468,6 +504,7 @@ payload = {
         "direccion_probabilidades": direction_probabilities,
         "ajuste_direccion_cop": redondear_cop(ajuste_direccion_cop),
         "dispersion_motores_pct": round(float(candidate_spread_pct), 2),
+        "colchon_riesgo_cop": redondear_cop(colchon_riesgo),
         "limite_cambio_pct": round(float(limite_cambio * 100), 2),
         "fuerza_senal": round(float(signal_strength), 3),
         "pesos_ensamble": dynamic_weights,
@@ -505,6 +542,7 @@ history_row = {
     "direccion_modelo": direction_prediction,
     "direccion_confianza": round(float(direction_confidence), 3),
     "ajuste_direccion_cop": redondear_cop(ajuste_direccion_cop),
+    "colchon_riesgo_cop": redondear_cop(colchon_riesgo),
     "holdout_mape": holdout.get(holdout_key),
     "holdout_mae": round(mae_holdout, 2),
 }
@@ -546,6 +584,7 @@ print(f"   Direccion modelo: {direction_prediction} ({direction_confidence:.2f},
 print(f"   Ajuste direccion: ${ajuste_direccion_cop:,.0f}")
 print(f"   Prediccion final: ${precio_estimado:,.0f}")
 print(f"   Rango estimado: ${precio_minimo:,.0f} - ${precio_maximo:,.0f}")
+print(f"   Colchon riesgo: ${colchon_riesgo:,.0f}")
 print(f"   Variacion: {variacion:+.2f}%")
 print(f"   Tendencia: {tendencia}")
 print(f"   Confianza: {confianza} | Riesgo: {nivel_riesgo}")

@@ -16,7 +16,7 @@ function Alertas() {
   const [form, setForm] = useState({
     comprador: '',
     precioMinimo: '',
-    canales: { push: true, email: false, whatsapp: false },
+    canales: { push: true, email: true, whatsapp: false },
   });
 
   const obtenerAlertas = useCallback(async () => {
@@ -73,7 +73,7 @@ function Alertas() {
       setForm({
         comprador: '',
         precioMinimo: '',
-        canales: { push: true, email: false, whatsapp: false },
+        canales: { push: true, email: true, whatsapp: false },
       });
       obtenerAlertas();
     } catch {

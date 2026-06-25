@@ -12,7 +12,7 @@ const alertaNoticiaSchema = new mongoose.Schema({
   }],
   canales: {
     push: { type: Boolean, default: true },
-    email: { type: Boolean, default: false },
+    email: { type: Boolean, default: true },
   },
   activa: { type: Boolean, default: true },
   ultimaNotificacion: { type: Date, default: null },

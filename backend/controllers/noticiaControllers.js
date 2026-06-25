@@ -1,7 +1,5 @@
 import Noticia from "../models/noticia.js";
-import { asegurarNoticiasRecientes, limpiarNoticiasDanadas } from "../services/noticiaAutoService.js";
-import AlertaNoticia from "../models/alertaNoticia.js";
-import { enviarAlertaNoticia } from "../services/emailService.js";
+import { asegurarNoticiasRecientes, limpiarNoticiasDanadas, notificarAlertasNoticia } from "../services/noticiaAutoService.js";
 
 export const getNoticias = async (req, res) => {
     try {
@@ -43,31 +41,8 @@ export const createNoticia = async (req, res) => {
         const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente, imagen });
         await noticia.save();
 
-        // Verificar alertas de noticias
         try {
-            const alertas = await AlertaNoticia.find({
-                activa: true,
-                $or: [
-                    { categorias: categoria },
-                    { categorias: 'todas' },
-                    { categorias: { $size: 0 } },
-                ]
-            }).populate('usuario', 'nombre apellido email');
-
-            for (const alerta of alertas) {
-                await AlertaNoticia.findByIdAndUpdate(alerta._id, {
-                    ultimaNotificacion: new Date()
-                });
-                if (alerta.canales?.email && alerta.usuario?.email) {
-                    await enviarAlertaNoticia({
-                        destinatario: alerta.usuario.email,
-                        nombreUsuario: `${alerta.usuario.nombre} ${alerta.usuario.apellido}`,
-                        tituloNoticia: noticia.titulo,
-                        categoria: noticia.categoria,
-                        resumen: noticia.resumen,
-                    });
-                }
-            }
+            await notificarAlertasNoticia(noticia);
         } catch (alertaError) {
             console.error('Error al verificar alertas de noticias:', alertaError.message);
         }

@@ -145,6 +145,29 @@ function DashboardComprador() {
     }
   }, [API_URL]);
 
+  const refrescarMercado = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/precios`, {
+        params: { t: Date.now() },
+      });
+      setTodosPrecios(data);
+    } catch (error) {
+      console.error('Error al refrescar precios del mercado:', error);
+    }
+  }, [API_URL]);
+
+  const refrescarHistorial = useCallback(async (compradorId) => {
+    if (!compradorId) return;
+    try {
+      const { data } = await api.get(`${API_URL}/api/historial-precios/comprador/${compradorId}`, {
+        params: { t: Date.now() },
+      });
+      setHistorial(data);
+    } catch {
+      // opcional
+    }
+  }, [API_URL]);
+
   useEffect(() => {
     // ✅ Esperar a que el contexto tenga el usuario listo
     if (!usuario?.id) return;
@@ -186,8 +209,7 @@ function DashboardComprador() {
         } catch { /* opcional */ }
 
         // ✅ Rutas públicas
-        const mercadoRes = await axios.get(`${API_URL}/api/precios`);
-        setTodosPrecios(mercadoRes.data);
+        await refrescarMercado();
 
         const noticiasRes = await axios.get(`${API_URL}/api/noticias`);
         setNoticias(noticiasRes.data.slice(0, 3));
@@ -200,7 +222,7 @@ function DashboardComprador() {
     };
 
     obtenerDatos();
-  }, [API_URL, usuario?.id, obtenerPrecios]);
+  }, [API_URL, usuario?.id, obtenerPrecios, refrescarMercado]);
 
   const handleCrearPerfil = async (e) => {
     e.preventDefault();
@@ -256,6 +278,8 @@ function DashboardComprador() {
       setMostrarFormulario(false);
       setNuevoPrecio({ preciocarga: '', tipocafe: 'pergamino_seco' });
       await obtenerPrecios(compradorActual._id);
+      await refrescarMercado();
+      await refrescarHistorial(compradorActual._id);
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al publicar el precio');
     } finally {
@@ -275,6 +299,8 @@ function DashboardComprador() {
       setMostrarEditar(false);
       setPrecioEditar(null);
       await obtenerPrecios(compradorRef.current._id);
+      await refrescarMercado();
+      await refrescarHistorial(compradorRef.current._id);
     } catch (error) {
       mostrarMsg('error', error.response?.data?.message || 'Error al actualizar el precio');
     }
@@ -288,6 +314,8 @@ function DashboardComprador() {
       setMostrarEliminar(false);
       setPrecioEliminar(null);
       await obtenerPrecios(compradorRef.current._id);
+      await refrescarMercado();
+      await refrescarHistorial(compradorRef.current._id);
     } catch {
       mostrarMsg('error', 'Error al eliminar el precio');
     }
