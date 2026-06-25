@@ -263,7 +263,7 @@ export default function PerfilPublicoComprador() {
       await axios.post(`${API_URL}/api/alertas`, {
         comprador: id,
         precioMinimo: Number(precioAlerta),
-        canales: { push: true, email: false, whatsapp: false },
+        canales: { push: true, email: true, whatsapp: false },
       }, { withCredentials: true });
       setAlertaGuardada(true);
       setMensajeAlerta({ tipo: 'exito', texto: 'Alerta activada. La verás en tu sección de alertas.' });

@@ -306,7 +306,7 @@ export default function DashboardProductor() {
       } else {
         const res = await axios.post(`${API_URL}/api/alertas`, {
           usuario: usuario.id, precioMinimo: alertaPrecio, activa: true,
-          canales: { whatsapp: true, push: true, sms: false, email: false },
+          canales: { whatsapp: true, push: true, sms: false, email: true },
         }, config);
         setAlertaActiva(res.data);
       }

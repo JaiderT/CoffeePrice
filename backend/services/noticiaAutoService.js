@@ -4,11 +4,48 @@ import mongoose from 'mongoose';
 import Noticia from '../models/noticia.js';
 import NoticiaFuenteHistorial from '../models/noticiaFuenteHistorial.js';
 import PrecioModel from '../models/precio.js';
+import AlertaNoticia from '../models/alertaNoticia.js';
+import { enviarAlertaNoticia } from './emailService.js';
 import { crearHashFuente, obtenerArticulosReales } from './fuentesNoticiasService.js';
 
 let generacionEnCurso = null;
 let openaiClient = null;
 let ultimaRevisionAutomaticaMs = 0;
+
+export async function notificarAlertasNoticia(noticia) {
+    if (!noticia?.categoria) return [];
+
+    const alertas = await AlertaNoticia.find({
+        activa: true,
+        $or: [
+            { categorias: noticia.categoria },
+            { categorias: 'todas' },
+            { categorias: { $size: 0 } },
+        ]
+    }).populate('usuario', 'nombre apellido email');
+
+    const enviadas = [];
+
+    for (const alerta of alertas) {
+        await AlertaNoticia.findByIdAndUpdate(alerta._id, {
+            ultimaNotificacion: new Date()
+        });
+
+        if (alerta.canales?.email !== false && alerta.usuario?.email) {
+            const enviada = await enviarAlertaNoticia({
+                destinatario: alerta.usuario.email,
+                nombreUsuario: `${alerta.usuario.nombre || ''} ${alerta.usuario.apellido || ''}`.trim() || 'caficultor',
+                tituloNoticia: noticia.titulo,
+                categoria: noticia.categoria,
+                resumen: noticia.resumen,
+            });
+
+            if (enviada) enviadas.push(alerta._id);
+        }
+    }
+
+    return enviadas;
+}
 
 function obtenerPartesBogota(fecha = new Date()) {
     const partes = new Intl.DateTimeFormat('en-CA', {
@@ -1178,6 +1215,10 @@ export async function generarNoticiasDelDia(opciones = {}) {
             });
 
             await registrarFuenteGenerada(sourceHash, articulo);
+
+            notificarAlertasNoticia(nuevaNoticia).catch((error) => {
+                console.error('[NoticiaAuto] Error notificando alertas de noticia:', error.message);
+            });
 
             noticiasRecientes.unshift({
                 titulo: nuevaNoticia.titulo,

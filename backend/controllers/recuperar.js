@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
 import Usuario from "../models/usuario.js";
+import { crearTransporteCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,13 +12,7 @@ function crearTransporte() {
     throw new Error("Faltan EMAIL_USER o EMAIL_PASS para enviar correos");
   }
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  return crearTransporteCorreo();
 }
 
 function normalizarEmail(email = "") {

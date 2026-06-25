@@ -1,12 +1,22 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+function normalizarPasswordCorreo(password = '') {
+  return String(password).replace(/\s+/g, '');
+}
+
+export function crearTransporteCorreo() {
+  return nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: normalizarPasswordCorreo(process.env.EMAIL_PASS),
+    },
+  });
+}
+
+const transporter = crearTransporteCorreo();
+
+export const enviarCorreo = async (mailOptions) => transporter.sendMail(mailOptions);
 
 function escaparHtml(texto = '') {
   return String(texto)

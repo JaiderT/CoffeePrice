@@ -192,7 +192,28 @@ function esFechaIsoSimple(value) {
 }
 
 function esNumeroFinito(value) {
-    return Number.isFinite(Number(value));
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
+function desplazarFechaIso(fecha, offsetDias) {
+    const base = new Date(`${fecha}T00:00:00.000Z`);
+    if (Number.isNaN(base.getTime())) return null;
+    base.setUTCDate(base.getUTCDate() + offsetDias);
+    return serializarFecha(base);
+}
+
+function buscarPrecioRealComparable(fecha, preciosRealesFnc) {
+    if (!fecha || !(preciosRealesFnc instanceof Map)) return null;
+    if (preciosRealesFnc.has(fecha)) return preciosRealesFnc.get(fecha);
+
+    for (let offset = 1; offset <= 3; offset += 1) {
+        const fechaSiguiente = desplazarFechaIso(fecha, offset);
+        if (fechaSiguiente && preciosRealesFnc.has(fechaSiguiente)) {
+            return preciosRealesFnc.get(fechaSiguiente);
+        }
+    }
+
+    return null;
 }
 
 function calcularTendenciaReal(precioReal, precioBase) {
@@ -291,7 +312,7 @@ async function leerHistorialPrediccionesFnc() {
                     evaluaciones.get(prediccion.fecha_prediccion) ||
                         construirEvaluacionDesdePrecioReal(
                             prediccion,
-                            preciosRealesFnc.get(prediccion.fecha_prediccion)
+                            buscarPrecioRealComparable(prediccion.fecha_prediccion, preciosRealesFnc)
                         )
                 )
             );
@@ -494,7 +515,9 @@ export const getPrediccionesPorRango = async (req, res) => {
         }
 
         if (prediccionesFnc.length) {
-            const prediccionesRango = prediccionesFnc.slice(-dias);
+            const prediccionesEvaluadas = prediccionesFnc.filter((item) => item.tieneResultadoReal);
+            const baseRango = prediccionesEvaluadas.length ? prediccionesEvaluadas : prediccionesFnc;
+            const prediccionesRango = baseRango.slice(-dias);
             return res.json({
                 dias,
                 total: prediccionesRango.length,

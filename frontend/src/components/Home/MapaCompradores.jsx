@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -317,18 +317,41 @@ export default function MapaCompradores() {
   const [cargandoRuta, setCargandoRuta] = useState(false);
   const [errorRuta, setErrorRuta] = useState('');
 
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/comprador/mapa`, { withCredentials: true })
-      .then(({ data }) => {
-        const normalizados = (data || []).filter(
-          (comprador) => Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud)
-        );
-        setCompradores(normalizados);
-      })
-      .catch(() => console.error('Error cargando compradores'))
-      .finally(() => setCargando(false));
+  const cargarCompradores = useCallback(async () => {
+    setCargando(true);
+    try {
+      const { data } = await axios.get(`${API_URL}/api/comprador/mapa`, {
+        withCredentials: true,
+        params: { t: Date.now() },
+      });
+      const normalizados = (data || []).filter(
+        (comprador) => Number.isFinite(comprador.latitud) && Number.isFinite(comprador.longitud)
+      );
+      setCompradores(normalizados);
+    } catch {
+      console.error('Error cargando compradores');
+    } finally {
+      setCargando(false);
+    }
   }, [API_URL]);
+
+  useEffect(() => {
+    cargarCompradores();
+
+    const refrescarSiVisible = () => {
+      if (document.visibilityState === 'visible') {
+        cargarCompradores();
+      }
+    };
+
+    window.addEventListener('focus', cargarCompradores);
+    document.addEventListener('visibilitychange', refrescarSiVisible);
+
+    return () => {
+      window.removeEventListener('focus', cargarCompradores);
+      document.removeEventListener('visibilitychange', refrescarSiVisible);
+    };
+  }, [cargarCompradores]);
 
   const obtenerMiUbicacion = () => {
     if (!navigator.geolocation) return;
