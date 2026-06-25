@@ -3,12 +3,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { randomInt } from "crypto";
 import { construirOpcionesCookie } from "../utils/cookieOptions.js";
-import { crearTransporteCorreo } from "../services/emailService.js";
+import { enviarCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const transporter = crearTransporteCorreo();
 
 function construirSesionUsuario(usuario) {
   return {
@@ -43,7 +41,7 @@ async function generarHashCodigo(codigo) {
 }
 
 export async function enviarCodigoVerificacion(email, nombre, codigo) {
-  await transporter.sendMail({
+  await enviarCorreo({
     from: `"support.coffeprice@gmail.com" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verifica tu cuenta de CoffePrice",

@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import Usuario from "../models/usuario.js";
-import { crearTransporteCorreo } from "../services/emailService.js";
+import { enviarCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,7 +12,7 @@ function crearTransporte() {
     throw new Error("Faltan EMAIL_USER o EMAIL_PASS para enviar correos");
   }
 
-  return crearTransporteCorreo();
+  return { sendMail: enviarCorreo };
 }
 
 function normalizarEmail(email = "") {
