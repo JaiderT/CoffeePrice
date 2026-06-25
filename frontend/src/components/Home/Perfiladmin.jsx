@@ -52,6 +52,30 @@ const TAGS = [
   { value: 'bascula_justa', label: 'Báscula justa' },
 ];
 
+function CampoPassword({ label, value, onChange }) {
+  const [ver, setVer] = useState(false);
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">{label}</label>
+      <div className="relative">
+        <input
+          type={ver ? 'text' : 'password'}
+          value={value}
+          onChange={onChange}
+          className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] pr-10"
+        />
+        <button
+          type="button"
+          onClick={() => setVer(!ver)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8A96E] transition-colors"
+        >
+          <i className={`fa-solid ${ver ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function PerfilAdmin() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { usuario, actualizarUsuario } = useAuth();
@@ -286,7 +310,6 @@ export default function PerfilAdmin() {
       mostrarMensaje('error', 'Debes escribir un motivo de rechazo');
       return;
     }
-
     try {
       await axios.put(`${API_URL}/api/usuario/${usuarioId}/estado`,
         { estado: 'rechazado', motivoRevision: motivoLimpio }, { withCredentials: true });
@@ -350,8 +373,9 @@ export default function PerfilAdmin() {
       mostrarMensaje('exito', 'Contraseña actualizada correctamente');
       setPasswords({ actual: '', nueva: '', confirmar: '' });
       setModo('ver');
-    } catch {
-      mostrarMensaje('error', 'Contraseña actual incorrecta');
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al cambiar la contraseña';
+      mostrarMensaje('error', msg);
     } finally {
       setLoading(false);
     }
@@ -388,16 +412,11 @@ export default function PerfilAdmin() {
   const getEmpresa = (u) => compradores.find(c => c.usuario?._id === u._id || c.usuario === u._id);
   const getEstadoRevisionLabel = (estado) => {
     switch (estado) {
-      case 'aprobado':
-        return 'Aprobado';
-      case 'enRevision':
-        return 'En revisión';
-      case 'rechazado':
-        return 'Rechazado';
-      case 'requiereInformacion':
-        return 'Requiere información';
-      default:
-        return 'Perfil incompleto';
+      case 'aprobado': return 'Aprobado';
+      case 'enRevision': return 'En revisión';
+      case 'rechazado': return 'Rechazado';
+      case 'requiereInformacion': return 'Requiere información';
+      default: return 'Perfil incompleto';
     }
   };
   const abrirSolicitud = useCallback((u) => {
@@ -545,18 +564,22 @@ export default function PerfilAdmin() {
               )}
               {modo === 'password' && (
                 <form onSubmit={handleCambiarPassword} className="space-y-4">
-                  {[
-                    { label: 'Contraseña actual', key: 'actual' },
-                    { label: 'Nueva contraseña', key: 'nueva' },
-                    { label: 'Confirmar nueva contraseña', key: 'confirmar' },
-                  ].map((f, i) => (
-                    <div key={i}>
-                      <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">{f.label}</label>
-                      <input type="password" value={passwords[f.key]}
-                        onChange={e => setPasswords({ ...passwords, [f.key]: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" />
-                    </div>
-                  ))}
+                  <CampoPassword
+                    label="Contraseña actual"
+                    value={passwords.actual}
+                    onChange={e => setPasswords({ ...passwords, actual: e.target.value })}
+                  />
+                  <CampoPassword
+                    label="Nueva contraseña"
+                    value={passwords.nueva}
+                    onChange={e => setPasswords({ ...passwords, nueva: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-400 -mt-2">Mínimo 10 caracteres, una mayúscula, una minúscula y un número</p>
+                  <CampoPassword
+                    label="Confirmar nueva contraseña"
+                    value={passwords.confirmar}
+                    onChange={e => setPasswords({ ...passwords, confirmar: e.target.value })}
+                  />
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setModo('ver')}
                       className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
@@ -576,88 +599,6 @@ export default function PerfilAdmin() {
         {/* PESTAÑA GESTIÓN USUARIOS */}
         {pestana === 'gestion' && (
           <div className="space-y-6">
-
-            {false && (
-            <div className={surfaceCard}>
-              <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
-                <div>
-                  <h3 className="text-[#2C1A0E] font-bold">Actividad entre productor y comprador</h3>
-                  <p className="text-sm text-gray-500 mt-1">Aquí ves el flujo real entre los roles, no solo la aprobación de cuentas.</p>
-                </div>
-                <span className="rounded-full bg-[#F5ECD7] px-3 py-1 text-xs font-semibold text-[#7A4020]">
-                  {solicitudes.length} solicitudes registradas
-                </span>
-              </div>
-              <div className="p-4 md:p-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-[#E7D9BF] bg-[#FCF8F1] px-4 py-4">
-                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#8B7355]">Abiertas</p>
-                    <p className="mt-1 text-3xl font-black text-[#2C1A0E]">{solicitudesAbiertas.length}</p>
-                  </div>
-                  <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-4">
-                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-green-700">Respondidas</p>
-                    <p className="mt-1 text-3xl font-black text-green-700">{solicitudesRespondidas.length}</p>
-                  </div>
-                  <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4">
-                    <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-yellow-700">Pendientes de comprador</p>
-                    <p className="mt-1 text-3xl font-black text-yellow-700">{solicitudesAbiertas.length}</p>
-                  </div>
-                </div>
-
-                {solicitudes.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#E7D9BF] bg-[#FFFCF7] px-4 py-5 text-sm text-gray-500">
-                    Aún no hay solicitudes entre productores y compradores para revisar.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {solicitudes.slice(0, 5).map((item) => (
-                      <div key={item._id} className="rounded-2xl border border-[#EFE3CD] bg-[#FFFCF7] px-4 py-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-[#2C1A0E]">
-                              {item.productor?.nombre} {item.productor?.apellido} → {item.comprador?.nombreempresa}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {item.cantidadcargas} carga(s) · {(item.tipocafe || 'pergamino_seco').replaceAll('_', ' ')} · {new Date(item.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </p>
-                            <p className="text-xs text-[#7A4020] mt-1">
-                              {item.comprador?.municipio || 'El Pital'} · {item.comprador?.tipoempresa || item.comprador?.tipo || 'Comprador'}
-                            </p>
-                            {item.mensaje && (
-                              <p className="mt-2 text-sm text-[#6B5A4D]">{item.mensaje}</p>
-                            )}
-                            {item.respuestaComprador && (
-                              <div className="mt-2 rounded-xl bg-[#F0F7E8] px-3 py-2 text-sm text-[#2D6A4F]">
-                                Respuesta: {item.respuestaComprador}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-col items-start gap-2 md:items-end">
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              item.estado === 'abierta'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : item.estado === 'respondida'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {item.estado}
-                            </span>
-                            {item.comprador?.estadoRevision && (
-                              <span className="text-[11px] font-semibold text-gray-500">
-                                Perfil comprador: {getEstadoRevisionLabel(item.comprador.estadoRevision)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            )}
-
             {/* Suspendidos */}
             {usuariosSuspendidos.length > 0 && (
               <div className={surfaceCard}>
@@ -1027,7 +968,6 @@ export default function PerfilAdmin() {
                 <i className="fa-solid fa-xmark text-xl"></i>
               </button>
             </div>
-
             <div className="p-6 space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-[#F9F4E8] rounded-2xl p-5">
@@ -1039,70 +979,32 @@ export default function PerfilAdmin() {
                     <p className="text-gray-500">Estado actual: {modalSolicitud.usuario.estado}</p>
                   </div>
                 </div>
-
                 <div className="bg-[#FFF8EC] rounded-2xl p-5">
                   <p className="text-xs font-bold text-[#8B6B45] uppercase mb-3">Estado de revisión</p>
                   <div className="space-y-2 text-sm">
-                    <p className="text-[#2C1A0E] font-semibold">
-                      {getEstadoRevisionLabel(modalSolicitud.comprador?.estadoRevision)}
-                    </p>
-                    <p className="text-gray-500">
-                      {modalSolicitud.comprador?.motivoRevision || 'Sin observaciones registradas'}
-                    </p>
+                    <p className="text-[#2C1A0E] font-semibold">{getEstadoRevisionLabel(modalSolicitud.comprador?.estadoRevision)}</p>
+                    <p className="text-gray-500">{modalSolicitud.comprador?.motivoRevision || 'Sin observaciones registradas'}</p>
                   </div>
                 </div>
               </div>
-
               <div className="bg-white border border-[#E7D9BF] rounded-2xl p-5">
                 <p className="text-xs font-bold text-[#8B6B45] uppercase mb-4">Perfil de empresa</p>
                 {modalSolicitud.comprador ? (
                   <div className="grid md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400 text-xs">Empresa</p>
-                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.nombreempresa}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">Tipo</p>
-                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.tipoempresa || 'independiente'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">Municipio</p>
-                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.municipio || 'El Pital'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">Teléfono de empresa</p>
-                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.telefono || 'No registrado'}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-gray-400 text-xs">Dirección</p>
-                      <p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.direccion}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-gray-400 text-xs">Descripción</p>
-                      <p className="text-[#2C1A0E]">{modalSolicitud.comprador.descripcion || 'Sin descripción'}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-gray-400 text-xs">Servicios</p>
-                      <p className="text-[#2C1A0E]">
-                        {modalSolicitud.comprador.servicios?.length > 0
-                          ? modalSolicitud.comprador.servicios.join(', ')
-                          : 'Sin servicios registrados'}
-                      </p>
-                    </div>
+                    <div><p className="text-gray-400 text-xs">Empresa</p><p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.nombreempresa}</p></div>
+                    <div><p className="text-gray-400 text-xs">Tipo</p><p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.tipoempresa || 'independiente'}</p></div>
+                    <div><p className="text-gray-400 text-xs">Municipio</p><p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.municipio || 'El Pital'}</p></div>
+                    <div><p className="text-gray-400 text-xs">Teléfono de empresa</p><p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.telefono || 'No registrado'}</p></div>
+                    <div className="md:col-span-2"><p className="text-gray-400 text-xs">Dirección</p><p className="text-[#2C1A0E] font-semibold">{modalSolicitud.comprador.direccion}</p></div>
+                    <div className="md:col-span-2"><p className="text-gray-400 text-xs">Descripción</p><p className="text-[#2C1A0E]">{modalSolicitud.comprador.descripcion || 'Sin descripción'}</p></div>
+                    <div className="md:col-span-2"><p className="text-gray-400 text-xs">Servicios</p><p className="text-[#2C1A0E]">{modalSolicitud.comprador.servicios?.length > 0 ? modalSolicitud.comprador.servicios.join(', ') : 'Sin servicios registrados'}</p></div>
                     <div className="md:col-span-2">
                       <p className="text-gray-400 text-xs">Ubicación exacta</p>
-                      <p className="text-[#2C1A0E]">
-                        {Number.isFinite(modalSolicitud.comprador.latitud) && Number.isFinite(modalSolicitud.comprador.longitud)
-                          ? `Lat: ${modalSolicitud.comprador.latitud} · Lng: ${modalSolicitud.comprador.longitud}`
-                          : 'No registró ubicación exacta en el mapa'}
-                      </p>
+                      <p className="text-[#2C1A0E]">{Number.isFinite(modalSolicitud.comprador.latitud) && Number.isFinite(modalSolicitud.comprador.longitud) ? `Lat: ${modalSolicitud.comprador.latitud} · Lng: ${modalSolicitud.comprador.longitud}` : 'No registró ubicación exacta en el mapa'}</p>
                     </div>
                     <div className="md:col-span-2">
                       <p className="text-gray-400 text-xs mb-2">Punto de compra en el mapa</p>
-                      <MapaSolicitud
-                        latitud={modalSolicitud.comprador.latitud}
-                        longitud={modalSolicitud.comprador.longitud}
-                      />
+                      <MapaSolicitud latitud={modalSolicitud.comprador.latitud} longitud={modalSolicitud.comprador.longitud} />
                     </div>
                   </div>
                 ) : (
@@ -1110,33 +1012,10 @@ export default function PerfilAdmin() {
                 )}
               </div>
             </div>
-
             <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:flex-wrap sm:justify-end">
-              <button
-                onClick={() => setModalSolicitud(null)}
-                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Cerrar
-              </button>
-              <button
-                onClick={() => {
-                  setModalSolicitud(null);
-                  setModalRechazo(modalSolicitud.usuario);
-                  setMotivoRechazo('');
-                }}
-                className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-sm font-semibold hover:bg-red-200 transition-colors"
-              >
-                Rechazar
-              </button>
-              <button
-                onClick={() => {
-                  handleAprobarComprador(modalSolicitud.usuario._id);
-                  setModalSolicitud(null);
-                }}
-                className="px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
-              >
-                Aprobar
-              </button>
+              <button onClick={() => setModalSolicitud(null)} className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">Cerrar</button>
+              <button onClick={() => { setModalSolicitud(null); setModalRechazo(modalSolicitud.usuario); setMotivoRechazo(''); }} className="px-4 py-2 rounded-xl bg-red-100 text-red-600 text-sm font-semibold hover:bg-red-200 transition-colors">Rechazar</button>
+              <button onClick={() => { handleAprobarComprador(modalSolicitud.usuario._id); setModalSolicitud(null); }} className="px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors">Aprobar</button>
             </div>
           </div>
         </div>
@@ -1154,33 +1033,15 @@ export default function PerfilAdmin() {
                 <i className="fa-solid fa-xmark text-xl"></i>
               </button>
             </div>
-
             <div className="p-6">
-              <p className="text-sm text-[#2C1A0E] font-semibold mb-3">
-                {modalRechazo.nombre} {modalRechazo.apellido}
-              </p>
-              <textarea
-                value={motivoRechazo}
-                onChange={(e) => setMotivoRechazo(e.target.value)}
-                rows={5}
+              <p className="text-sm text-[#2C1A0E] font-semibold mb-3">{modalRechazo.nombre} {modalRechazo.apellido}</p>
+              <textarea value={motivoRechazo} onChange={(e) => setMotivoRechazo(e.target.value)} rows={5}
                 placeholder="Escribe con claridad por qué se rechaza el registro o qué debe corregir el comprador."
-                className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none"
-              />
+                className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none" />
             </div>
-
             <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
-              <button
-                onClick={() => { setModalRechazo(null); setMotivoRechazo(''); }}
-                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleRechazarComprador(modalRechazo._id)}
-                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
-              >
-                Enviar rechazo
-              </button>
+              <button onClick={() => { setModalRechazo(null); setMotivoRechazo(''); }} className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={() => handleRechazarComprador(modalRechazo._id)} className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors">Enviar rechazo</button>
             </div>
           </div>
         </div>
@@ -1188,30 +1049,20 @@ export default function PerfilAdmin() {
 
       {/* Modal crear/editar noticia */}
       {mostrarFormNoticia && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[#2C1A0E] font-bold text-lg">
-                {noticiaEditar ? 'Editar noticia' : 'Nueva noticia'}
-              </h3>
-              <button onClick={() => setMostrarFormNoticia(false)} className="text-gray-400 hover:text-gray-600">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
+              <h3 className="text-[#2C1A0E] font-bold text-lg">{noticiaEditar ? 'Editar noticia' : 'Nueva noticia'}</h3>
+              <button onClick={() => setMostrarFormNoticia(false)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form onSubmit={handleGuardarNoticia} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Título</label>
-                <input type="text" required value={formNoticia.titulo}
-                  onChange={e => setFormNoticia({ ...formNoticia, titulo: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
-                  placeholder="Título de la noticia" />
+                <input type="text" required value={formNoticia.titulo} onChange={e => setFormNoticia({ ...formNoticia, titulo: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" placeholder="Título de la noticia" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Categoría</label>
-                <select value={formNoticia.categoria}
-                  onChange={e => setFormNoticia({ ...formNoticia, categoria: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]">
+                <select value={formNoticia.categoria} onChange={e => setFormNoticia({ ...formNoticia, categoria: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]">
                   <option value="mercado">📈 Precios del café</option>
                   <option value="internacional">🌎 Mercado internacional</option>
                   <option value="clima">🌧️ Clima y cosechas</option>
@@ -1222,41 +1073,23 @@ export default function PerfilAdmin() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Resumen</label>
-                <textarea required value={formNoticia.resumen}
-                  onChange={e => setFormNoticia({ ...formNoticia, resumen: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-20"
-                  placeholder="Resumen breve de la noticia" />
+                <textarea required value={formNoticia.resumen} onChange={e => setFormNoticia({ ...formNoticia, resumen: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-20" placeholder="Resumen breve de la noticia" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Contenido</label>
-                <textarea required value={formNoticia.contenido}
-                  onChange={e => setFormNoticia({ ...formNoticia, contenido: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-32"
-                  placeholder="Contenido completo de la noticia" />
+                <textarea required value={formNoticia.contenido} onChange={e => setFormNoticia({ ...formNoticia, contenido: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E] resize-none h-32" placeholder="Contenido completo de la noticia" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">Fuente (opcional)</label>
-                <input type="text" value={formNoticia.fuente}
-                  onChange={e => setFormNoticia({ ...formNoticia, fuente: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
-                  placeholder="Ej: FNC Colombia" />
+                <input type="text" value={formNoticia.fuente} onChange={e => setFormNoticia({ ...formNoticia, fuente: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" placeholder="Ej: FNC Colombia" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2">URL de imagen (opcional)</label>
-                <input type="text" value={formNoticia.imagen}
-                  onChange={e => setFormNoticia({ ...formNoticia, imagen: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]"
-                  placeholder="https://..." />
+                <input type="text" value={formNoticia.imagen} onChange={e => setFormNoticia({ ...formNoticia, imagen: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-[#C8A96E]/30 text-sm focus:outline-none focus:border-[#C8A96E]" placeholder="https://..." />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setMostrarFormNoticia(false)}
-                  className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit"
-                  className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-                  {noticiaEditar ? 'Guardar cambios' : 'Publicar noticia'}
-                </button>
+                <button type="button" onClick={() => setMostrarFormNoticia(false)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button type="submit" className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">{noticiaEditar ? 'Guardar cambios' : 'Publicar noticia'}</button>
               </div>
             </form>
           </div>
@@ -1265,23 +1098,14 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar usuario */}
       {modalEliminarUsuario && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-user-slash text-red-400 text-2xl"></i>
-            </div>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-user-slash text-red-400 text-2xl"></i></div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar usuario?</h3>
             <p className="text-gray-400 text-sm mb-6">El usuario no podrá iniciar sesión. Esta acción no se puede deshacer.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button onClick={() => setModalEliminarUsuario(null)}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
-              <button onClick={handleEliminarUsuario}
-                className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
-                Eliminar
-              </button>
+              <button onClick={() => setModalEliminarUsuario(null)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={handleEliminarUsuario} className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">Eliminar</button>
             </div>
           </div>
         </div>
@@ -1289,23 +1113,14 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar reseña comprador */}
       {modalEliminarReseña && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
-            </div>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-trash text-red-400 text-2xl"></i></div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button onClick={() => setModalEliminarReseña(null)}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
-              <button onClick={handleEliminarReseña}
-                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-                Eliminar
-              </button>
+              <button onClick={() => setModalEliminarReseña(null)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={handleEliminarReseña} className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">Eliminar</button>
             </div>
           </div>
         </div>
@@ -1313,23 +1128,14 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar reseña plataforma */}
       {modalEliminarPlataforma && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-trash text-red-400 text-2xl"></i>
-            </div>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-trash text-red-400 text-2xl"></i></div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar reseña?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button onClick={() => setModalEliminarPlataforma(null)}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
-              <button onClick={handleEliminarPlataforma}
-                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-                Eliminar
-              </button>
+              <button onClick={() => setModalEliminarPlataforma(null)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={handleEliminarPlataforma} className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">Eliminar</button>
             </div>
           </div>
         </div>
@@ -1337,23 +1143,14 @@ export default function PerfilAdmin() {
 
       {/* Modal eliminar noticia */}
       {modalEliminarNoticia && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl md:p-8">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="fa-solid fa-newspaper text-red-400 text-2xl"></i>
-            </div>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-solid fa-newspaper text-red-400 text-2xl"></i></div>
             <h3 className="text-[#2C1A0E] font-bold text-lg mb-2">¿Eliminar noticia?</h3>
             <p className="text-gray-400 text-sm mb-6">Esta acción no se puede deshacer.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button onClick={() => setModalEliminarNoticia(null)}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Cancelar
-              </button>
-              <button onClick={handleEliminarNoticia}
-                className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">
-                Eliminar
-              </button>
+              <button onClick={() => setModalEliminarNoticia(null)} className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancelar</button>
+              <button onClick={handleEliminarNoticia} className="flex-1 bg-[#2C1A0E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#3D1F0F] transition-colors">Eliminar</button>
             </div>
           </div>
         </div>
