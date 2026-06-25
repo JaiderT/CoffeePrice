@@ -135,7 +135,7 @@ function Sidebar() {
         </div>
       </div>
 
-      <div className="fixed inset-y-0 left-0 top-0 hidden w-16 flex-col border-r border-white/10 bg-[#2C1A0E]/98 py-4 backdrop-blur md:flex">
+      <div className="fixed inset-y-0 left-0 top-0 hidden w-16 flex-col border-r border-white/10 bg-[#2C1A0E]/98 py-4 backdrop-blur md:flex z-50">
         <div className="mb-4 flex h-10 w-10 items-center justify-center self-center rounded-xl bg-[#C8A96E] text-xl">
           ☕
         </div>
