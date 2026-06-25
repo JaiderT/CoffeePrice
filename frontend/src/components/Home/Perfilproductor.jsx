@@ -69,8 +69,9 @@ export default function PerfilProductor() {
       mostrarMensaje('exito', 'Contraseña actualizada correctamente');
       setPasswords({ actual: '', nueva: '', confirmar: '' });
       setModo('ver');
-    } catch {
-      mostrarMensaje('error', 'Contraseña actual incorrecta');
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al cambiar la contraseña';
+      mostrarMensaje('error', msg);
     } finally {
       setLoading(false);
     }
@@ -192,6 +193,7 @@ export default function PerfilProductor() {
               <form onSubmit={handleCambiarPassword} className="space-y-4">
                 <InputField label="Contraseña actual" value={passwords.actual} onChange={v => setPasswords({ ...passwords, actual: v })} type="password" />
                 <InputField label="Nueva contraseña" value={passwords.nueva} onChange={v => setPasswords({ ...passwords, nueva: v })} type="password" />
+                <p className="text-xs text-gray-400 -mt-2">Mínimo 10 caracteres, una mayúscula, una minúscula y un número</p>
                 <InputField label="Confirmar nueva contraseña" value={passwords.confirmar} onChange={v => setPasswords({ ...passwords, confirmar: v })} type="password" />
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setModo('ver')}
