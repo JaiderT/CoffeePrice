@@ -26,11 +26,19 @@ function NuevoCafe({ tiposCafe, setTiposCafe, guardarConfig, mostrarMsg }) {
       <p className="text-xs font-semibold text-[#2C1A0E] uppercase mb-3">Agregar nuevo tipo</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Nombre</label>
+          <label className="block text-xs text-gray-500 mb-1">Nombre <span className="text-red-400">*</span></label>
           <input type="text" value={form.label}
             onChange={e => setForm({ ...form, label: e.target.value })}
             placeholder="Ej: Tostado"
             className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Valor <span className="text-red-400">*</span></label>
+          <input type="text" value={form.value}
+            onChange={e => setForm({ ...form, value: e.target.value })}
+            placeholder="Ej: tostado"
+            className="w-full px-3 py-2 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E]" />
+          <p className="text-xs text-gray-400 mt-1">Sin espacios ni mayúsculas</p>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Emoji</label>

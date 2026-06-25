@@ -217,26 +217,9 @@ export default function PerfilComprador() {
       mostrarMensaje('error', 'Las contraseñas nuevas no coinciden');
       return;
     }
-
-    setLoading(true);
-    try {
-      await axios.put(`${API_URL}/api/usuario/password`, {
-        passwordactual: passwords.actual,
-        passwordnueva: passwords.nueva,
-      }, { withCredentials: true });
-      mostrarMensaje('exito', 'Contraseña actualizada correctamente');
-      setPasswords({ actual: '', nueva: '', confirmar: '' });
-      setModo('ver');
-    } catch {
-      mostrarMensaje('error', 'Contraseña actual incorrecta');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEliminarCuenta = async () => {
-    try {
-      await axios.delete(`${API_URL}/api/usuario/perfil`, { withCredentials: true });
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al cambiar la contraseña';
+      mostrarMensaje('error', msg);
       logout();
       navigate('/login');
     } catch {
@@ -408,6 +391,7 @@ export default function PerfilComprador() {
               <form onSubmit={handleCambiarPassword} className="space-y-4">
                 <InputField label="Contraseña actual" value={passwords.actual} onChange={(v) => setPasswords({ ...passwords, actual: v })} type="password" />
                 <InputField label="Nueva contraseña" value={passwords.nueva} onChange={(v) => setPasswords({ ...passwords, nueva: v })} type="password" />
+                <p className="text-xs text-gray-400 -mt-2">Mínimo 10 caracteres, una mayúscula, una minúscula y un número</p>
                 <InputField label="Confirmar nueva contraseña" value={passwords.confirmar} onChange={(v) => setPasswords({ ...passwords, confirmar: v })} type="password" />
                 <BotonesForm onCancel={() => setModo('ver')} loading={loading} />
               </form>
