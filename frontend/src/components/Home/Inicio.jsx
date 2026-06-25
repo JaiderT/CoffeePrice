@@ -275,7 +275,7 @@ function Inicio() {
                     <p className="mt-1 text-[11px] text-[#D8CBBB]">Compradores registrados</p>
                   </div>
                   <div className="rounded-2xl bg-[#E1BE86] px-4 py-4 text-[#2E2118]">
-                    <p className="text-xl font-black">Gratis</p>
+                    <p className="text-xl font-black">Gratiss</p>
                     <p className="mt-1 text-[11px] text-[#6F4E31]">Para caficultores</p>
                   </div>
                 </div>

@@ -3,12 +3,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { randomInt } from "crypto";
 import { construirOpcionesCookie } from "../utils/cookieOptions.js";
-import { crearTransporteCorreo } from "../services/emailService.js";
+import { CorreoNoDisponibleError, enviarCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const transporter = crearTransporteCorreo();
 
 function construirSesionUsuario(usuario) {
   return {
@@ -42,8 +40,18 @@ async function generarHashCodigo(codigo) {
   return bcrypt.hash(codigo, 10);
 }
 
+function responderErrorCorreo(res, error) {
+  if (error instanceof CorreoNoDisponibleError || error?.statusCode === 503) {
+    return res.status(503).json({
+      message: "No pudimos enviar el correo en este momento. Revisa la configuracion del proveedor de correo en produccion.",
+    });
+  }
+
+  return res.status(500).json({ message: "Error en el servidor" });
+}
+
 export async function enviarCodigoVerificacion(email, nombre, codigo) {
-  await transporter.sendMail({
+  await enviarCorreo({
     from: `"support.coffeprice@gmail.com" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verifica tu cuenta de CoffePrice",
@@ -122,10 +130,19 @@ export const register = async (req, res) => {
     if (existeUsuario) {
       if (existeUsuario.codigoVerificacion) {
         const codigoPendiente = generarCodigoSeisDigitos();
+        const codigoAnterior = existeUsuario.codigoVerificacion;
+        const expiracionAnterior = existeUsuario.codigoVerificacionExpira;
         existeUsuario.codigoVerificacion = await generarHashCodigo(codigoPendiente);
         existeUsuario.codigoVerificacionExpira = new Date(Date.now() + 10 * 60 * 1000);
         await existeUsuario.save();
-        await enviarCodigoVerificacion(emailNormalizado, existeUsuario.nombre, codigoPendiente);
+        try {
+          await enviarCodigoVerificacionActual(emailNormalizado, existeUsuario.nombre, codigoPendiente);
+        } catch (emailError) {
+          existeUsuario.codigoVerificacion = codigoAnterior;
+          existeUsuario.codigoVerificacionExpira = expiracionAnterior;
+          await existeUsuario.save();
+          throw emailError;
+        }
         return res.status(200).json({
           message: "Ya existe una cuenta pendiente. Te reenviamos el código de verificación.",
         });
@@ -150,12 +167,17 @@ export const register = async (req, res) => {
     });
 
     await newUsuario.save();
-    await enviarCodigoVerificacion(emailNormalizado, nombre.trim(), codigo);
+    try {
+      await enviarCodigoVerificacionActual(emailNormalizado, nombre.trim(), codigo);
+    } catch (emailError) {
+      await Usuario.findByIdAndDelete(newUsuario._id).catch(() => null);
+      throw emailError;
+    }
 
     res.status(201).json({ message: "Código de verificación enviado al correo." });
   } catch (error) {
     console.error("Error en register:", error);
-    res.status(500).json({ message: "Error en el servidor" });
+    return responderErrorCorreo(res, error);
   }
 };
 
@@ -273,7 +295,7 @@ export const resendVerification = async (req, res) => {
     res.status(200).json({ message: "Código reenviado exitosamente" });
   } catch (error) {
     console.error("Error en resendVerification:", error);
-    res.status(500).json({ message: "Error en el servidor" });
+    return responderErrorCorreo(res, error);
   }
 };
 
