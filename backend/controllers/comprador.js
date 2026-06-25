@@ -90,7 +90,7 @@ export const createcomprador = async (req, res) => {
         }
 
         const destinatariosUnicos = [...new Set(destinatarios)];
-        await enviarSolicitudCompradorAdmin({
+        enviarSolicitudCompradorAdmin({
             destinatarios: destinatariosUnicos,
             nombreSolicitante: `${usuarioSolicitante?.nombre || ""} ${usuarioSolicitante?.apellido || ""}`.trim() || usuarioSolicitante?.email,
             emailSolicitante: usuarioSolicitante?.email || "No disponible",
@@ -103,6 +103,8 @@ export const createcomprador = async (req, res) => {
                 telefono: nuevoComprador.telefono,
                 direccion: nuevoComprador.direccion,
             },
+        }).catch((emailError) => {
+            console.error("Error al notificar registro de comprador:", emailError.message);
         });
 
         res.status(201).json({

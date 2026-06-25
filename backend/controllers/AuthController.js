@@ -1,20 +1,14 @@
 import Usuario from "../models/usuario.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import { randomInt } from "crypto";
 import { construirOpcionesCookie } from "../utils/cookieOptions.js";
+import { crearTransporteCorreo } from "../services/emailService.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const transporter = crearTransporteCorreo();
 
 function construirSesionUsuario(usuario) {
   return {

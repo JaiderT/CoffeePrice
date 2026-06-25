@@ -1,15 +1,35 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+dns.setDefaultResultOrder?.('ipv4first');
 
 function normalizarPasswordCorreo(password = '') {
   return String(password).replace(/\s+/g, '');
 }
 
+function parseBoolean(value, defaultValue) {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  return String(value).toLowerCase() === 'true';
+}
+
 export function crearTransporteCorreo() {
+  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const secure = parseBoolean(process.env.EMAIL_SECURE, port === 465);
+
   return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    ...(process.env.EMAIL_SERVICE
+      ? { service: process.env.EMAIL_SERVICE }
+      : { host, port, secure, requireTLS: !secure }),
     auth: {
       user: process.env.EMAIL_USER,
       pass: normalizarPasswordCorreo(process.env.EMAIL_PASS),
+    },
+    connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 8000),
+    greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 8000),
+    socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 12000),
+    tls: {
+      servername: host,
     },
   });
 }

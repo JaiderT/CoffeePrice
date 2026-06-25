@@ -41,11 +41,9 @@ export const createNoticia = async (req, res) => {
         const noticia = new Noticia({ titulo, resumen, contenido, categoria, fuente, imagen });
         await noticia.save();
 
-        try {
-            await notificarAlertasNoticia(noticia);
-        } catch (alertaError) {
+        notificarAlertasNoticia(noticia).catch((alertaError) => {
             console.error('Error al verificar alertas de noticias:', alertaError.message);
-        }
+        });
 
         res.status(201).json(noticia);
     } catch (error) {
