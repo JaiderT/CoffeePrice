@@ -113,7 +113,7 @@ export default function PerfilComprador() {
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
   const [ubicandoMapa, setUbicandoMapa] = useState(false);
-  const [modalAccion, setModalAccion] = useState(null); // 'eliminar' | 'suspender'
+  const [modalAccion, setModalAccion] = useState(null);
 
   useEffect(() => {
     if (usuario) {
@@ -217,9 +217,26 @@ export default function PerfilComprador() {
       mostrarMensaje('error', 'Las contraseñas nuevas no coinciden');
       return;
     }
+    setLoading(true);
+    try {
+      await axios.put(`${API_URL}/api/usuario/password`, {
+        passwordactual: passwords.actual,
+        passwordnueva: passwords.nueva,
+      }, { withCredentials: true });
+      mostrarMensaje('exito', 'Contraseña actualizada correctamente');
+      setPasswords({ actual: '', nueva: '', confirmar: '' });
+      setModo('ver');
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al cambiar la contraseña';
       mostrarMensaje('error', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEliminarCuenta = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/usuario/perfil`, { withCredentials: true });
       logout();
       navigate('/login');
     } catch {
@@ -331,7 +348,7 @@ export default function PerfilComprador() {
 
         {mensaje && (
           <div className={`mb-6 px-4 py-3 rounded-2xl text-sm font-semibold shadow-[0_8px_18px_rgba(77,48,24,0.05)] ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {mensaje.tipo === 'exito' ? 'OK' : 'Error'} {mensaje.texto}
+            {mensaje.tipo === 'exito' ? '✅' : '❌'} {mensaje.texto}
           </div>
         )}
 
@@ -373,7 +390,7 @@ export default function PerfilComprador() {
                   onClick={() => setModo('password')}
                   className="mt-4 w-full border border-[#C8A96E]/40 text-[#7A4020] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5ECD7] transition-colors"
                 >
-                  Cambiar contraseña
+                  <i className="fa-solid fa-lock mr-2"></i>Cambiar contraseña
                 </button>
               </div>
             )}
@@ -677,9 +694,9 @@ function InputField({ label, value, onChange, type = 'text', placeholder = '' })
           <button
             type="button"
             onClick={() => setVerPassword(!verPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8A96E] transition-colors"
           >
-            {verPassword ? 'Ocultar' : 'Ver'}
+            <i className={`fa-solid ${verPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
           </button>
         )}
       </div>
