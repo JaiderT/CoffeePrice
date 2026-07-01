@@ -1,4 +1,5 @@
 import ResenaPlataforma from "../models/resenaPlataforma.js";
+import { contieneLenguajeOfensivo } from "../utils/filtroLenguaje.js";
 
 export const getReseñasAprobadas = async (req, res) => {
   try {
@@ -25,6 +26,10 @@ export const getTodasReseñas = async (req, res) => {
 export const createReseña = async (req, res) => {
   try {
     const { calificacion, comentario, lugar } = req.body;
+    if (contieneLenguajeOfensivo(comentario)) {
+      return res.status(400).json({ message: "Tu comentario contiene lenguaje ofensivo. Por favor reformúlalo." });
+    }
+
     const yaExiste = await ResenaPlataforma.findOne({ usuario: req.user.id });
     if (yaExiste) {
       return res.status(400).json({ message: "Ya dejaste una reseña de la plataforma" });

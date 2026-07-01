@@ -2,6 +2,7 @@ import CompradorModel from "../models/comprador.js";
 import Usuario from "../models/usuario.js";
 import { ESTADOS_REVISION_COMPRADOR } from "../utils/compradorEstado.js";
 import { enviarSolicitudCompradorAdmin } from "../services/emailService.js";
+import { contieneLenguajeOfensivo } from "../utils/filtroLenguaje.js";
 
 export const getcompradores = async (req, res) => {
     try {
@@ -33,6 +34,9 @@ export const createcomprador = async (req, res) => {
         if (!soloLetras.test(nombreempresa.trim())) {
             return res.status(400).json({ message: "El nombre de la empresa solo puede contener letras" });
         }
+        if (contieneLenguajeOfensivo(nombreempresa) || (descripcion && contieneLenguajeOfensivo(descripcion))) {
+            return res.status(400).json({ message: "El nombre de la empresa o la descripción contienen lenguaje ofensivo" });
+        }
 
         // Verificar duplicados ignorando números al final
         const nombreBase = nombreempresa.trim().replace(/\d+$/, '').trim().toLowerCase();
@@ -58,7 +62,7 @@ export const createcomprador = async (req, res) => {
             nombreempresa: nombreempresa.trim(),
             tipoempresa: tipoempresa || "independiente",
             direccion: direccion.trim(),
-            municipio: municipio || "El Pital",
+            municipio: "El Pital",
             telefono: telefono?.trim() || null,
             descripcion: descripcion?.trim() || null,
             servicios: servicios || [],
@@ -140,6 +144,9 @@ export const updatecomprador = async (req, res) => {
             if (!soloLetras.test(nombreempresa.trim())) {
                 return res.status(400).json({ message: "El nombre de la empresa solo puede contener letras" });
             }
+            if (contieneLenguajeOfensivo(nombreempresa)) {
+                return res.status(400).json({ message: "El nombre de la empresa contiene lenguaje ofensivo" });
+            }
             // Verificar duplicados ignorando números al final
             const nombreBase = nombreempresa.trim().replace(/\d+$/, '').trim().toLowerCase();
             const todasEmpresas = await CompradorModel.find({ _id: { $ne: compradorExistente._id } }, 'nombreempresa');
@@ -154,8 +161,11 @@ export const updatecomprador = async (req, res) => {
         }
 
         if (tipoempresa !== undefined) compradorExistente.tipoempresa = tipoempresa;
-        if (municipio !== undefined) compradorExistente.municipio = municipio;
-        if (descripcion !== undefined) compradorExistente.descripcion = descripcion?.trim() || null;
+        if (descripcion !== undefined) {
+        if (descripcion && contieneLenguajeOfensivo(descripcion)) {
+            return res.status(400).json({ message: "La descripción contiene lenguaje ofensivo" });
+        }
+        compradorExistente.descripcion = descripcion?.trim() || null;}
         if (servicios !== undefined) compradorExistente.servicios = servicios;
         if (direccion !== undefined) compradorExistente.direccion = direccion.trim();
         if (telefono !== undefined) compradorExistente.telefono = telefono.trim();

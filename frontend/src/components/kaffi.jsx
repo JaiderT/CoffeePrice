@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { KAFFI_GUIDES, getAssistForPath, getGuidesForPath } from '../data/kaffiGuides';
 import { useAuth } from '../context/useAuth.js';
+import { esLenguajeOfensivo } from '../utils/filtroLenguaje.js';
 
 const MENSAJE_INICIAL =
   'Buenas. Soy Kaffi y estoy para ayudarle con la plataforma sin enredos.';
@@ -10,37 +11,11 @@ const MENSAJE_INICIAL =
 const STORAGE_PINNED = 'kaffi_panel_pinned';
 const HIGHLIGHT_CLASS =
   'ring-4 ring-[#C8A96E] ring-offset-4 ring-offset-[#FFF8EC] shadow-[0_0_0_6px_rgba(200,169,110,0.20)]';
-const PATRONES_OFENSIVOS = [
-  /\bidiot[ao]s?\b/,
-  /\bimbecil(?:es)?\b/,
-  /\bestupid[oa]s?\b/,
-  /\bpendej[oa]s?\b/,
-  /\bmaric[ao]n(?:es)?\b/,
-  /\bhijueputa\b/,
-  /\bhpta\b/,
-  /\bmalparid[oa]s?\b/,
-  /\bgonorre?a\b/,
-  /\bpiro+b[oa]s?\b/,
-  /\bcallate\b/,
-  /\bno sirves\b/,
-  /\bque inutil\b/,
-];
+
 
 function leerBooleano(key, fallback = false) {
   const value = localStorage.getItem(key);
   return value == null ? fallback : value === 'true';
-}
-
-function normalizarTexto(value = '') {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
-
-function esLenguajeOfensivo(value = '') {
-  const texto = normalizarTexto(value);
-  return PATRONES_OFENSIVOS.some((patron) => patron.test(texto));
 }
 
 function leerDatosPaginaKaffi() {

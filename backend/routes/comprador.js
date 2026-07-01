@@ -18,15 +18,6 @@ const router = express.Router();
 
 const CENTROS_MUNICIPIO = {
     "el pital": [2.266205, -75.805401],
-    "pitalito": [1.8537, -76.0517],
-    "acevedo": [1.8043, -75.8893],
-    "la argentina": [2.1962, -75.9805],
-    "tarqui": [2.1107, -75.8238],
-    "suaza": [1.9767, -75.7947],
-    "palestina": [1.7238, -76.1347],
-    "elias": [2.0131, -75.9395],
-    "saladoblanco": [1.9933, -76.0457],
-    "isnos": [1.927, -76.2148],
 };
 
 function normalizarClaveMunicipio(valor = "") {
@@ -67,7 +58,7 @@ function construirUbicacionGeneral(comprador = {}) {
     return "Ubicación general disponible";
 }
 
-export function sanitizarCompradorPublico(comprador = {}, extras = {}) {
+export function sanitizarCompradorPublico(comprador = {}, extras = {}, opciones = {}) {
     const tieneCoordenadasExactas =
         Number.isFinite(Number(comprador.latitud)) &&
         Number.isFinite(Number(comprador.longitud));
@@ -84,13 +75,14 @@ export function sanitizarCompradorPublico(comprador = {}, extras = {}) {
         tipoempresa: comprador.tipoempresa || "independiente",
         municipio: comprador.municipio || null,
         ubicacionGeneral: construirUbicacionGeneral(comprador),
-        direccion: null,
-        telefono: null,
+        direccion: opciones.mostrarContacto ? (comprador.direccion || null) : null,
+        telefono: opciones.mostrarContacto ? (comprador.telefono || null) : null,
         horarioApertura: comprador.horarioApertura || null,
         horarioCierre: comprador.horarioCierre || null,
         descripcion: comprador.descripcion || null,
         servicios: Array.isArray(comprador.servicios) ? comprador.servicios : [],
-        contactoRestringido: true,
+        contactoRestringido: !opciones.mostrarContacto,
+
         ...coords,
         ...extras,
     };
@@ -115,7 +107,7 @@ const authOpcional = (req, res, next) => {
 router.get("/", authMiddleware, roleMiddleware("admin"), getcompradores);
 router.post("/", authMiddleware, roleMiddleware("comprador"), createcomprador);
 router.get("/usuario/:usuarioId", authMiddleware, getcompradorByUsuario);
-router.get("/mapa", async (req, res) => {
+router.get("/mapa", authOpcional, async (req, res) => {
     try {
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
@@ -170,7 +162,7 @@ router.get("/mapa", async (req, res) => {
                 tipocafe: precio?.tipocafe ?? null,
                 unidadPrecio: precio?.unidad ?? "carga",
                 precioActualizadoAt: precio?.updatedAt ?? null,
-            });
+            }, { mostrarContacto: Boolean(req.user) });
         });
 
         res.json(respuesta);
@@ -201,7 +193,7 @@ router.get("/:id", authOpcional, async (req, res) => {
             if (!compradorVisible) {
                 return res.status(404).json({ message: "Comprador no encontrado" });
             }
-            return res.json(sanitizarCompradorPublico(comprador));
+            return res.json(sanitizarCompradorPublico(comprador, {}, { mostrarContacto: true }));
         }
 
         return res.json(comprador);

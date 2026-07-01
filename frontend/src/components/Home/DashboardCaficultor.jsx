@@ -138,7 +138,7 @@ export default function DashboardProductor() {
   const [rangoGrafica, setRangoGrafica] = useState("30D");
 
   const [noticias, setNoticias] = useState([]);
-  const [cargas, setCargas]     = useState(3);
+  const [cargas, setCargas]     = useState('3');
 
   const mostrarMsg = (tipo, texto) => {
     setMensaje({ tipo, texto });
@@ -316,7 +316,9 @@ export default function DashboardProductor() {
     } finally { setGuardandoAlerta(false); }
   };
 
-  const totalVenta = precioMasAlto * cargas;
+const cargasNum = Number(cargas) || 0;
+const totalVenta = precioMasAlto * cargasNum;
+
 
   const diasPorRango = {
     "7D": 7,
@@ -358,7 +360,7 @@ export default function DashboardProductor() {
     : 0;
 
   const SkeletonBox = ({ h = 'h-52', extra = '' }) => (
-    <div className={`${h} bg-gradient-to-br from-[#F8F1E2] to-[#EFE3CC] rounded-[22px] border border-[#E7D9BF]/70 animate-pulse ${extra}`} />
+    <div className={`${h} bg-linear-to-br from-[#F8F1E2] to-[#EFE3CC] rounded-[22px] border border-[#E7D9BF]/70 animate-pulse ${extra}`} />
   );
 
   return (
@@ -687,10 +689,21 @@ export default function DashboardProductor() {
             <div className="bg-white rounded-[22px] p-5 shadow-[0_10px_30px_rgba(77,48,24,0.06)] border border-[#E7D9BF]">
               <p className="text-[#2C1A0E] font-bold text-sm mb-1">🧮 Calculadora rápida</p>
               <p className="text-gray-400 text-xs mb-4">¿Cuánto recibirías si vendes hoy?</p>
-              <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Cargas</label>
+            <label className="block text-xs font-semibold text-[#2C1A0E] mb-2">Cargas</label>
               <input
                 type="number" min={1} max={999} value={cargas}
-                onChange={e => setCargas(Math.max(1, Number(e.target.value)))}
+                onChange={e => {
+                  const val = e.target.value;
+                  // Permite borrar el campo por completo y escribir libremente
+                  if (val === '' || /^\d{1,3}$/.test(val)) {
+                    setCargas(val);
+                  }
+                }}
+                onBlur={() => {
+                  // Solo al salir del campo se corrige si quedó vacío o fuera de rango (1 a 999)
+                  const n = Math.min(999, Math.max(1, Number(cargas) || 1));
+                  setCargas(String(n));
+                }}
                 className="w-full px-4 py-3 rounded-xl border border-[#E7D9BF] text-sm focus:outline-none focus:border-[#C8A96E] bg-[#FDFAF5] mb-4"
               />
               <div className="bg-[#2C1A0E] rounded-2xl p-4 flex items-center justify-between shadow-[0_10px_24px_rgba(44,26,14,0.14)]">

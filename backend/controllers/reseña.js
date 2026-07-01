@@ -1,4 +1,5 @@
 import Reseña from "../models/reseña.js";
+import { contieneLenguajeOfensivo } from "../utils/filtroLenguaje.js";
 
 export const getReseñasByComprador = async (req, res) => {
   try {
@@ -32,6 +33,9 @@ export const createReseña = async (req, res) => {
   try {
     const { comprador, calificacion, comentario, tags } = req.body;
     const productor = req.user?.id;
+    if (comentario && contieneLenguajeOfensivo(comentario)) {
+      return res.status(400).json({ message: "El comentario contiene lenguaje ofensivo" });
+    }
 
     const reseñaExistente = await Reseña.exists({ productor, comprador });
     if (reseñaExistente) {
@@ -53,6 +57,9 @@ export const createReseña = async (req, res) => {
 export const updateReseña = async (req, res) => {
   try {
     const { calificacion, comentario, tags } = req.body;
+    if (comentario && contieneLenguajeOfensivo(comentario)) {
+      return res.status(400).json({ message: "El comentario contiene lenguaje ofensivo" });
+    }
 
     const reseña = await Reseña.findByIdAndUpdate(
       req.params.id,

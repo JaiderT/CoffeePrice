@@ -26,3 +26,19 @@ test("sanitizarCompradorPublico oculta telefono y direccion exacta", () => {
   assert.equal(typeof publico.latitud, "number");
   assert.equal(typeof publico.longitud, "number");
 });
+
+test("sanitizarCompradorPublico muestra telefono y direccion cuando mostrarContacto es true", () => {
+  const comprador = {
+    _id: "cmp-1",
+    nombreempresa: "Cafe Centro",
+    municipio: "El Pital",
+    direccion: "Calle 1 # 2-3",
+    telefono: "3001234567",
+  };
+
+  const publico = sanitizarCompradorPublico(comprador, {}, { mostrarContacto: true });
+
+  assert.equal(publico.direccion, "Calle 1 # 2-3");
+  assert.equal(publico.telefono, "3001234567");
+  assert.equal(publico.contactoRestringido, false);
+});

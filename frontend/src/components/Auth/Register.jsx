@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { abrirGuiaKaffi } from "../../utils/kaffiEvents";
+import TerminosModal from "./TerminosModal.jsx";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [terminos, setTerminos] = useState(false);
+  const [mostrarTerminos, setMostrarTerminos] = useState(false);
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +22,7 @@ export default function Register() {
   const [celularError, setCelularError] = useState("");
 
   const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]*$/;
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
   function validarCelular(numero) {
     const digits = numero.replace(/\s+/g, "").replace(/^(\+57)/, "");
@@ -67,7 +70,7 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!terminos) {
-      alert("Por favor acepta los términos de uso para continuar.");
+      setMostrarTerminos(true);
       return;
     }
     if (!soloLetras.test(nombre) || nombre.trim().length === 0) {
@@ -83,7 +86,10 @@ export default function Register() {
       setError(celularMsg);
       return;
     }
-    if (password.length < 8) return;
+    if (!PASSWORD_REGEX.test(password)) {
+      setError("La contraseña debe tener mínimo 10 caracteres, con al menos una mayúscula, una minúscula y un número.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       return;
@@ -376,17 +382,28 @@ export default function Register() {
                 )}
               </div>
 
-              <label className="flex items-start gap-2.5 mb-2 cursor-pointer">
+              <div className="mb-2">
+              <label className="flex items-start gap-2.5 cursor-pointer">
                 <input type="checkbox" checked={terminos} onChange={e => setTerminos(e.target.checked)}
                   className="accent-[#C8814A] w-3.5 h-3.5 mt-0.5 shrink-0"/>
                 <span className="text-xs text-gray-500">
-                  Acepto los{" "}
-                  <a href="#" className="text-[#C8814A] font-semibold hover:underline">Términos de uso</a>
-                  {" "}y la{" "}
-                  <a href="#" className="text-[#C8814A] font-semibold hover:underline">Política de privacidad</a>
-                  {" "}de CoffePrice
+                  Acepto los Términos de uso y la Política de privacidad de CoffePrice
                 </span>
               </label>
+              <button
+                type="button"
+                onClick={() => setMostrarTerminos(true)}
+                className="mt-1 ml-6 text-xs text-[#C8814A] font-semibold hover:underline"
+              >
+                Leer términos y política de privacidad →
+              </button>
+            </div>
+            
+            <TerminosModal
+              abierto={mostrarTerminos}
+              onCerrar={() => setMostrarTerminos(false)}
+              onAceptar={() => { setTerminos(true); setMostrarTerminos(false); }}
+            />
 
               {error && (
                 <div className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center gap-2">

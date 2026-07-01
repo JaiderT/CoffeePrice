@@ -36,15 +36,6 @@ const TIPOS_EMPRESA = [
 
 const MUNICIPIOS = [
   'El Pital',
-  'Pitalito',
-  'Acevedo',
-  'La Argentina',
-  'Tarqui',
-  'Suaza',
-  'Palestina',
-  'Elías',
-  'Saladoblanco',
-  'Isnos',
 ];
 
 const SERVICIOS_OPCIONES = [
@@ -355,6 +346,11 @@ function DashboardComprador() {
     ? Math.round(preciosOtros.reduce((a, b) => a + b, 0) / preciosOtros.length) : 0;
   const mejorPrecio = todosPrecios.length > 0 ? Math.max(...todosPrecios.map(p => p.preciocarga)) : 0;
   const porEncima = precioActual > promercado;
+  const rankingHoy = [...todosPrecios].sort((a, b) => b.preciocarga - a.preciocarga);
+  const posicionRanking = comprador
+    ? rankingHoy.findIndex(p => p.comprador?._id === comprador._id) + 1
+    : 0;
+  const totalRanking = rankingHoy.length;
 
   const datosGrafica = historial.slice(0, 7).reverse().map((h, i) => ({
     dia: i === historial.slice(0, 7).length - 1 ? 'Hoy' : `${i + 1}d`,
@@ -643,8 +639,16 @@ function DashboardComprador() {
               <p className="text-[#2C1A0E] text-2xl font-black tracking-tight mt-2">{precios.length}</p>
               <p className="text-gray-400 text-xs mt-1">productos</p>
             </div>
+            <div className={metricCard}>
+              <p className="text-gray-400 text-xs uppercase font-semibold">Ranking hoy en El Pital</p>
+              <p className="text-[#2C1A0E] text-2xl font-black tracking-tight mt-2">
+                {posicionRanking > 0 ? `#${posicionRanking}` : '—'}
+              </p>
+              <p className="text-gray-400 text-xs mt-1">
+                {totalRanking > 0 ? `de ${totalRanking} compradores` : 'Sin datos aún'}
+              </p>
+            </div>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className={`lg:col-span-2 ${cardBase} p-5`}>
               <p className={`${sectionTitle} text-sm mb-4`}>📈 Evolución de mis precios</p>

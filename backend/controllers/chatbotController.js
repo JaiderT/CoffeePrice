@@ -1,4 +1,8 @@
 import OpenAI from 'openai';
+import { normalizarTexto, contieneLenguajeOfensivo } from '../utils/filtroLenguaje.js';
+import PrecioModel from '../models/precio.js';
+import PrecioFNC from '../models/PrecioFNC.js';
+import { esCompradorAprobado } from '../utils/compradorEstado.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -19,33 +23,47 @@ Si la persona está en login, registro o verificación, responde con pasos corto
 Si la persona esta en precios o predicciones, responde con recomendaciones accionables, no con frases genericas.
 Si la persona usa lenguaje ofensivo, no devuelvas ofensas: marca un limite con respeto y vuelve a ofrecer ayuda util.`;
 
-const PATRONES_OFENSIVOS = [
-  /\bidiot[ao]s?\b/,
-  /\bimbecil(?:es)?\b/,
-  /\bestupid[oa]s?\b/,
-  /\bpendej[oa]s?\b/,
-  /\bmaric[ao]n(?:es)?\b/,
-  /\bhijueputa\b/,
-  /\bhpta\b/,
-  /\bmalparid[oa]s?\b/,
-  /\bgonorre?a\b/,
-  /\bpiro+b[oa]s?\b/,
-  /\bperr[oa]s?\b/,
-  /\bcallate\b/,
-  /\bno sirves\b/,
-  /\bque inutil\b/,
-];
-
-function normalizarTexto(value = '') {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
+function esOfensivo(value = '') {
+  return contieneLenguajeOfensivo(value);
 }
 
-function esOfensivo(value = '') {
-  const texto = normalizarTexto(value);
-  return PATRONES_OFENSIVOS.some((patron) => patron.test(texto));
+async function obtenerContextoPreciosReales() {
+  try {
+    const precios = await PrecioModel.find()
+      .populate({
+        path: 'comprador',
+        select: 'nombreempresa usuario estadoRevision',
+        populate: { path: 'usuario', select: 'estado' },
+      })
+      .sort({ preciocarga: -1 });
+ 
+    const vistos = new Set();
+    const activos = precios.filter((p) => {
+      const key = p.comprador?._id?.toString();
+      if (!key || vistos.has(key)) return false;
+      if (!esCompradorAprobado(p.comprador?.usuario, p.comprador)) return false;
+      vistos.add(key);
+      return true;
+    });
+ 
+    const mejoresPreciosHoy = activos.slice(0, 5).map((p) => ({
+      comprador: p.comprador?.nombreempresa || 'Comprador',
+      tipocafe: p.tipocafe,
+      preciocarga: p.preciocarga,
+      preciokg: p.preciokg,
+      actualizadoAt: p.updatedAt,
+    }));
+ 
+    const fnc = await PrecioFNC.findOne().sort({ createdAt: -1 });
+ 
+    return {
+      mejoresPreciosHoy,
+      precioFNC: fnc ? { precio: fnc.precio, fuente: fnc.fuente, fecha: fnc.createdAt } : null,
+    };
+  } catch (error) {
+    console.error('Error obteniendo precios reales para Kaffi:', error);
+    return { mejoresPreciosHoy: [], precioFNC: null };
+  }
 }
 
 function contieneAlguno(texto, palabras) {
@@ -258,6 +276,19 @@ function obtenerRespuestaGuiada({ ultimoMensaje, contexto }) {
       sugerencias: ['Ayudeme con esta pantalla', 'Explique paso a paso', 'Que me recomienda hacer'],
     };
   }
+  if (contieneAlguno(texto, ['de donde sale', 'de donde salio', 'fuente del precio', 'como calculan el precio', 'por que este precio', 'de donde viene este precio'])) {
+    const fuenteFNC = contexto?.datosPagina?.fuentePrecioFNC;
+    const fncTexto = fuenteFNC?.precio
+      ? ` El precio de referencia FNC (${Number(fuenteFNC.precio).toLocaleString('es-CO')} pesos) se toma directo de la Federación Nacional de Cafeteros y se actualiza automáticamente los días hábiles.`
+      : '';
+
+    return {
+      respuesta:
+        `Los precios por comprador los publica cada comprador registrado y aprobado en El Pital; se actualizan cuando ellos mismos cambian su precio, por eso cada tarjeta muestra la fecha de la última actualización.${fncTexto} Si un precio te parece desactualizado, revisa esa fecha antes de decidir con quién vender.`,
+      sugerencias: ['Quien paga mejor hoy', 'Comparar con FNC', 'Conviene vender hoy'],
+    };
+  }
+
 
   if (
     pagina === '/precios' ||
@@ -406,18 +437,37 @@ export const chatWithKaffi = async (req, res) => {
     }
 
     const ultimoMensaje = mensajes[mensajes.length - 1]?.content || '';
-    const guiada = obtenerRespuestaGuiada({ ultimoMensaje, contexto });
+    const datosReales = await obtenerContextoPreciosReales();
+    const mejorPrecioHoy = datosReales.mejoresPreciosHoy[0] || null;
+    const contextoEnriquecido = {
+      ...contexto,
+      datosPagina: {
+      ...contexto?.datosPagina,
+        resumenPrecios: contexto?.datosPagina?.resumenPrecios || {
+          mejorPrecio: mejorPrecioHoy?.preciocarga ?? null,
+          mejorComprador: mejorPrecioHoy?.comprador ?? null,
+          precioFNC: datosReales.precioFNC?.precio ?? null,
+          diferenciaVsFNC: mejorPrecioHoy && datosReales.precioFNC
+            ? mejorPrecioHoy.preciocarga - datosReales.precioFNC.precio
+            : null,
+        },
+        listaPreciosHoy: datosReales.mejoresPreciosHoy,
+        fuentePrecioFNC: datosReales.precioFNC,
+      },
+    };
+
+    const guiada = obtenerRespuestaGuiada({ ultimoMensaje, contexto: contextoEnriquecido });
 
     if (guiada) {
       return res.json(guiada);
     }
 
-    if (!esConsultaDelDominio({ ultimoMensaje, contexto })) {
-      return res.json(obtenerRespuestaFueraDeTema({ contexto }));
+    if (!esConsultaDelDominio({ ultimoMensaje, contexto: contextoEnriquecido })) {
+    return res.json(obtenerRespuestaFueraDeTema({ contexto: contextoEnriquecido }));
     }
 
-    const contextoSerializado = contexto
-      ? `Contexto actual en formato JSON: ${JSON.stringify(contexto)}. Contexto de negocio resumido: ${construirContextoDeNegocio(contexto)}`
+    const contextoSerializado = contextoEnriquecido
+    ? `Contexto actual en formato JSON: ${JSON.stringify(contextoEnriquecido)}. Contexto de negocio resumido: ${construirContextoDeNegocio(contextoEnriquecido)}`
       : null;
 
     const response = await openai.chat.completions.create({
@@ -431,7 +481,7 @@ export const chatWithKaffi = async (req, res) => {
       temperature: 0.6,
     });
 
-    const sugerencias = obtenerSugerencias({ ultimoMensaje, contexto });
+    const sugerencias = obtenerSugerencias({ ultimoMensaje, contexto: contextoEnriquecido });
 
     res.json({
       respuesta: response.choices[0].message.content,
