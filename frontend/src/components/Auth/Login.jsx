@@ -1,7 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth.js';
 import { abrirGuiaKaffi } from "../../utils/kaffiEvents";
+
+const MENSAJES_ERROR_URL = {
+  cuenta_rechazada: "Tu cuenta fue rechazada. Contacta al administrador.",
+  cuenta_eliminada: "Esta cuenta fue eliminada. Contacta al administrador.",
+  google_auth_failed: "No fue posible iniciar sesión con Google. Intenta de nuevo.",
+  google_failed: "No fue posible iniciar sesión con Google. Intenta de nuevo.",
+};
+
 
 export default function Login() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -11,8 +19,39 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [reactivationToken, setReactivationToken] = useState(null);
+  const [mostrarModalReactivar, setMostrarModalReactivar] = useState(false);
+  const [reactivando, setReactivando] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const tokenParam = searchParams.get("token");
+ 
+    if (errorParam === "cuenta_suspendida" && tokenParam) {
+      setReactivationToken(tokenParam);
+      setMostrarModalReactivar(true);
+    } else if (errorParam && MENSAJES_ERROR_URL[errorParam]) {
+      setError(MENSAJES_ERROR_URL[errorParam]);
+    }
+ 
+    if (errorParam || tokenParam) {
+      searchParams.delete("error");
+      searchParams.delete("token");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+ 
+  const redirigirSegunRol = (role) => {
+    setTimeout(() => {
+      if (role === "admin") navigate("/admin/dashboard");
+      else if (role === "comprador") navigate("/comprador/dashboard");
+      else navigate("/dashboard");
+    }, 1500);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,20 +74,60 @@ export default function Login() {
         return;
       }
 
+      if (data.requiereReactivacion) {
+        setReactivationToken(data.reactivationToken);
+        setMostrarModalReactivar(true);
+        return;
+      }
+
       login(data.user);
 
       setSuccess(`¡Bienvenido, ${data.name || data.user?.nombre || "de nuevo"}!`);
 
-      setTimeout(() => {
-        if (data.role === "admin") navigate("/admin/dashboard");
-        else if (data.role === "comprador") navigate("/comprador/dashboard");
-        else navigate("/dashboard");
-      }, 1500);
+      redirigirSegunRol(data.role);
     } catch {
       setError("Error al conectar con el servidor");
     } finally {
       setLoading(false);
     }
+  };
+  const handleConfirmarReactivacion = async () => {
+    if (!reactivationToken) return;
+    setReactivando(true);
+    setError(null);
+ 
+    try {
+      const response = await fetch(`${API_URL}/api/auth/reactivar-cuenta`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ reactivationToken }),
+      });
+ 
+      const data = await response.json();
+ 
+      if (!response.ok) {
+        setError(data.message || "No fue posible reactivar tu cuenta.");
+        setMostrarModalReactivar(false);
+        return;
+      }
+ 
+      login(data.user);
+      setMostrarModalReactivar(false);
+      setSuccess(data.message || "Tu cuenta fue reactivada correctamente.");
+      redirigirSegunRol(data.role);
+    } catch {
+      setError("Error al conectar con el servidor");
+      setMostrarModalReactivar(false);
+    } finally {
+      setReactivando(false);
+      setReactivationToken(null);
+    }
+  };
+ 
+  const handleCancelarReactivacion = () => {
+    setMostrarModalReactivar(false);
+    setReactivationToken(null);
   };
 
   return (
@@ -295,7 +374,37 @@ export default function Login() {
           </div>
         </div>
       </div>
-
+      {mostrarModalReactivar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl text-center">
+            <div className="text-4xl mb-3">⚠️</div>
+            <h3 className="text-lg font-black text-[#3B1F0A] mb-2 font-serif">
+              Tu cuenta está suspendida
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              ¿Deseas reactivarla ahora para volver a ingresar a CoffePrice?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmarReactivacion}
+                disabled={reactivando}
+                className="w-full py-2.5 rounded-xl text-white text-sm font-bold shadow-lg transition-all bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28] disabled:opacity-60"
+              >
+                {reactivando ? "Reactivando..." : "Sí, reactivar mi cuenta"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelarReactivacion}
+                disabled={reactivando}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:text-[#3B1F0A] transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

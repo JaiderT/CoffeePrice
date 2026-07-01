@@ -28,6 +28,15 @@ function generarToken(usuario, expiresIn = process.env.JWT_EXPIRES_IN || "7d") {
     { expiresIn }
   );
 }
+const REACTIVACION_PURPOSE = "reactivar_cuenta";
+
+function generarTokenReactivacion(usuario, expiresIn = "10m") {
+  return jwt.sign(
+    { id: usuario._id, purpose: REACTIVACION_PURPOSE },
+    process.env.JWT_SECRET,
+    { expiresIn }
+  );
+}
 
 function fijarCookieAuth(res, token, maxAge = 7 * 24 * 60 * 60 * 1000) {
   res.cookie("auth_token", token, construirOpcionesCookie({ maxAge }));
@@ -349,15 +358,18 @@ export const login = async (req, res) => {
       });
     }
 
-    if (user.estado === "suspendido") {
-      return res.status(403).json({
-        message: "Tu cuenta está suspendida. Contacta al administrador.",
-      });
-    }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Credenciales invalidas" });
+    }
+
+    if(user.estado === "suspendido") {
+      const reactivationToken = generarTokenReactivacion(user);
+      return res.status(200).json({
+        requiereReactivacion: true,
+        message: "Tu cuenta esta suspendida. ¿Deseas reactivarla para continuar?",
+        reactivationToken,
+      });
     }
 
     await Usuario.findByIdAndUpdate(user._id, { ultimaConexion: new Date() });
@@ -379,6 +391,59 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
+export const reactivarCuenta = async (req, res) => {
+  try {
+    const { reactivationToken } = req.body;
+ 
+    if (!reactivationToken) {
+      return res.status(400).json({ message: "Token de reactivación requerido" });
+    }
+ 
+    let payload;
+    try {
+      payload = jwt.verify(reactivationToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(400).json({
+        message: "El enlace de reactivación expiró o no es válido. Inicia sesión nuevamente.",
+      });
+    }
+ 
+    if (payload.purpose !== REACTIVACION_PURPOSE) {
+      return res.status(400).json({ message: "Token de reactivación no válido" });
+    }
+ 
+    const usuario = await Usuario.findById(payload.id);
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+ 
+    if (usuario.estado !== "suspendido") {
+      return res.status(400).json({ message: "Esta cuenta no está suspendida" });
+    }
+ 
+    usuario.estado = "activo";
+    usuario.ultimaConexion = new Date();
+    await usuario.save();
+ 
+    const token = generarToken(usuario);
+    fijarCookieAuth(res, token);
+ 
+    res.status(200).json({
+      message: "Tu cuenta fue reactivada correctamente. ¡Bienvenido de nuevo!",
+      user: construirSesionUsuario(usuario),
+      role: usuario.rol,
+      name: usuario.nombre,
+      apellido: usuario.apellido,
+      id: usuario._id,
+      celular: usuario.celular,
+      email: usuario.email,
+    });
+  } catch (error) {
+    console.error("Error en reactivarCuenta:", error);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
 
 export const googleCallback = (req, res) => {
   try {
@@ -393,8 +458,9 @@ export const googleCallback = (req, res) => {
       );
     }
     if (req.user.estado === "suspendido") {
+      const reactivationToken = generarTokenReactivacion(req.user);
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=cuenta_suspendida`
+        `${process.env.FRONTEND_URL}/login?error=cuenta_suspendida&token=${reactivationToken}`
       );
     }
     const token = generarToken(req.user);

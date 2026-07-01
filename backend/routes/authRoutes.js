@@ -7,6 +7,7 @@ import {
   googleCallback,
   verifyEmailCodigo,
   resendVerification,
+  reactivarCuenta,
 } from "../controllers/AuthController.js";
 import passport, { googleAuthConfigured } from "../config/passport.js";
 import { loginLimiter, registerLimiter, verifyLimiter, resendVerificationLimiter } from "../middlewares/rateLimit.js";
@@ -35,7 +36,7 @@ router.post("/login", loginLimiter, login);
 router.post("/register", registerLimiter, register);
 router.post("/verify-email", verifyLimiter, verifyEmailCodigo);
 router.post("/resend-verification", resendVerificationLimiter, resendVerification);
-
+router.post("/reactivar-cuenta", loginLimiter, reactivarCuenta);
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await Usuario.findById(req.user.id)
