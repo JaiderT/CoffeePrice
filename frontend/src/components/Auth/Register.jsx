@@ -23,6 +23,16 @@ export default function Register() {
 
   const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]*$/;
   const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+  
+  function evaluarRequisitosPassword(val) {
+    return {
+      longitud: val.length >= 10,
+      mayuscula: /[A-Z]/.test(val),
+      minuscula: /[a-z]/.test(val),
+      numero: /[0-9]/.test(val),
+    };
+  }
+
 
   function validarCelular(numero) {
     const digits = numero.replace(/\s+/g, "").replace(/^(\+57)/, "");
@@ -63,7 +73,8 @@ export default function Register() {
   const strengthLabels = ["", "Contraseña débil", "Contraseña regular", "Contraseña buena", "Contraseña muy segura"];
   const strengthColors = ["", "text-red-500", "text-yellow-500", "text-green-500", "text-green-700"];
   const segActive = ["bg-red-500", "bg-yellow-500", "bg-green-500", "bg-green-700"];
-
+  const requisitosPassword = evaluarRequisitosPassword(password);
+  const passwordValida = PASSWORD_REGEX.test(password);
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
@@ -90,6 +101,11 @@ export default function Register() {
       setError("La contraseña debe tener mínimo 10 caracteres, con al menos una mayúscula, una minúscula y un número.");
       return;
     }
+    if (!passwordValida) {
+      setError("La contraseña debe tener mínimo 10 caracteres, una mayúscula, una minúscula y un número.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       return;
@@ -311,8 +327,8 @@ export default function Register() {
                 <label className="block text-xs font-semibold text-[#3B1F0A] mb-2 uppercase tracking-wide">Contraseña</label>
                 <div className="relative group">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#C8814A] transition-colors">🔒</span>
-                  <input data-kaffi="register-password" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres"
-                    value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
+                  <input data-kaffi="register-password" type={showPassword ? "text" : "password"} placeholder="Mínimo 10 caracteres"
+                    value={password} onChange={e => setPassword(e.target.value)} required minLength={10}
                     className="w-full pl-9 pr-10 py-2.5 sm:py-3 rounded-xl border border-[#C8814A]/20 bg-gray-50/50 text-sm text-[#3B1F0A] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C8814A]/30 focus:border-[#C8814A] focus:bg-white transition-all"/>
                   <button type="button" onClick={() => setShowPassword(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8814A] transition-colors">
@@ -381,7 +397,23 @@ export default function Register() {
                   <p className="text-xs font-semibold mt-1.5 text-green-600">✅ Las contraseñas coinciden</p>
                 )}
               </div>
-
+              <div className="mt-2.5 rounded-xl border border-[#C8814A]/15 bg-[#FFF8EC] p-3">
+                  <p className="text-[11px] font-semibold text-[#3B1F0A] mb-1.5 uppercase tracking-wide">Tu contraseña debe tener:</p>
+                  <ul className="space-y-1">
+                    <li className={`text-xs flex items-center gap-1.5 ${requisitosPassword.longitud ? "text-green-600" : "text-gray-400"}`}>
+                      <span>{requisitosPassword.longitud ? "✅" : "⬜"}</span> Mínimo 10 caracteres
+                    </li>
+                    <li className={`text-xs flex items-center gap-1.5 ${requisitosPassword.mayuscula ? "text-green-600" : "text-gray-400"}`}>
+                      <span>{requisitosPassword.mayuscula ? "✅" : "⬜"}</span> Al menos una letra mayúscula (A-Z)
+                    </li>
+                    <li className={`text-xs flex items-center gap-1.5 ${requisitosPassword.minuscula ? "text-green-600" : "text-gray-400"}`}>
+                      <span>{requisitosPassword.minuscula ? "✅" : "⬜"}</span> Al menos una letra minúscula (a-z)
+                    </li>
+                    <li className={`text-xs flex items-center gap-1.5 ${requisitosPassword.numero ? "text-green-600" : "text-gray-400"}`}>
+                      <span>{requisitosPassword.numero ? "✅" : "⬜"}</span> Al menos un número (0-9)
+                    </li>
+                  </ul>
+                </div>
               <div className="mb-2">
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input type="checkbox" checked={terminos} onChange={e => setTerminos(e.target.checked)}
@@ -411,7 +443,7 @@ export default function Register() {
                 </div>
               )}
 
-              <button data-kaffi="register-submit" type="submit" disabled={loading || passwordsMismatch}
+              <button data-kaffi="register-submit" type="submit" disabled={loading || passwordsMismatch || (password.length > 0 && !passwordValida)}
                 className="w-full py-2.5 sm:py-3 rounded-xl text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group bg-linear-to-r from-[#3D1F0F] to-[#7A4020] hover:from-[#4a2815] hover:to-[#8a4a28]">
                 <span className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 <span className="relative flex items-center justify-center gap-2">
