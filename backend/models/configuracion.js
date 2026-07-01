@@ -6,7 +6,7 @@ const configuracionSchema = new mongoose.Schema({
   diasHistorial: { type: Number, default: 30 },
   alertasActivas: { type: Boolean, default: true },
   registroAbierto: { type: Boolean, default: true },
-  municipios: { type: [String], default: ['El Pital', 'Pitalito', 'Acevedo', 'La Argentina', 'Tarqui'] },
+  municipios: { type: [String], default: ['El Pital'] },
   tiposCafe: {
     type: [{
       value: String,

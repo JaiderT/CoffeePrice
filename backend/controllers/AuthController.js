@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { randomInt } from "crypto";
 import { construirOpcionesCookie } from "../utils/cookieOptions.js";
 import { CorreoNoDisponibleError, enviarCorreo } from "../services/emailService.js";
+import { contieneLenguajeOfensivo } from "../utils/filtroLenguaje.js";
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -108,6 +109,12 @@ export const register = async (req, res) => {
         message: "Nombre, apellido, correo, contraseña y rol son obligatorios",
       });
     }
+    if (contieneLenguajeOfensivo(nombre) || contieneLenguajeOfensivo(apellido)) {
+      return res.status(400).json({
+        message: "El nombre y el apellido no pueden contener lenguaje ofensivo",
+      });
+    }
+
 
     const emailNormalizado = email.trim().toLowerCase();
     const rolesPermitidos = ["productor", "comprador"];

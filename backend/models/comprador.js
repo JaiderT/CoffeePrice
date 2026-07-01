@@ -26,6 +26,7 @@ const compradorSchema = new mongoose.Schema(
         municipio: {
             type: String,
             trim: true,
+            enum: ["El Pital"],
             default: "El Pital",
         },
         telefono: {

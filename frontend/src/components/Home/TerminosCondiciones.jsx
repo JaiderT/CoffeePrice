@@ -1,6 +1,6 @@
 import ResponsivePageLayout from '../Layout/ResponsivePageLayout.jsx';
 
-const sections = [
+export const terminosSections = [
   {
     title: '1. Objeto del servicio',
     text:
@@ -68,7 +68,7 @@ function TerminosCondiciones() {
             </p>
 
             <div className="mt-8 space-y-5">
-              {sections.map((section) => (
+              {terminosSections.map((section) => (
                 <section key={section.title} className="rounded-2xl bg-[#FCF7F0] p-5">
                   <h2 className="text-base font-black text-[#2F241C]">{section.title}</h2>
                   <p className="mt-2 text-sm leading-relaxed text-[#5E4B3A]">{section.text}</p>

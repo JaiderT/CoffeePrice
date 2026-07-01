@@ -194,7 +194,7 @@ export default function PerfilPublicoComprador() {
   const obtenerDatos = useCallback(async () => {
     try {
       const [compradorRes, reseñasRes, preciosRes] = await Promise.all([
-        axios.get(`${API_URL}/api/comprador/${id}`),
+        axios.get(`${API_URL}/api/comprador/${id}`, { withCredentials: true }),
         axios.get(`${API_URL}/api/resenas/comprador/${id}`),
         axios.get(`${API_URL}/api/precios/comprador/${id}`),
       ]);

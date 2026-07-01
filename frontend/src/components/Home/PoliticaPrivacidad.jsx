@@ -1,6 +1,6 @@
 import ResponsivePageLayout from '../Layout/ResponsivePageLayout.jsx';
 
-const privacySections = [
+export const privacySections = [
   {
     title: '1. Datos que recopilamos',
     text:

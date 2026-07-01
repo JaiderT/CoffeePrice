@@ -25,15 +25,6 @@ const TIPOS_EMPRESA = [
 
 const MUNICIPIOS = [
   'El Pital',
-  'Pitalito',
-  'Acevedo',
-  'La Argentina',
-  'Tarqui',
-  'Suaza',
-  'Palestina',
-  'Elías',
-  'Saladoblanco',
-  'Isnos',
 ];
 
 const SERVICIOS_OPCIONES = [

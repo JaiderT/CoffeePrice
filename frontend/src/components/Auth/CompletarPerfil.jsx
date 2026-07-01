@@ -28,15 +28,6 @@ const SERVICIOS_OPCIONES = [
 
 const MUNICIPIOS = [
   "El Pital",
-  "Pitalito",
-  "Acevedo",
-  "La Argentina",
-  "Tarqui",
-  "Suaza",
-  "Palestina",
-  "Elías",
-  "Saladoblanco",
-  "Isnos",
 ];
 
 function ActualizarVistaMapa({ centro }) {

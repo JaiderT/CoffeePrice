@@ -209,7 +209,7 @@ function Inicio() {
     },
     {
       pregunta: '¿En qué municipios está disponible?',
-      respuesta: 'Actualmente tenemos cobertura en 12 municipios del Huila. Estamos trabajando para expandirnos a más zonas cafeteras del país.',
+      respuesta: 'Por ahora CoffePrice tiene cobertura exclusiva en El Pital, Huila. Estamos enfocados en dar un servicio confiable en esta zona antes de expandirnos a otros municipios.',
     },
     {
       pregunta: '¿Cómo sé que los precios son reales?',
