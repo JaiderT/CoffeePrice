@@ -42,4 +42,6 @@ fecha_generacion,fecha_prediccion,precio_actual_fnc,precio_estimado,precio_minim
 2026-06-29,2026-06-30,2176000,2131300,2043200,2219400,-2.05,fnc_hibrido,ensemble_ponderado,1.2193,33742.23,baja,naive,2026-06-30,0.0,-1.98,1.0,estable,0.593,0.0,baja,alto,54400.0
 2026-06-30,2026-07-01,2280000,2284200,2171200,2397200,0.18,fnc_hibrido,ensemble_ponderado,1.5556,56019.86,estable,naive,2026-07-01,0.0,2.73,0.2,estable,0.533,0.0,baja,alto,57000.0
 2026-07-01,2026-07-02,2320000,2299500,2173800,2384900,-0.88,fnc_hibrido,ensemble_ponderado,1.7202,47998.73,estable,naive,2026-07-02,0.0,0.78,0.2,baja,0.592,20600.0,baja,alto,57500.0
-2026-07-02,2026-07-03,2250000,2208300,2103200,2313400,-1.85,fnc_hibrido,ensemble_ponderado,1.7482,48867.58,baja,naive,2026-07-03,0.0,-5.45,1.0,estable,0.966,0.0,baja,alto,56200.0
+2026-07-02,2026-07-03,2250000,2208300,2103200,2313400,-1.85,fnc_hibrido,ensemble_ponderado,1.7235,48817.99,baja,naive,2026-07-03,0.0,-5.45,1.0,estable,0.971,0.0,baja,alto,56200.0
+2026-07-03,2026-07-06,2230000,2223700,2152200,2295200,-0.28,fnc_hibrido,ensemble_ponderado,1.7286,47648.8,estable,naive,2026-07-04,1.0,-1.92,0.25,estable,0.377,0.0,media,medio,23800.0
+2026-07-06,2026-07-07,2520000,2518600,2320900,2651400,-0.06,fnc_hibrido,ensemble_ponderado,2.5041,72671.86,estable,naive,2026-07-07,0.0,6.85,0.2,baja,0.789,25900.0,baja,alto,92600.0

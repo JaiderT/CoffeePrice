@@ -1,42 +1,42 @@
 {
   "estrategia_seleccionada": "naive",
   "estado_modelo": "seguir_en_pruebas",
-  "registros_base": 399,
-  "registros_supervisados": 392,
+  "registros_base": 401,
+  "registros_supervisados": 394,
   "rango_entrenamiento": {
     "desde": "2025-05-30",
-    "hasta": "2026-07-02"
+    "hasta": "2026-07-06"
   },
   "max_cambio_diario_permitido": 0.03,
   "ensemble_weights": {
-    "naive": 0.4694,
-    "prophet": 0.1068,
-    "hybrid": 0.0983,
-    "formula": 0.3256
+    "naive": 0.4142,
+    "prophet": 0.1184,
+    "hybrid": 0.1081,
+    "formula": 0.3593
   },
   "metricas": {
     "train": {
-      "mape_naive": 1.295,
-      "mape_prophet": 1.4524,
-      "mape_hybrid": 0.4003,
-      "mape_formula": 0.7922,
-      "mape_ensemble": 0.7129,
-      "mae_hybrid": 10131.33,
-      "mae_formula": 20067.81,
-      "mae_ensemble": 18215.62
+      "mape_naive": 1.2881,
+      "mape_prophet": 1.4452,
+      "mape_hybrid": 0.4182,
+      "mape_formula": 0.7864,
+      "mape_ensemble": 0.7256,
+      "mae_hybrid": 10538.66,
+      "mae_formula": 19907.98,
+      "mae_ensemble": 18518.39
     },
     "holdout": {
-      "mape_naive": 1.0645,
-      "mape_prophet": 5.0856,
-      "mape_hybrid": 5.5265,
-      "mape_formula": 1.668,
-      "mape_ensemble": 1.7482,
-      "mae_naive": 23333.33,
-      "mae_prophet": 110707.84,
-      "mae_hybrid": 120207.28,
-      "mae_formula": 36291.95,
-      "mae_ensemble": 38091.67,
-      "accuracy_direccion": 47.62
+      "mape_naive": 1.6552,
+      "mape_prophet": 6.2958,
+      "mape_hybrid": 6.8953,
+      "mape_formula": 2.0738,
+      "mape_ensemble": 2.5041,
+      "mae_naive": 38095.24,
+      "mae_prophet": 140167.62,
+      "mae_hybrid": 153353.13,
+      "mae_formula": 47187.76,
+      "mae_ensemble": 56774.89,
+      "accuracy_direccion": 38.1
     }
   }
 }
