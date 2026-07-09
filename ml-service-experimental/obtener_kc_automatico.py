@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -14,6 +15,15 @@ print("=" * 50)
 
 REQUEST_TIMEOUT = (6, 12)
 MAX_RETRIES = 2
+# El contrato KC=F cotiza en ICE, con horario de referencia en Nueva York.
+# BUGFIX (2026-07-10): antes se convertia el timestamp de Yahoo con
+# datetime.fromtimestamp(ts), que usa la zona horaria LOCAL DEL SERVIDOR.
+# Si el servidor no esta configurado en America/New_York, una barra del
+# viernes puede terminar fechada sabado/domingo (o al reves), inyectando
+# "saltos" de precio falsos en fechas de fin de semana que no existen en
+# el mercado real. Se vio un caso real: un precio de domingo 2026-07-05
+# que en realidad correspondia a la sesion del viernes/lunes.
+EXCHANGE_TZ = ZoneInfo("America/New_York")
 
 
 def obtener_kc_yahoo(max_retries: int = MAX_RETRIES) -> list[dict]:
@@ -40,13 +50,22 @@ def obtener_kc_yahoo(max_retries: int = MAX_RETRIES) -> list[dict]:
 
     result = data["chart"]["result"][0]
     timestamps = result.get("timestamp", [])
-    closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+    quote = result.get("indicators", {}).get("quote", [{}])[0]
+    closes = quote.get("close", [])
 
     registros = []
+    descartados_fin_de_semana = 0
     for ts, close in zip(timestamps, closes):
         if close is None:
             continue
-        fecha = datetime.fromtimestamp(ts).strftime("%m/%d/%Y")
+        fecha_dt = datetime.fromtimestamp(ts, tz=timezone.utc).astimezone(EXCHANGE_TZ)
+        if fecha_dt.weekday() >= 5:
+            # Barra fantasma de sabado/domingo: casi siempre es un artefacto
+            # de conversion de zona horaria o una sesion Globex incompleta.
+            # Se descarta para no meter saltos falsos al historico.
+            descartados_fin_de_semana += 1
+            continue
+        fecha = fecha_dt.strftime("%m/%d/%Y")
         registros.append(
             {
                 "Date": fecha,
@@ -58,6 +77,10 @@ def obtener_kc_yahoo(max_retries: int = MAX_RETRIES) -> list[dict]:
                 "Change %": "",
             }
         )
+
+    if descartados_fin_de_semana:
+        print(f"   {descartados_fin_de_semana} barra(s) de fin de semana descartada(s) (artefacto de datos).", flush=True)
+
     return registros
 
 

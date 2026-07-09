@@ -61,7 +61,19 @@ def clasificar_tendencia_real(row: pd.Series) -> str:
 
 
 df_eval["tendencia_real"] = df_eval.apply(clasificar_tendencia_real, axis=1)
-df_eval["acerto_tendencia"] = (df_eval["tendencia"] == df_eval["tendencia_real"]).astype(int)
+
+# BUGFIX (2026-07-03): antes se comparaba "tendencia" (la variacion implicita
+# del PRECIO del ensemble, calculada con el mismo umbral pero sin relacion con
+# el clasificador de direccion) contra "tendencia_real". Eso NO mide el
+# acierto del modelo de direccion (modelo_direccion_xgboost.pkl), que es la
+# columna "direccion_modelo". Se deja "acerto_tendencia_ensemble" como
+# referencia historica, pero la metrica que realmente importa es
+# "acerto_tendencia_modelo".
+df_eval["acerto_tendencia_ensemble"] = (df_eval["tendencia"] == df_eval["tendencia_real"]).astype(int)
+df_eval["acerto_tendencia_modelo"] = (df_eval["direccion_modelo"] == df_eval["tendencia_real"]).astype(int)
+# Se mantiene el nombre de columna original para no romper dashboards/consumidores existentes,
+# pero ahora apunta al calculo correcto (direccion_modelo vs tendencia_real).
+df_eval["acerto_tendencia"] = df_eval["acerto_tendencia_modelo"]
 
 df_eval = df_eval.sort_values(["fecha_generacion", "fecha_prediccion"])
 df_eval.to_csv(EVALUATION_HISTORY_PATH, index=False)
@@ -69,13 +81,15 @@ df_eval.to_csv(EVALUATION_HISTORY_PATH, index=False)
 mape = float(df_eval["error_pct"].mean())
 mae = float(df_eval["error_abs"].mean())
 hit_rate = float(df_eval["acerto_rango"].mean() * 100)
-trend_hit_rate = float(df_eval["acerto_tendencia"].mean() * 100)
+trend_hit_rate_modelo = float(df_eval["acerto_tendencia_modelo"].mean() * 100)
+trend_hit_rate_ensemble = float(df_eval["acerto_tendencia_ensemble"].mean() * 100)
 
 print(f"Predicciones evaluadas: {len(df_eval)}")
 print(f"MAPE acumulado: {mape:.3f}%")
 print(f"MAE acumulado: ${mae:,.0f}")
 print(f"Hit rate del rango: {hit_rate:.1f}%")
-print(f"Acierto de tendencia: {trend_hit_rate:.1f}%")
+print(f"Acierto de tendencia (modelo_direccion_xgboost, CORRECTO): {trend_hit_rate_modelo:.1f}%")
+print(f"Acierto de tendencia (variacion del ensemble, referencia historica): {trend_hit_rate_ensemble:.1f}%")
 print("\nUltimas evaluaciones:")
 print(
     df_eval.tail(7)[
