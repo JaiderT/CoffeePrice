@@ -17,6 +17,8 @@ from pipeline_fnc_hibrido import (
     PREDICTION_JSON_PATH,
     PROPHET_MODEL_PATH,
     XGBOOST_MODEL_PATH,
+    compute_dynamic_change_limit,
+    compute_direction_strength,
     compute_market_signal_strength,
     build_daily_base,
     build_supervised_frame,
@@ -311,24 +313,38 @@ selected_raw, presion_mercado, precio_por_presion, factor_presion = aplicar_ajus
 )
 
 ajuste_direccion_cop = 0.0
-if direction_prediction in {"sube", "baja"} and direction_confidence >= 0.48 and direction_margin >= 0.10:
+# BUGFIX (2026-07-10): antes esto era un corte binario (direction_confidence
+# >= 0.48 y direction_margin >= 0.10 -> se aplica TODO el ajuste; si no, CERO
+# ajuste). El 2026-07-09 el clasificador tuvo 44.7% de confianza -apenas por
+# debajo del umbral- y el ajuste completo se anulo a 0, como si el modelo no
+# hubiera dicho nada. Ahora se usa una rampa continua (compute_direction_strength):
+# mientras mas convencido este el modelo, mas fuerte es el empujon; una
+# señal debil todavia mueve un poco el precio en vez de no mover nada.
+direction_strength = compute_direction_strength(direction_confidence, direction_margin)
+if direction_prediction in {"sube", "baja"} and direction_strength > 0.0:
     direction_sign = 1 if direction_prediction == "sube" else -1
     selected_delta = selected_raw - ultimo_precio_fnc
     min_direction_delta = max(22000.0, ultimo_precio_fnc * 0.0075)
-    ajuste_direccion_cop = min_direction_delta * (0.55 + direction_margin)
+    ajuste_direccion_cop = min_direction_delta * (0.55 + direction_margin) * direction_strength
     objetivo_direccion = ultimo_precio_fnc + (direction_sign * ajuste_direccion_cop)
 
+    peso_objetivo = 0.20 + (0.35 * direction_strength)  # 0.20 (señal debil) a 0.55 (señal muy fuerte)
     if direction_sign > 0 and selected_delta < ajuste_direccion_cop:
-        selected_raw = (0.65 * selected_raw) + (0.35 * objetivo_direccion)
+        selected_raw = ((1 - peso_objetivo) * selected_raw) + (peso_objetivo * objetivo_direccion)
     elif direction_sign < 0 and selected_delta > -ajuste_direccion_cop:
-        selected_raw = (0.65 * selected_raw) + (0.35 * objetivo_direccion)
+        selected_raw = ((1 - peso_objetivo) * selected_raw) + (peso_objetivo * objetivo_direccion)
 
 es_fin_de_semana = fecha_prediccion.weekday() >= 5
 if es_fin_de_semana:
     selected_raw = ultimo_precio_fnc
     ajuste_direccion_cop = 0.0
 
-limite_cambio = max(recent_change_limit, 0.025 if abs(presion_mercado) >= 3.0 and factor_presion >= 0.55 else recent_change_limit)
+# NUEVO (2026-07-10): Opcion C. El techo de cambio diario ya NO es un
+# numero fijo (antes: max 3% siempre, sin importar la señal). Ahora crece
+# cuando el mercado externo (KC/TRM) se mueve fuerte y/o el clasificador de
+# direccion esta convencido, hasta un techo absoluto de seguridad (15%).
+# Si no hay señales fuertes, el resultado es practicamente el mismo de antes.
+limite_cambio = compute_dynamic_change_limit(recent_change_limit, signal_strength, direction_strength)
 minimo_seguro = ultimo_precio_fnc * (1 - limite_cambio)
 maximo_seguro = ultimo_precio_fnc * (1 + limite_cambio)
 precio_estimado = max(min(selected_raw, maximo_seguro), minimo_seguro)

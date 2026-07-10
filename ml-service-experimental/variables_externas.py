@@ -37,8 +37,18 @@ def merge_optional(df_base: pd.DataFrame, path: str, columns: list[str], fill_va
     for column in columns:
         if column not in df_base.columns:
             df_base[column] = fill_value if fill_value is not None else 0.0
+
+    # BUGFIX (2026-07-10): antes, para columnas con fill_value fijo
+    # (petroleo_wti, clima), CUALQUIER fecha sin match exacto -incluyendo
+    # las mas recientes, justo las que importan para la prediccion de HOY-
+    # volvia directo al valor constante "muerto" (ej. 78.5), aunque hubiera
+    # un dato real de 1-2 dias antes disponible. Ahora primero se propaga
+    # hacia adelante el ultimo valor real conocido (ffill, sin mirar al
+    # futuro para evitar fuga de informacion) y el valor fijo queda solo
+    # como ultimo recurso para fechas anteriores a cualquier dato real.
+    df_base[columns] = df_base[columns].ffill()
     if fill_value is None:
-        df_base[columns] = df_base[columns].ffill().bfill()
+        df_base[columns] = df_base[columns].bfill()
     else:
         df_base[columns] = df_base[columns].fillna(fill_value)
     return df_base
@@ -46,11 +56,16 @@ def merge_optional(df_base: pd.DataFrame, path: str, columns: list[str], fill_va
 
 df = cargar_rango_base()
 
-# Proxy variables while the sources are still experimental.
-df["petroleo_wti"] = 78.5
-df["flete_fbx"] = 2800.0
-df["volumen_ice"] = 15000.0
-
+# NUEVO (2026-07-03): antes petroleo_wti/flete_fbx/volumen_ice eran constantes
+# fijas ("Proxy variables while the sources are still experimental"), lo que
+# las dejaba sin varianza y sin ningun valor predictivo real para el modelo.
+# Ahora petroleo_wti se completa con datos reales (wti_historico.csv,
+# generado por obtener_wti_automatico.py con el futuro CL=F de Yahoo
+# Finance), con ffill para dias recientes sin dato aun (ver merge_optional).
+#
+# flete_fbx y volumen_ice se retiraron del pipeline por completo (sin fuente
+# gratuita confiable) - ver EXTERNAL_COLUMNS en pipeline_fnc_hibrido.py.
+df = merge_optional(df, "wti_historico.csv", ["petroleo_wti"], fill_value=78.5)
 df = merge_optional(df, "usd_brl_historico.csv", ["usd_brl"])
 df = merge_optional(df, "clima_brasil.csv", ["clima_brasil_alerta", "clima_brasil_intensidad"], fill_value=0.0)
 df = merge_optional(df, "inventarios_ice.csv", ["inventario_ice"])

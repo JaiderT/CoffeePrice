@@ -24,8 +24,9 @@ print("=" * 60)
 print(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 steps = [
-    {"script": "obtener_kc_automatico.py", "label": "Actualizando KC", "critical": True},
+    {"script": "obtener_kc_automatico.py", "label": "Actualizando KC (precio + volumen real)", "critical": True},
     {"script": "obtener_trm_automatico.py", "label": "Actualizando TRM", "critical": True},
+    {"script": "obtener_wti_automatico.py", "label": "Actualizando WTI (petroleo, dato real)", "critical": False},
     {"script": "obtener_fnc_automatico.py", "label": "Actualizando FNC", "critical": False},
     {"script": "obtener_usd_brl.py", "label": "Actualizando USD/BRL", "critical": False},
     {"script": "obtener_clima_brasil.py", "label": "Actualizando clima Brasil", "critical": False},

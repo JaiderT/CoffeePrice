@@ -42,10 +42,23 @@ LBS_POR_KG = 2.20462
 KG_POR_CARGA = 125
 LBS_POR_CARGA = LBS_POR_KG * KG_POR_CARGA
 
+# NOTA (2026-07-03): se retiro "flete_fbx" del set de features. El Freightos
+# Baltic Index no tiene API/CSV gratuito (solo grafico embebido de 3 meses o
+# cuenta de pago); mantenerlo como constante fija no aportaba señal real y
+# generaba una feature "muerta".
+#
+# NOTA (2026-07-10): tambien se retiro "volumen_ice". Se intento alimentarla
+# con el volumen real de KC=F via Yahoo Finance, pero el dato que devuelve
+# ese endpoint para este simbolo es poco confiable (valores como 1, 2 o 6
+# "contratos", muy por debajo del volumen real de ICE que ronda decenas de
+# miles). Es peor tener una señal de baja calidad pareciendo real que no
+# tenerla: el modelo puede terminar aprendiendo de ruido. Si se consigue una
+# fuente confiable de volumen de ICE en el futuro, se puede reintroducir aqui.
+#
+# "petroleo_wti" SI se mantiene: los valores de Yahoo Finance para CL=F son
+# consistentes con precios de mercado conocidos del WTI.
 EXTERNAL_COLUMNS = [
     "petroleo_wti",
-    "flete_fbx",
-    "volumen_ice",
     "inventario_ice",
     "usd_brl",
     "clima_brasil_alerta",
@@ -437,6 +450,39 @@ def make_prophet_frame(df_supervised: pd.DataFrame) -> pd.DataFrame:
     return df.dropna().sort_values("ds").reset_index(drop=True)
 
 
+def walk_forward_splits(
+    df: pd.DataFrame,
+    n_splits: int = 5,
+    test_window_days: int = 14,
+    min_train_days: int = 90,
+) -> list[tuple[pd.DataFrame, pd.DataFrame]]:
+    """Genera varios cortes temporales (expanding window) en vez de un unico
+    split fijo. Con ~400 registros, un solo holdout de 14-21 dias produce
+    metricas muy ruidosas (un solo movimiento fuerte de precio puede duplicar
+    el MAPE reportado). Promediar varios cortes da una estimacion mucho mas
+    confiable de que tan bien generaliza cada estrategia antes de decidir si
+    el modelo esta "usable".
+
+    Cada fold usa todo el historico disponible hasta ese punto como train
+    (nunca datos futuros -> sin fuga de informacion) y los siguientes
+    `test_window_days` como test.
+    """
+    total = len(df)
+    splits: list[tuple[pd.DataFrame, pd.DataFrame]] = []
+
+    last_test_end = total
+    for _ in range(n_splits):
+        test_end = last_test_end
+        test_start = test_end - test_window_days
+        train_end = test_start
+        if train_end < min_train_days or test_start <= 0:
+            break
+        splits.append((df.iloc[:train_end].copy(), df.iloc[test_start:test_end].copy()))
+        last_test_end = train_end
+
+    return list(reversed(splits))
+
+
 def train_test_split_temporal(df: pd.DataFrame, min_test_days: int = 14) -> tuple[pd.DataFrame, pd.DataFrame]:
     if len(df) < 45:
         raise ValueError("No hay suficientes registros para un split temporal confiable.")
@@ -468,6 +514,49 @@ def compute_recent_change_limit(base_df: pd.DataFrame) -> float:
         return 0.012
     quantile = float(changes.quantile(0.9))
     return min(0.03, max(0.008, quantile * 1.15))
+
+
+# NUEVO (2026-07-10): antes precio_estimado siempre se topaba a un maximo de
+# 3% de cambio diario (min(0.03, ...) en compute_recent_change_limit), sin
+# importar que tan fuerte fuera la señal de mercado o del clasificador de
+# direccion. Eso hacia IMPOSIBLE por diseño capturar saltos reales grandes
+# (ej. +8.95% el 2026-07-09). Esta funcion calcula un techo dinamico: parte
+# del limite "normal" (base_limit, tipicamente 3%) y lo va ampliando segun
+# dos señales independientes:
+#   - signal_strength: que tan fuerte se esta moviendo el mercado externo
+#     (KC + TRM), ya calculado en predecir_fnc_hibrido.py.
+#   - direction_strength: que tan convencido esta el clasificador de
+#     direccion (combina confianza y margen entre la clase top y la segunda,
+#     con una rampa continua en vez de un corte binario duro).
+# Si ninguna señal es fuerte, el techo se queda igual que antes (~3%). Si
+# ambas son fuertes y coinciden, puede llegar hasta MAX_CHANGE_LIMIT (15%).
+# Nunca se aplica un solo numero fijo "a ciegas": el aumento siempre esta
+# atado a evidencia real del propio modelo.
+MAX_CHANGE_LIMIT = 0.15
+
+
+def compute_direction_strength(direction_confidence: float, direction_margin: float) -> float:
+    """Convierte confianza+margen del clasificador de direccion en un valor
+    0..1 con rampa continua (no un corte binario). Con 3 clases, 1/3 es el
+    nivel de confianza de "adivinar al azar"; todo lo que esta en o por
+    debajo de eso aporta 0 conviccion."""
+    conviccion = max(0.0, (direction_confidence - (1 / 3)) / (1 - (1 / 3)))
+    factor_margen = min(1.0, direction_margin / 0.20)
+    return max(0.0, min(1.0, conviccion * factor_margen))
+
+
+def compute_dynamic_change_limit(
+    base_limit: float,
+    signal_strength: float,
+    direction_strength: float,
+) -> float:
+    bono_mercado = 0.06 * max(0.0, min(1.0, signal_strength))
+    bono_direccion = 0.09 * max(0.0, min(1.0, direction_strength))
+    # Si ambas señales estan de acuerdo y son fuertes, se suman (con un
+    # pequeño extra de "acuerdo") para poder llegar al techo absoluto.
+    bono_acuerdo = 0.03 * max(0.0, min(1.0, signal_strength)) * max(0.0, min(1.0, direction_strength))
+    limite = base_limit + bono_mercado + bono_direccion + bono_acuerdo
+    return max(base_limit, min(MAX_CHANGE_LIMIT, limite))
 
 
 def compute_strategy_weights(metric_map: dict[str, float], naive_penalty: float = 1.0) -> dict[str, float]:
